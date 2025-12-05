@@ -181,6 +181,7 @@ export const sendModuleCompletionEmail = async (
   submissionId: string
 ): Promise<void> => {
   const reviewUrl = `${window.location.origin}/review/${submissionId}?review=true`;
+  const taskCount = Object.keys(data.completedTasks || {}).filter(key => data.completedTasks[key]).length;
   
   const templateParams = {
     to_email: data.professorEmail,
@@ -189,8 +190,10 @@ export const sendModuleCompletionEmail = async (
     module_name: data.moduleName,
     module_number: data.moduleNumber,
     phase: data.phase,
-    review_link: reviewUrl,
-    completed_at: new Date().toLocaleString()
+    operating_system: data.operatingSystem === 'mac' ? 'Mac' : 'Windows',
+    task_count: `${taskCount} tasks`,
+    submitted_at: new Date().toLocaleString(),
+    review_url: reviewUrl
   };
 
   try {
