@@ -63,8 +63,8 @@ const OrientationSlideshow = ({ apprenticeName, apprenticeEmail, professorEmail,
       title: 'Welcome to Oclef',
       subtitle: 'Reinventing Piano Education',
       content: [
-        "You're not here to run through scales or check boxes on a lesson plan.",
-        "You're here because you have the ability to shape how a young person thinks, grows, and takes on challenges.",
+        "You're not here because you can teach scales and follow a lesson plan.",
+        "You're here as a collaborator—someone who shapes how a young person thinks, grows, and takes on challenges.",
         "At Oclef, piano is just the starting point. The real mission is helping kids become confident, disciplined, and curious—people who know how to learn and aren't afraid of hard work."
       ],
       color: '#0066A2'
