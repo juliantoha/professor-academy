@@ -180,8 +180,15 @@ export const sendModuleCompletionEmail = async (
   data: ModuleSubmissionData,
   submissionId: string
 ): Promise<void> => {
+  // Check if professor email is valid before attempting to send
+  if (!data.professorEmail || !data.professorEmail.includes('@')) {
+    console.warn('⚠️ Professor email is missing or invalid, skipping email notification');
+    console.warn('Professor email value:', data.professorEmail || '(empty)');
+    return;
+  }
+
   const reviewUrl = `${window.location.origin}/review/${submissionId}?review=true`;
-  
+
   const templateParams = {
     to_email: data.professorEmail,
     student_name: data.studentName,
@@ -193,15 +200,21 @@ export const sendModuleCompletionEmail = async (
     completed_at: new Date().toLocaleString()
   };
 
+  console.log('Sending email to professor:', data.professorEmail);
+  console.log('Template params:', JSON.stringify(templateParams, null, 2));
+
   try {
-    await emailjs.send(
+    const result = await emailjs.send(
       import.meta.env.VITE_EMAILJS_SERVICE_ID,
       import.meta.env.VITE_EMAILJS_MODULE_TEMPLATE_ID || import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
       templateParams
     );
     console.log('✓ Module completion email sent to professor');
+    console.log('EmailJS response:', result);
   } catch (error) {
     console.error('Failed to send module email:', error);
+    console.error('EmailJS Service ID:', import.meta.env.VITE_EMAILJS_SERVICE_ID ? 'Set' : 'MISSING');
+    console.error('EmailJS Template ID:', import.meta.env.VITE_EMAILJS_MODULE_TEMPLATE_ID || import.meta.env.VITE_EMAILJS_TEMPLATE_ID ? 'Set' : 'MISSING');
     console.warn('⚠️ Continuing without email notification');
   }
 };
