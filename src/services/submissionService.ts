@@ -196,8 +196,9 @@ export const sendModuleCompletionEmail = async (
     module_name: data.moduleName,
     module_number: data.moduleNumber,
     phase: data.phase,
-    review_link: reviewUrl,
-    completed_at: new Date().toLocaleString()
+    operating_system: data.operatingSystem || 'N/A',
+    review_url: reviewUrl,
+    submitted_at: new Date().toLocaleString()
   };
 
   console.log('Sending email to professor:', data.professorEmail);
