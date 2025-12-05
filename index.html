@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    
+    <!-- Favicon with dark mode support -->
+    <link rel="icon" type="image/png" href="/oclef-favicon-black.png" media="(prefers-color-scheme: light)" />
+    <link rel="icon" type="image/png" href="/oclef-favicon-white.png" media="(prefers-color-scheme: dark)" />
+    <!-- Fallback for browsers that don't support media queries -->
+    <link rel="icon" type="image/png" href="/oclef-favicon-black.png" />
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Oclef Professor Academy - Apprentice Training</title>
+    <meta name="description" content="Transform apprentices into expert online music instructors. Comprehensive three-phase training program covering orientation, teaching skills, and professional development." />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://jade-platypus-de477e.netlify.app/" />
+    <meta property="og:title" content="Oclef Professor Academy - Apprentice Training" />
+    <meta property="og:description" content="Transform apprentices into expert online music instructors. Comprehensive three-phase training program covering orientation, teaching skills, and professional development." />
+    <meta property="og:image" content="https://jade-platypus-de477e.netlify.app/og-image.png" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://jade-platypus-de477e.netlify.app/" />
+    <meta property="twitter:title" content="Oclef Professor Academy - Apprentice Training" />
+    <meta property="twitter:description" content="Transform apprentices into expert online music instructors. Comprehensive three-phase training program covering orientation, teaching skills, and professional development." />
+    <meta property="twitter:image" content="https://jade-platypus-de477e.netlify.app/og-image.png" />
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      html, body, #root {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      
+      body {
+        font-family: 'Lato', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Hidden form for Netlify Forms detection -->
+    <form name="oclef-training" netlify netlify-honeypot="bot-field" hidden>
+      <input type="hidden" name="bot-field" />
+      <input type="text" name="professorEmail" />
+      <input type="text" name="operatingSystem" />
+      <input type="text" name="completedTasks" />
+      <input type="text" name="screenshotCount" />
+      <input type="text" name="submittedAt" />
+      <input type="text" name="progress" />
+    </form>
+    
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
