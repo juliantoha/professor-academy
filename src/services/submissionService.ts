@@ -40,12 +40,6 @@ export interface OrientationData {
 // CLOUDINARY UPLOAD
 // ============================================
 
-/**
- * Upload a base64 image to Cloudinary
- * @param base64Image - Base64 encoded image string
- * @param taskId - Unique identifier for the image
- * @returns Cloudinary secure URL
- */
 export const uploadToCloudinary = async (base64Image: string, taskId: string): Promise<string> => {
   const formData = new FormData();
   formData.append('file', base64Image);
@@ -75,18 +69,10 @@ export const uploadToCloudinary = async (base64Image: string, taskId: string): P
 // SUPABASE OPERATIONS
 // ============================================
 
-/**
- * Save submission to Supabase Submissions table
- * @param submissionId - Unique submission identifier
- * @param data - Submission data (can be SubmissionData or ModuleSubmissionData)
- * @param screenshotUrls - Map of task IDs to Cloudinary URLs
- * @param moduleName - Optional module name for module-specific submissions
- */
 export const saveToSupabase = async (
   submissionId: string,
   data: SubmissionData | ModuleSubmissionData,
-  screenshotUrls: Record<string, string>,
-  moduleName?: string
+  screenshotUrls: Record<string, string>
 ): Promise<void> => {
   const isModuleSubmission = 'moduleName' in data;
   
@@ -102,7 +88,6 @@ export const saveToSupabase = async (
     status: 'Pending'
   };
 
-  // Add module-specific fields if this is a module submission
   if (isModuleSubmission) {
     record.moduleName = (data as ModuleSubmissionData).moduleName;
     record.moduleNumber = (data as ModuleSubmissionData).moduleNumber;
@@ -115,19 +100,12 @@ export const saveToSupabase = async (
 
   if (error) {
     console.error('Supabase Submissions error:', error);
-    throw new Error('Failed to save submission to Supabase');
+    throw new Error('Failed to save submission to database');
   }
 
   console.log('✓ Submission saved to Supabase');
 };
 
-/**
- * Update Progress table in Supabase
- * @param apprenticeEmail - Email of the apprentice
- * @param phase - Training phase (e.g., "Phase 1", "Phase 2")
- * @param module - Module name (e.g., "Computer Essentials")
- * @param submissionId - Unique submission identifier
- */
 export const updateProgress = async (
   apprenticeEmail: string,
   phase: string,
@@ -137,57 +115,55 @@ export const updateProgress = async (
   console.log(`Updating progress: ${phase} - ${module} for ${apprenticeEmail}`);
   
   try {
-    // Check if progress record exists
-    const { data: existingRecords, error: checkError } = await supabase
+    // Check if record exists
+    const { data: existing, error: fetchError } = await supabase
       .from('progress')
       .select('*')
       .eq('apprenticeEmail', apprenticeEmail)
       .eq('phase', phase)
-      .eq('module', module);
-    
-    if (checkError) {
-      console.error('Failed to check existing progress:', checkError);
+      .eq('module', module)
+      .maybeSingle();
+
+    if (fetchError) {
+      console.error('Failed to check existing progress:', fetchError);
       throw new Error('Failed to check existing progress records');
     }
-    
-    if (existingRecords && existingRecords.length > 0) {
-      // Update existing record
-      const recordId = existingRecords[0].id;
-      console.log(`Updating existing progress record: ${recordId}`);
-      
+
+    if (existing) {
+      // Update existing record by composite key
       const { error: updateError } = await supabase
         .from('progress')
         .update({
-          Status: 'Completed',
-          submissionId
+          Status: 'Submitted',
+          submissionId,
+          submittedAt: new Date().toISOString()
         })
-        .eq('id', recordId);
-      
+        .eq('apprenticeEmail', apprenticeEmail)
+        .eq('phase', phase)
+        .eq('module', module);
+
       if (updateError) {
         console.error('Failed to update progress:', updateError);
         throw new Error('Failed to update progress record');
       }
-      
       console.log(`✓ Updated progress for ${module}`);
     } else {
       // Create new record
-      console.log(`Creating new progress record for ${module}`);
-      
-      const { error: createError } = await supabase
+      const { error: insertError } = await supabase
         .from('progress')
         .insert({
           apprenticeEmail,
           phase,
           module,
-          Status: 'Completed',
-          submissionId
+          Status: 'Submitted',
+          submissionId,
+          submittedAt: new Date().toISOString()
         });
-      
-      if (createError) {
-        console.error('Failed to create progress:', createError);
+
+      if (insertError) {
+        console.error('Failed to create progress:', insertError);
         throw new Error('Failed to create progress record');
       }
-      
       console.log(`✓ Created progress record for ${module}`);
     }
   } catch (error) {
@@ -200,15 +176,12 @@ export const updateProgress = async (
 // EMAIL FUNCTIONS
 // ============================================
 
-/**
- * Send module completion email to professor
- * @param data - Module submission data
- * @param submissionId - Unique submission identifier
- */
 export const sendModuleCompletionEmail = async (
   data: ModuleSubmissionData,
   submissionId: string
 ): Promise<void> => {
+  const reviewUrl = `${window.location.origin}/review/${submissionId}?review=true`;
+  
   const templateParams = {
     to_email: data.professorEmail,
     student_name: data.studentName,
@@ -216,8 +189,7 @@ export const sendModuleCompletionEmail = async (
     module_name: data.moduleName,
     module_number: data.moduleNumber,
     phase: data.phase,
-    submission_id: submissionId,
-    review_link: `${window.location.origin}/review/${submissionId}`,
+    review_link: reviewUrl,
     completed_at: new Date().toLocaleString()
   };
 
@@ -229,16 +201,11 @@ export const sendModuleCompletionEmail = async (
     );
     console.log('✓ Module completion email sent to professor');
   } catch (error) {
-    console.error('Failed to send module completion email:', error);
+    console.error('Failed to send module email:', error);
     console.warn('⚠️ Continuing without email notification');
   }
 };
 
-/**
- * Send email to professor about training submission
- * @param data - Submission data
- * @param submissionId - Unique submission identifier
- */
 export const sendEmailToProfessor = async (
   data: SubmissionData,
   submissionId: string
@@ -248,8 +215,6 @@ export const sendEmailToProfessor = async (
     student_name: data.studentName,
     apprentice_email: data.apprenticeEmail,
     submission_id: submissionId,
-    operating_system: data.operatingSystem,
-    completed_tasks: Object.keys(data.completedTasks).filter(key => data.completedTasks[key]).join(', '),
     completed_at: new Date().toLocaleString()
   };
 
@@ -266,10 +231,6 @@ export const sendEmailToProfessor = async (
   }
 };
 
-/**
- * Send orientation completion email to professor
- * @param data - Orientation data
- */
 export const sendOrientationEmail = async (
   data: OrientationData
 ): Promise<void> => {
@@ -298,11 +259,6 @@ export const sendOrientationEmail = async (
 // SUBMISSION HANDLERS
 // ============================================
 
-/**
- * Mark Phase 1 Orientation as complete
- * @param data - Orientation completion data
- * @returns Submission ID
- */
 export const markOrientationComplete = async (data: OrientationData): Promise<string> => {
   const submissionId = `orientation_${uuidv4()}`;
   
@@ -312,23 +268,22 @@ export const markOrientationComplete = async (data: OrientationData): Promise<st
   console.log('Professor:', data.professorEmail);
 
   try {
-    // Check if orientation progress record exists
-    const { data: existingRecords, error: checkError } = await supabase
+    // Check if orientation record exists
+    const { data: existing, error: fetchError } = await supabase
       .from('progress')
       .select('*')
       .eq('apprenticeEmail', data.apprenticeEmail)
       .eq('phase', 'Phase 1')
-      .eq('module', 'Orientation');
-    
-    if (checkError) {
-      console.error('Failed to check existing orientation progress:', checkError);
+      .eq('module', 'Orientation')
+      .maybeSingle();
+
+    if (fetchError) {
+      console.error('Failed to check existing orientation progress:', fetchError);
       throw new Error('Failed to check existing orientation records');
     }
-    
-    if (existingRecords && existingRecords.length > 0) {
-      const recordId = existingRecords[0].id;
-      console.log(`Updating existing orientation record: ${recordId}`);
-      
+
+    if (existing) {
+      // Update existing record by composite key
       const { error: updateError } = await supabase
         .from('progress')
         .update({
@@ -336,18 +291,18 @@ export const markOrientationComplete = async (data: OrientationData): Promise<st
           submissionId,
           submittedAt: new Date().toISOString()
         })
-        .eq('id', recordId);
-      
+        .eq('apprenticeEmail', data.apprenticeEmail)
+        .eq('phase', 'Phase 1')
+        .eq('module', 'Orientation');
+
       if (updateError) {
         console.error('Failed to update orientation progress:', updateError);
         throw new Error('Failed to update orientation record');
       }
-      
       console.log('✓ Updated existing orientation record');
     } else {
-      console.log('Creating new orientation record');
-      
-      const { error: createError } = await supabase
+      // Create new record
+      const { error: insertError } = await supabase
         .from('progress')
         .insert({
           apprenticeEmail: data.apprenticeEmail,
@@ -357,12 +312,11 @@ export const markOrientationComplete = async (data: OrientationData): Promise<st
           submissionId,
           submittedAt: new Date().toISOString()
         });
-      
-      if (createError) {
-        console.error('Failed to create orientation progress:', createError);
+
+      if (insertError) {
+        console.error('Failed to create orientation progress:', insertError);
         throw new Error('Failed to create orientation record');
       }
-      
       console.log('✓ Created orientation record');
     }
 
@@ -378,14 +332,8 @@ export const markOrientationComplete = async (data: OrientationData): Promise<st
   }
 };
 
-/**
- * Submit individual module completion
- * This is the main function to use for Phase 2 module submissions
- * @param data - Module submission data
- * @returns Submission ID
- */
 export const submitModule = async (data: ModuleSubmissionData): Promise<string> => {
-  const submissionId = `sub-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const submissionId = `${data.moduleNumber.replace('.', '_')}_${uuidv4()}`;
   
   console.log('=== Starting Module Submission ===');
   console.log('Submission ID:', submissionId);
@@ -402,7 +350,7 @@ export const submitModule = async (data: ModuleSubmissionData): Promise<string> 
     let uploadedCount = 0;
     for (const [taskId, base64Image] of Object.entries(data.uploadedScreenshots)) {
       try {
-        const url = await uploadToCloudinary(base64Image, `submissions/${submissionId}/${taskId}`);
+        const url = await uploadToCloudinary(base64Image, `${submissionId}_${taskId}`);
         screenshotUrls[taskId] = url;
         uploadedCount++;
         console.log(`✓ Uploaded ${uploadedCount}/${screenshotCount}: ${taskId}`);
@@ -414,7 +362,7 @@ export const submitModule = async (data: ModuleSubmissionData): Promise<string> 
 
     // Step 2: Save to Supabase Submissions
     console.log('\n--- Step 2: Saving to Submissions Table ---');
-    await saveToSupabase(submissionId, data, screenshotUrls, data.moduleName);
+    await saveToSupabase(submissionId, data, screenshotUrls);
 
     // Step 3: Update Progress table
     console.log('\n--- Step 3: Updating Progress Table ---');
@@ -434,13 +382,8 @@ export const submitModule = async (data: ModuleSubmissionData): Promise<string> 
   }
 };
 
-/**
- * Submit training (legacy - kept for backward compatibility)
- * @param data - Submission data
- * @returns Submission ID
- */
 export const submitTraining = async (data: SubmissionData): Promise<string> => {
-  const submissionId = `sub-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const submissionId = uuidv4();
   
   console.log('=== Starting Training Submission ===');
   console.log('Submission ID:', submissionId);
@@ -455,7 +398,7 @@ export const submitTraining = async (data: SubmissionData): Promise<string> => {
     let uploadedCount = 0;
     for (const [taskId, base64Image] of Object.entries(data.uploadedScreenshots)) {
       try {
-        const url = await uploadToCloudinary(base64Image, `submissions/${submissionId}/${taskId}`);
+        const url = await uploadToCloudinary(base64Image, `${submissionId}_${taskId}`);
         screenshotUrls[taskId] = url;
         uploadedCount++;
         console.log(`✓ Uploaded ${uploadedCount}/${screenshotCount}: ${taskId}`);

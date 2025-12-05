@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, CheckCircle, Award, Target, TrendingUp, Users, Zap, Book, Maximize, Minimize } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 interface OrientationProps {
   apprenticeName?: string;
   apprenticeEmail?: string;
   professorEmail?: string;
-  dashboardToken?: string; // Added to redirect back to dashboard
+  dashboardToken?: string;
 }
 
 const OrientationSlideshow = ({ apprenticeName, apprenticeEmail, professorEmail, dashboardToken }: OrientationProps) => {
@@ -25,26 +26,16 @@ const OrientationSlideshow = ({ apprenticeName, apprenticeEmail, professorEmail,
       }
 
       try {
-        const baseId = import.meta.env.VITE_AIRTABLE_BASE_ID;
-        const apiKey = import.meta.env.VITE_AIRTABLE_API_KEY;
+        const { data, error } = await supabase
+          .from('progress')
+          .select('*')
+          .eq('apprenticeEmail', apprenticeEmail)
+          .eq('phase', 'Phase 1')
+          .eq('module', 'Orientation')
+          .single();
 
-        const response = await fetch(
-          `https://api.airtable.com/v0/${baseId}/Progress?filterByFormula=AND({apprenticeEmail}='${apprenticeEmail}',{phase}='Phase 1',{module}='Orientation')`,
-          {
-            headers: {
-              'Authorization': `Bearer ${apiKey}`
-            }
-          }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.records && data.records.length > 0) {
-            const orientationRecord = data.records[0];
-            if (orientationRecord.fields.Status === 'Completed') {
-              setAlreadyCompleted(true);
-            }
-          }
+        if (!error && data && data.Status === 'Completed') {
+          setAlreadyCompleted(true);
         }
       } catch (error) {
         console.error('Error checking orientation status:', error);
@@ -233,21 +224,18 @@ const OrientationSlideshow = ({ apprenticeName, apprenticeEmail, professorEmail,
       });
       
       setCompleted(true);
-      setAlreadyCompleted(true); // Mark as completed in state
+      setAlreadyCompleted(true);
       alert('✅ Orientation marked complete! Redirecting to your dashboard...');
       
-      // Redirect back to the apprentice's dashboard
       setTimeout(() => {
         if (dashboardToken) {
           window.location.href = `/dashboard/${dashboardToken}`;
         } else {
-          // Fallback: try to get token from URL params
           const urlParams = new URLSearchParams(window.location.search);
           const tokenFromUrl = urlParams.get('token');
           if (tokenFromUrl) {
             window.location.href = `/dashboard/${tokenFromUrl}`;
           } else {
-            // Last resort: go to home and show message
             alert('⚠️ Dashboard token not found. Please check your email for the dashboard link.');
             window.location.href = '/';
           }
@@ -258,8 +246,8 @@ const OrientationSlideshow = ({ apprenticeName, apprenticeEmail, professorEmail,
       
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       let helpText = '\n\nPossible issues:\n';
-      helpText += '• Airtable tables not set up correctly\n';
-      helpText += '• Missing environment variables (.env file)\n';
+      helpText += '• Database tables not set up correctly\n';
+      helpText += '• Missing environment variables\n';
       helpText += '• No Progress record exists for this apprentice\n';
       helpText += '• Network connection issue\n\n';
       helpText += 'Check the browser console for details.';
@@ -303,79 +291,99 @@ const OrientationSlideshow = ({ apprenticeName, apprenticeEmail, professorEmail,
             transform: translate(0%, 0%) scale(1) rotate(0deg);
           }
           33% { 
-            transform: translate(-40%, -30%) scale(1.2) rotate(-120deg);
+            transform: translate(-50%, -20%) scale(1.2) rotate(-120deg);
           }
           66% { 
-            transform: translate(30%, -40%) scale(0.9) rotate(-240deg);
+            transform: translate(20%, -40%) scale(0.9) rotate(-240deg);
+          }
+        }
+
+        @keyframes plasmaBlob3 {
+          0%, 100% { 
+            transform: translate(0%, 0%) scale(1) rotate(0deg);
+          }
+          33% { 
+            transform: translate(30%, -30%) scale(0.7) rotate(90deg);
+          }
+          66% { 
+            transform: translate(-40%, 20%) scale(1.4) rotate(180deg);
           }
         }
 
         @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(20px); }
+          from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes slideInUp {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        .slide-content {
-          animation: fadeIn 0.6s ease-out;
-        }
-
-        .content-item {
-          animation: slideInUp 0.5s ease-out backwards;
-        }
-
-        .content-item:nth-child(1) { animation-delay: 0.1s; }
-        .content-item:nth-child(2) { animation-delay: 0.2s; }
-        .content-item:nth-child(3) { animation-delay: 0.3s; }
-        .content-item:nth-child(4) { animation-delay: 0.4s; }
-        .content-item:nth-child(5) { animation-delay: 0.5s; }
-
-        .nav-button svg {
-          display: block !important;
-          visibility: visible !important;
-          opacity: 1 !important;
         }
       `}</style>
 
-      {/* Lava Lamp Blobs */}
+      {/* Animated plasma background */}
       <div style={{
-        content: '',
         position: 'absolute',
-        width: '900px',
-        height: '900px',
-        borderRadius: '50%',
-        filter: 'blur(100px)',
-        mixBlendMode: 'screen',
-        opacity: 0.85,
-        pointerEvents: 'none',
-        background: `radial-gradient(circle, ${currentSlideData.color} 0%, ${currentSlideData.color}dd 40%, transparent 70%)`,
-        top: '-250px',
-        left: '-150px',
-        animation: 'plasmaBlob1 25s ease-in-out infinite',
-        transition: 'background 1s ease',
-        zIndex: 0
-      }} />
+        inset: 0,
+        overflow: 'hidden',
+        pointerEvents: 'none'
+      }}>
+        <div style={{
+          position: 'absolute',
+          width: '150%',
+          height: '150%',
+          top: '-25%',
+          left: '-25%',
+          background: `radial-gradient(ellipse at 30% 20%, ${currentSlideData.color}40 0%, transparent 50%)`,
+          animation: 'plasmaBlob1 20s ease-in-out infinite',
+          filter: 'blur(60px)'
+        }} />
+        <div style={{
+          position: 'absolute',
+          width: '150%',
+          height: '150%',
+          top: '-25%',
+          left: '-25%',
+          background: `radial-gradient(ellipse at 70% 80%, ${currentSlideData.color}30 0%, transparent 50%)`,
+          animation: 'plasmaBlob2 25s ease-in-out infinite',
+          filter: 'blur(80px)'
+        }} />
+        <div style={{
+          position: 'absolute',
+          width: '150%',
+          height: '150%',
+          top: '-25%',
+          left: '-25%',
+          background: `radial-gradient(ellipse at 50% 50%, rgba(255,255,255,0.1) 0%, transparent 40%)`,
+          animation: 'plasmaBlob3 30s ease-in-out infinite',
+          filter: 'blur(40px)'
+        }} />
+      </div>
 
-      <div style={{
-        content: '',
-        position: 'absolute',
-        width: '800px',
-        height: '800px',
-        borderRadius: '50%',
-        filter: 'blur(100px)',
-        mixBlendMode: 'screen',
-        opacity: 0.85,
-        pointerEvents: 'none',
-        background: `radial-gradient(circle, #F6AE00 0%, #eb6a18 40%, transparent 70%)`,
-        bottom: '-200px',
-        right: '-150px',
-        animation: 'plasmaBlob2 20s ease-in-out infinite',
-        zIndex: 0
-      }} />
+      {/* Fullscreen Toggle */}
+      <button
+        onClick={toggleFullscreen}
+        style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          background: 'rgba(255,255,255,0.15)',
+          backdropFilter: 'blur(10px)',
+          border: '2px solid rgba(255,255,255,0.3)',
+          borderRadius: '12px',
+          padding: '0.75rem',
+          cursor: 'pointer',
+          color: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000,
+          transition: 'all 0.3s ease'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'rgba(255,255,255,0.25)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
+        }}
+      >
+        {isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
+      </button>
 
       {/* Progress Bar */}
       <div style={{
@@ -384,136 +392,104 @@ const OrientationSlideshow = ({ apprenticeName, apprenticeEmail, professorEmail,
         left: 0,
         right: 0,
         height: '6px',
-        background: 'rgba(0, 0, 0, 0.2)',
-        zIndex: 50
+        background: 'rgba(255,255,255,0.2)',
+        zIndex: 10000
       }}>
         <div style={{
           height: '100%',
+          background: `linear-gradient(90deg, ${currentSlideData.color} 0%, ${currentSlideData.color}dd 100%)`,
           width: `${progress}%`,
-          background: 'linear-gradient(90deg, #F6AE00 0%, #eb6a18 100%)',
-          transition: 'width 0.5s ease',
-          boxShadow: '0 0 10px rgba(246, 174, 0, 0.5)'
+          transition: 'width 0.5s ease, background 0.5s ease',
+          boxShadow: `0 0 20px ${currentSlideData.color}80`
         }} />
       </div>
 
-      {/* Fullscreen Button */}
-      <button
-        onClick={toggleFullscreen}
-        style={{
-          position: 'fixed',
-          top: '20px',
-          right: '20px',
-          background: 'linear-gradient(135deg, #0066A2 0%, #004A69 100%)',
-          backdropFilter: 'blur(10px)',
-          color: 'white',
-          border: '3px solid rgba(255, 255, 255, 0.5)',
-          outline: 'none',
-          width: '60px',
-          height: '60px',
-          borderRadius: '16px',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 9999,
-          transition: 'all 0.3s ease',
-          boxShadow: '0 6px 20px rgba(0, 102, 162, 0.5), 0 0 30px rgba(0, 102, 162, 0.3)'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'linear-gradient(135deg, #0080CC 0%, #0066A2 100%)';
-          e.currentTarget.style.transform = 'scale(1.1)';
-          e.currentTarget.style.boxShadow = '0 8px 28px rgba(0, 102, 162, 0.7), 0 0 40px rgba(0, 102, 162, 0.5)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'linear-gradient(135deg, #0066A2 0%, #004A69 100%)';
-          e.currentTarget.style.transform = 'scale(1)';
-          e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 102, 162, 0.5), 0 0 30px rgba(0, 102, 162, 0.3)';
-        }}
-        title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
-      >
-        {isFullscreen ? <Minimize size={30} strokeWidth={2.5} /> : <Maximize size={30} strokeWidth={2.5} />}
-      </button>
-
-      {/* Main Slide Card */}
-      <div className="slide-content" style={{
-        background: 'rgba(255, 255, 255, 0.98)',
-        backdropFilter: 'blur(10px)',
+      {/* Main Content */}
+      <div style={{
+        background: 'white',
+        borderRadius: '32px',
         padding: '4rem',
-        borderRadius: '24px',
-        boxShadow: '0 8px 40px rgba(0, 0, 0, 0.3)',
+        maxWidth: '900px',
+        width: '100%',
+        boxShadow: '0 32px 64px rgba(0,0,0,0.4)',
         position: 'relative',
         zIndex: 1,
-        maxWidth: '1200px',
-        width: '100%',
-        minHeight: '600px',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between'
+        animation: 'fadeIn 0.5s ease-out'
       }}>
-        {/* Slide Header */}
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '2rem' }}>
-            <div style={{
-              width: '80px',
-              height: '80px',
-              borderRadius: '20px',
-              background: `linear-gradient(135deg, ${currentSlideData.color} 0%, ${currentSlideData.color}dd 100%)`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: `0 8px 24px ${currentSlideData.color}40`
-            }}>
-              <currentSlideData.icon size={40} color="white" />
-            </div>
-            <div>
-              <h1 style={{
-                fontFamily: 'Montserrat, sans-serif',
-                fontSize: '3rem',
-                fontWeight: 700,
-                color: '#004A69',
-                margin: '0 0 0.5rem 0',
-                letterSpacing: '-1px'
-              }}>
-                {currentSlideData.title}
-              </h1>
-              <p style={{
-                fontSize: '1.5rem',
-                color: currentSlideData.color,
-                margin: 0,
-                fontWeight: 600
-              }}>
-                {currentSlideData.subtitle}
-              </p>
-            </div>
-          </div>
-
-          {/* Content */}
+        {/* Icon */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1.5rem',
+          marginBottom: '2rem'
+        }}>
           <div style={{
+            width: '80px',
+            height: '80px',
+            borderRadius: '20px',
+            background: `linear-gradient(135deg, ${currentSlideData.color} 0%, ${currentSlideData.color}cc 100%)`,
             display: 'flex',
-            flexDirection: 'column',
-            gap: '1.5rem',
-            marginBottom: '3rem'
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: `0 12px 32px ${currentSlideData.color}50`,
+            transition: 'all 0.5s ease'
           }}>
-            {currentSlideData.content.map((item, index) => (
-              <div 
-                key={index}
-                className="content-item"
-                style={{
-                  padding: '1.5rem',
-                  background: 'linear-gradient(135deg, #F9FAFB 0%, #FFFFFF 100%)',
-                  borderRadius: '16px',
-                  borderLeft: `4px solid ${currentSlideData.color}`,
-                  fontSize: '1.25rem',
-                  lineHeight: '1.8',
-                  color: '#1F2937',
-                  fontWeight: 400,
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.04)'
-                }}
-              >
-                {item}
-              </div>
-            ))}
+            {(() => {
+              const IconComponent = currentSlideData.icon;
+              return <IconComponent size={40} color="white" strokeWidth={2} />;
+            })()}
           </div>
+          <div>
+            <h1 style={{
+              fontFamily: 'Montserrat, sans-serif',
+              fontSize: '2.5rem',
+              fontWeight: 700,
+              color: '#004A69',
+              margin: 0,
+              letterSpacing: '-1px'
+            }}>
+              {currentSlideData.title}
+            </h1>
+            <p style={{
+              fontFamily: 'Montserrat, sans-serif',
+              fontSize: '1.2rem',
+              fontWeight: 600,
+              color: currentSlideData.color,
+              margin: '0.25rem 0 0 0',
+              transition: 'color 0.5s ease'
+            }}>
+              {currentSlideData.subtitle}
+            </p>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div style={{ marginBottom: '2rem' }}>
+          {currentSlideData.content.map((item, index) => (
+            <div
+              key={index}
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                marginBottom: '1.25rem',
+                padding: '1.25rem 1.5rem',
+                background: 'linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%)',
+                borderRadius: '14px',
+                borderLeft: `5px solid ${currentSlideData.color}`,
+                transition: 'all 0.3s ease',
+                animation: `fadeIn 0.5s ease-out ${index * 0.1}s both`
+              }}
+            >
+              <span style={{
+                fontSize: '1.15rem',
+                color: '#374151',
+                lineHeight: '1.7',
+                fontWeight: 500
+              }}>
+                {item}
+              </span>
+            </div>
+          ))}
         </div>
 
         {/* Complete Button or Back to Dashboard (on last slide) */}

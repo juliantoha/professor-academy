@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle, Clock, XCircle, FileText, ZoomIn, Download, Mail, AlertCircle, Eye, ChevronLeft, ChevronRight, Lock } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 interface SubmissionData {
   submissionId: string;
@@ -27,11 +28,11 @@ const ReviewSubmission = ({ submissionId }: { submissionId: string }) => {
   const [emailSent, setEmailSent] = useState(false);
   const [dashboardToken, setDashboardToken] = useState<string | null>(null);
 
-  // NEW: Check if viewer is professor (has review=true parameter)
+  // Check if viewer is professor (has review=true parameter)
   const urlParams = new URLSearchParams(window.location.search);
   const isProfessorView = urlParams.get('review') === 'true';
   
-  // NEW: Check if submission is already reviewed (locked)
+  // Check if submission is already reviewed (locked)
   const isReviewed = submission ? (submission.status === 'Approved' || submission.status === 'Needs Work') : false;
 
   useEffect(() => {
@@ -40,21 +41,14 @@ const ReviewSubmission = ({ submissionId }: { submissionId: string }) => {
 
   const fetchDashboardToken = async (apprenticeEmail: string) => {
     try {
-      const response = await fetch(
-        `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}/Apprentices?filterByFormula={email}='${apprenticeEmail.toLowerCase()}'`,
-        {
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_AIRTABLE_API_KEY}`
-          }
-        }
-      );
+      const { data, error } = await supabase
+        .from('apprentices')
+        .select('dashboardToken')
+        .eq('email', apprenticeEmail.toLowerCase())
+        .single();
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.records.length > 0) {
-          const token = data.records[0].fields.dashboardToken;
-          setDashboardToken(token);
-        }
+      if (!error && data) {
+        setDashboardToken(data.dashboardToken);
       }
     } catch (err) {
       console.error('Error fetching dashboard token:', err);
@@ -63,32 +57,24 @@ const ReviewSubmission = ({ submissionId }: { submissionId: string }) => {
 
   const fetchSubmission = async () => {
     try {
-      const response = await fetch(
-        `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}/Submissions?filterByFormula={submissionId}='${submissionId}'`,
-        {
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_AIRTABLE_API_KEY}`
-          }
-        }
-      );
+      const { data, error } = await supabase
+        .from('submissions')
+        .select('*')
+        .eq('submissionId', submissionId)
+        .single();
 
-      if (!response.ok) {
+      if (error) {
         throw new Error('Failed to fetch submission');
       }
 
-      const data = await response.json();
-      
-      if (data.records.length === 0) {
+      if (!data) {
         throw new Error('Submission not found');
       }
 
-      const record = data.records[0];
-      const fields = record.fields;
-      
-      // Parse the screenshotUrls field (not screenshots)
+      // Parse the screenshotUrls field
       let parsedScreenshots = {};
       try {
-        parsedScreenshots = JSON.parse(fields.screenshotUrls || '{}');
+        parsedScreenshots = JSON.parse(data.screenshotUrls || '{}');
       } catch (e) {
         console.error('Error parsing screenshotUrls:', e);
       }
@@ -96,27 +82,27 @@ const ReviewSubmission = ({ submissionId }: { submissionId: string }) => {
       // Parse completedTasks
       let parsedTasks = [];
       try {
-        parsedTasks = JSON.parse(fields.completedTasks || '[]');
+        parsedTasks = JSON.parse(data.completedTasks || '[]');
       } catch (e) {
         console.error('Error parsing completedTasks:', e);
       }
       
       setSubmission({
-        submissionId: fields.submissionId,
-        studentName: fields.studentName,
-        apprenticeEmail: fields.apprenticeEmail,
-        professorEmail: fields.professorEmail,
-        operatingSystem: fields.operatingSystem || 'N/A',
-        moduleName: fields.moduleName || 'Unknown Module',
-        moduleNumber: fields.moduleNumber || '',
+        submissionId: data.submissionId,
+        studentName: data.studentName,
+        apprenticeEmail: data.apprenticeEmail,
+        professorEmail: data.professorEmail,
+        operatingSystem: data.operatingSystem || 'N/A',
+        moduleName: data.moduleName || 'Unknown Module',
+        moduleNumber: data.moduleNumber || '',
         screenshotUrls: parsedScreenshots,
         completedTasks: parsedTasks,
-        submittedAt: fields.submittedAt,
-        status: fields.status || 'Pending',
-        professorNotes: fields.professorNotes
+        submittedAt: data.submittedAt,
+        status: data.status || 'Pending',
+        professorNotes: data.professorNotes
       });
       
-      setNotes(fields.professorNotes || '');
+      setNotes(data.professorNotes || '');
       setLoading(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -129,65 +115,30 @@ const ReviewSubmission = ({ submissionId }: { submissionId: string }) => {
     
     setUpdating(true);
     try {
-      const response = await fetch(
-        `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}/Submissions?filterByFormula={submissionId}='${submissionId}'`,
-        {
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_AIRTABLE_API_KEY}`
-          }
-        }
-      );
+      // Update submission status
+      const { error: updateError } = await supabase
+        .from('submissions')
+        .update({
+          status: newStatus,
+          professorNotes: notes
+        })
+        .eq('submissionId', submissionId);
 
-      const data = await response.json();
-      const recordId = data.records[0].id;
-
-      await fetch(
-        `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}/Submissions/${recordId}`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_AIRTABLE_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            fields: {
-              status: newStatus,
-              professorNotes: notes
-            }
-          })
-        }
-      );
+      if (updateError) {
+        throw new Error('Failed to update submission');
+      }
 
       // Update Progress table
-      const progressResponse = await fetch(
-        `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}/Progress?filterByFormula=AND({apprenticeEmail}='${submission.apprenticeEmail}',{module}='${submission.moduleName}')`,
-        {
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_AIRTABLE_API_KEY}`
-          }
-        }
-      );
+      const { error: progressError } = await supabase
+        .from('progress')
+        .update({
+          Status: newStatus === 'Approved' ? 'Completed' : 'In Progress'
+        })
+        .eq('apprenticeEmail', submission.apprenticeEmail)
+        .eq('module', submission.moduleName);
 
-      if (progressResponse.ok) {
-        const progressData = await progressResponse.json();
-        if (progressData.records.length > 0) {
-          const progressRecordId = progressData.records[0].id;
-          await fetch(
-            `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}/Progress/${progressRecordId}`,
-            {
-              method: 'PATCH',
-              headers: {
-                'Authorization': `Bearer ${import.meta.env.VITE_AIRTABLE_API_KEY}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                fields: {
-                  Status: newStatus === 'Approved' ? 'Completed' : 'In Progress'
-                }
-              })
-            }
-          );
-        }
+      if (progressError) {
+        console.error('Error updating progress:', progressError);
       }
 
       setSubmission({ ...submission, status: newStatus, professorNotes: notes });
@@ -234,6 +185,8 @@ const ReviewSubmission = ({ submissionId }: { submissionId: string }) => {
     }
   };
 
+  const screenshotEntries = submission ? Object.entries(submission.screenshotUrls) : [];
+
   const openLightbox = (url: string, index: number) => {
     setLightboxImage(url);
     setLightboxIndex(index);
@@ -244,33 +197,48 @@ const ReviewSubmission = ({ submissionId }: { submissionId: string }) => {
   };
 
   const navigateLightbox = (direction: 'prev' | 'next') => {
-    const urls = Object.values(submission?.screenshotUrls || {});
-    let newIndex = lightboxIndex;
-    
-    if (direction === 'prev') {
-      newIndex = lightboxIndex > 0 ? lightboxIndex - 1 : urls.length - 1;
-    } else {
-      newIndex = lightboxIndex < urls.length - 1 ? lightboxIndex + 1 : 0;
-    }
-    
+    const newIndex = direction === 'prev' 
+      ? (lightboxIndex - 1 + screenshotEntries.length) % screenshotEntries.length
+      : (lightboxIndex + 1) % screenshotEntries.length;
     setLightboxIndex(newIndex);
-    setLightboxImage(urls[newIndex]);
+    setLightboxImage(screenshotEntries[newIndex][1]);
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!lightboxImage) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') navigateLightbox('prev');
+      if (e.key === 'ArrowRight') navigateLightbox('next');
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxImage, lightboxIndex]);
 
   if (loading) {
     return (
       <div style={{
+        fontFamily: 'Lato, sans-serif',
         minHeight: '100vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #F0F9FF 0%, #DBEAFE 100%)',
-        fontFamily: 'system-ui, -apple-system, sans-serif'
+        background: 'linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%)'
       }}>
-        <div style={{ textAlign: 'center' }}>
-          <Clock size={48} color="#0066A2" style={{ animation: 'spin 2s linear infinite' }} />
-          <p style={{ marginTop: '1rem', fontSize: '18px', color: '#004A69', fontWeight: 600 }}>Loading submission...</p>
-        </div>
+        <div style={{
+          width: '60px',
+          height: '60px',
+          borderRadius: '50%',
+          border: '4px solid #E5E7EB',
+          borderTopColor: '#0066A2',
+          animation: 'spin 1s linear infinite'
+        }} />
+        <style>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }
@@ -278,862 +246,651 @@ const ReviewSubmission = ({ submissionId }: { submissionId: string }) => {
   if (error || !submission) {
     return (
       <div style={{
+        fontFamily: 'Lato, sans-serif',
         minHeight: '100vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%)',
-        fontFamily: 'system-ui, -apple-system, sans-serif'
+        background: 'linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%)'
       }}>
-        <div style={{ textAlign: 'center', maxWidth: '500px', padding: '2rem' }}>
-          <XCircle size={48} color="#DC2626" />
-          <p style={{ marginTop: '1rem', fontSize: '18px', color: '#991B1B', fontWeight: 600 }}>
-            {error || 'Submission not found'}
-          </p>
-          <button
-            onClick={() => window.history.back()}
-            style={{
-              marginTop: '1.5rem',
-              padding: '0.75rem 1.5rem',
-              background: '#DC2626',
-              color: 'white',
-              border: 'none',
-              borderRadius: '10px',
-              fontSize: '14px',
-              fontWeight: 600,
-              cursor: 'pointer'
-            }}
-          >
-            Go Back
-          </button>
+        <div style={{
+          background: 'white',
+          borderRadius: '16px',
+          padding: '3rem',
+          maxWidth: '400px',
+          textAlign: 'center',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+        }}>
+          <AlertCircle size={48} color="#DC2626" style={{ marginBottom: '1rem' }} />
+          <h2 style={{ color: '#DC2626', marginBottom: '0.5rem' }}>Submission Not Found</h2>
+          <p style={{ color: '#6B7280' }}>{error || 'The requested submission could not be found.'}</p>
         </div>
       </div>
     );
   }
 
-  const statusColors = {
-    'Pending': { bg: '#FEF3C7', color: '#92400E', borderColor: '#F59E0B', icon: Clock },
-    'Approved': { bg: '#D1FAE5', color: '#065F46', borderColor: '#10B981', icon: CheckCircle },
-    'Needs Work': { bg: '#FEE2E2', color: '#991B1B', borderColor: '#EF4444', icon: XCircle }
+  const statusConfig = {
+    'Pending': { color: '#F59E0B', bg: '#FEF3C7', icon: Clock, label: 'Pending Review' },
+    'Approved': { color: '#10B981', bg: '#D1FAE5', icon: CheckCircle, label: 'Approved' },
+    'Needs Work': { color: '#EF4444', bg: '#FEE2E2', icon: XCircle, label: 'Needs Revision' }
   };
 
-  const statusStyle = statusColors[submission.status];
-  const StatusIcon = statusStyle.icon;
-  const screenshotEntries = Object.entries(submission.screenshotUrls);
+  const status = statusConfig[submission.status];
+  const StatusIcon = status.icon;
 
   return (
     <div style={{
-      fontFamily: 'system-ui, -apple-system, sans-serif',
+      fontFamily: 'Lato, sans-serif',
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)',
+      background: 'linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%)',
       padding: '2rem'
     }}>
-      <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-        {/* Header Card */}
+      <div style={{
+        maxWidth: '1000px',
+        margin: '0 auto'
+      }}>
+        {/* Header */}
         <div style={{
           background: 'white',
           borderRadius: '20px',
-          padding: '2.5rem',
-          marginBottom: '2rem',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
-          border: `3px solid ${statusStyle.borderColor}`
+          padding: '2rem',
+          marginBottom: '1.5rem',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', flexWrap: 'wrap', gap: '1.5rem', marginBottom: '2rem' }}>
-            <div style={{ flex: 1 }}>
-              <div style={{
-                fontSize: '13px',
-                fontWeight: 700,
-                color: '#6B7280',
-                textTransform: 'uppercase',
-                letterSpacing: '1px',
-                marginBottom: '0.5rem'
-              }}>
-                Submission Review
-              </div>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '1rem'
+          }}>
+            <div>
               <h1 style={{
-                fontSize: '32px',
+                fontFamily: 'Montserrat, sans-serif',
+                fontSize: '28px',
                 fontWeight: 700,
                 color: '#004A69',
-                margin: '0 0 0.5rem 0',
-                lineHeight: 1.2
+                margin: '0 0 0.5rem 0'
               }}>
-                {submission.moduleNumber && submission.moduleNumber !== 'N/A' 
-                  ? `${submission.moduleNumber} - ${submission.moduleName}`
-                  : submission.moduleName}
+                {submission.moduleName}
               </h1>
-              <p style={{ color: '#6B7280', fontSize: '15px', margin: 0 }}>
-                Submitted by <strong>{submission.studentName}</strong>
+              <p style={{ color: '#6B7280', margin: 0 }}>
+                Submitted by <strong>{submission.studentName}</strong> on {new Date(submission.submittedAt).toLocaleDateString()}
               </p>
             </div>
-            
             <div style={{
-              background: statusStyle.bg,
-              padding: '1rem 1.5rem',
-              borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
               gap: '0.75rem',
-              border: `2px solid ${statusStyle.borderColor}`,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
+              padding: '0.75rem 1.5rem',
+              background: status.bg,
+              borderRadius: '12px',
+              border: `2px solid ${status.color}`
             }}>
-              <StatusIcon size={24} color={statusStyle.color} />
+              <StatusIcon size={24} color={status.color} />
               <span style={{
-                fontSize: '16px',
-                fontWeight: 700,
-                color: statusStyle.color,
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px'
+                fontWeight: 600,
+                color: status.color,
+                fontSize: '16px'
               }}>
-                {submission.status}
+                {status.label}
               </span>
-            </div>
-          </div>
-          
-          {/* Submission Details Grid */}
-          <div style={{
-            padding: '1.75rem',
-            background: 'linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%)',
-            borderRadius: '14px',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '1.5rem'
-          }}>
-            <div>
-              <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '0.5rem', fontWeight: 600 }}>Apprentice Email</div>
-              <div style={{ fontSize: '15px', fontWeight: 600, color: '#1F2937' }}>{submission.apprenticeEmail}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '0.5rem', fontWeight: 600 }}>Operating System</div>
-              <div style={{ fontSize: '15px', fontWeight: 600, color: '#1F2937' }}>{submission.operatingSystem}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '0.5rem', fontWeight: 600 }}>Submitted Date</div>
-              <div style={{ fontSize: '15px', fontWeight: 600, color: '#1F2937' }}>
-                {new Date(submission.submittedAt).toLocaleDateString('en-US', { 
-                  month: 'short', 
-                  day: 'numeric', 
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
-              </div>
-            </div>
-            <div>
-              <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '0.5rem', fontWeight: 600 }}>Screenshots</div>
-              <div style={{ fontSize: '15px', fontWeight: 600, color: '#1F2937' }}>
-                {screenshotEntries.length} uploaded
-              </div>
+              {isReviewed && (
+                <Lock size={16} color={status.color} style={{ marginLeft: '4px' }} />
+              )}
             </div>
           </div>
         </div>
 
-        {/* Screenshots Section */}
+        {/* Details Grid */}
         <div style={{
-          background: 'white',
-          borderRadius: '20px',
-          padding: '2.5rem',
-          marginBottom: '2rem',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.06)'
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '1rem',
+          marginBottom: '1.5rem'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-            <h2 style={{
-              fontSize: '24px',
-              fontWeight: 700,
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            padding: '1.25rem',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+          }}>
+            <p style={{ color: '#6B7280', fontSize: '14px', margin: '0 0 0.25rem 0' }}>Apprentice Email</p>
+            <p style={{ fontWeight: 600, color: '#1F2937', margin: 0 }}>{submission.apprenticeEmail}</p>
+          </div>
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            padding: '1.25rem',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+          }}>
+            <p style={{ color: '#6B7280', fontSize: '14px', margin: '0 0 0.25rem 0' }}>Professor Email</p>
+            <p style={{ fontWeight: 600, color: '#1F2937', margin: 0 }}>{submission.professorEmail}</p>
+          </div>
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            padding: '1.25rem',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+          }}>
+            <p style={{ color: '#6B7280', fontSize: '14px', margin: '0 0 0.25rem 0' }}>Operating System</p>
+            <p style={{ fontWeight: 600, color: '#1F2937', margin: 0 }}>{submission.operatingSystem}</p>
+          </div>
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            padding: '1.25rem',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+          }}>
+            <p style={{ color: '#6B7280', fontSize: '14px', margin: '0 0 0.25rem 0' }}>Submission ID</p>
+            <p style={{ fontWeight: 600, color: '#1F2937', margin: 0, fontSize: '13px' }}>{submission.submissionId}</p>
+          </div>
+        </div>
+
+        {/* Completed Tasks */}
+        {submission.completedTasks.length > 0 && (
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '1.5rem',
+            marginBottom: '1.5rem',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+          }}>
+            <h3 style={{
+              fontFamily: 'Montserrat, sans-serif',
+              fontSize: '18px',
+              fontWeight: 600,
               color: '#004A69',
-              margin: 0
+              margin: '0 0 1rem 0',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
             }}>
-              Submitted Screenshots
-            </h2>
+              <FileText size={20} />
+              Completed Tasks
+            </h3>
             <div style={{
-              background: 'linear-gradient(135deg, #0066A2 0%, #004A69 100%)',
-              color: 'white',
-              padding: '0.5rem 1rem',
-              borderRadius: '10px',
-              fontSize: '14px',
-              fontWeight: 700
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.5rem'
             }}>
-              {screenshotEntries.length} Tasks
+              {submission.completedTasks.map((task, index) => (
+                <div key={index} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '0.75rem 1rem',
+                  background: '#F0FDF4',
+                  borderRadius: '8px',
+                  border: '1px solid #BBF7D0'
+                }}>
+                  <CheckCircle size={18} color="#22C55E" />
+                  <span style={{ color: '#166534' }}>{task}</span>
+                </div>
+              ))}
             </div>
           </div>
-          
-          {screenshotEntries.length === 0 ? (
-            <div style={{
-              textAlign: 'center',
-              padding: '4rem 2rem',
-              background: 'linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)',
-              borderRadius: '14px',
-              border: '2px dashed #F59E0B'
+        )}
+
+        {/* Screenshots */}
+        {screenshotEntries.length > 0 && (
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '1.5rem',
+            marginBottom: '1.5rem',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+          }}>
+            <h3 style={{
+              fontFamily: 'Montserrat, sans-serif',
+              fontSize: '18px',
+              fontWeight: 600,
+              color: '#004A69',
+              margin: '0 0 1rem 0',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
             }}>
-              <AlertCircle size={48} color="#D97706" style={{ marginBottom: '1rem' }} />
-              <p style={{ fontSize: '18px', color: '#92400E', fontWeight: 600 }}>
-                No screenshots found for this submission
-              </p>
-            </div>
-          ) : (
+              <Eye size={20} />
+              Screenshots ({screenshotEntries.length})
+            </h3>
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-              gap: '1.5rem'
+              gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+              gap: '1rem'
             }}>
-              {screenshotEntries.map(([taskId, url], index) => (
-                <div key={taskId} style={{
-                  border: '2px solid #E5E7EB',
-                  borderRadius: '14px',
+              {screenshotEntries.map(([key, url], index) => (
+                <div key={key} style={{
+                  position: 'relative',
+                  borderRadius: '12px',
                   overflow: 'hidden',
-                  transition: 'all 0.3s ease',
-                  background: 'white'
+                  border: '2px solid #E5E7EB',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
                 }}
+                onClick={() => openLightbox(url, index)}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-4px)';
-                  e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.12)';
                   e.currentTarget.style.borderColor = '#0066A2';
+                  e.currentTarget.style.transform = 'scale(1.02)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
                   e.currentTarget.style.borderColor = '#E5E7EB';
+                  e.currentTarget.style.transform = 'scale(1)';
                 }}
                 >
+                  <img 
+                    src={url} 
+                    alt={key}
+                    style={{
+                      width: '100%',
+                      height: '180px',
+                      objectFit: 'cover'
+                    }}
+                  />
                   <div style={{
-                    background: 'linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%)',
-                    padding: '1rem 1.25rem',
-                    borderBottom: '2px solid #E5E7EB',
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
+                    padding: '2rem 1rem 1rem',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center'
                   }}>
-                    <div style={{
-                      fontSize: '13px',
-                      fontWeight: 700,
-                      color: '#374151',
-                      fontFamily: 'monospace',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap'
+                    <span style={{
+                      color: 'white',
+                      fontSize: '14px',
+                      fontWeight: 500
                     }}>
-                      {taskId}
-                    </div>
+                      {key}
+                    </span>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button
-                        onClick={() => openLightbox(url, index)}
-                        style={{
-                          background: 'white',
-                          border: '2px solid #0066A2',
-                          borderRadius: '8px',
-                          padding: '0.4rem',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'all 0.2s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = '#0066A2';
-                          const icon = e.currentTarget.querySelector('svg');
-                          if (icon) icon.setAttribute('color', 'white');
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'white';
-                          const icon = e.currentTarget.querySelector('svg');
-                          if (icon) icon.setAttribute('color', '#0066A2');
-                        }}
+                      <ZoomIn size={18} color="white" />
+                      <a 
+                        href={url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ color: 'white' }}
                       >
-                        <ZoomIn size={16} color="#0066A2" />
-                      </button>
-                      <a
-                        href={url}
-                        download
-                        style={{
-                          background: 'white',
-                          border: '2px solid #10B981',
-                          borderRadius: '8px',
-                          padding: '0.4rem',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'all 0.2s ease',
-                          textDecoration: 'none'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = '#10B981';
-                          const icon = e.currentTarget.querySelector('svg');
-                          if (icon) icon.setAttribute('color', 'white');
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'white';
-                          const icon = e.currentTarget.querySelector('svg');
-                          if (icon) icon.setAttribute('color', '#10B981');
-                        }}
-                      >
-                        <Download size={16} color="#10B981" />
+                        <Download size={18} />
                       </a>
-                    </div>
-                  </div>
-                  <div style={{
-                    position: 'relative',
-                    paddingTop: '75%',
-                    background: '#F3F4F6',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => openLightbox(url, index)}
-                  >
-                    <img 
-                      src={url} 
-                      alt={`Screenshot for ${taskId}`}
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover'
-                      }}
-                    />
-                    <div style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      background: 'rgba(0,0,0,0)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      opacity: 0,
-                      transition: 'all 0.3s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(0,0,0,0.5)';
-                      e.currentTarget.style.opacity = '1';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(0,0,0,0)';
-                      e.currentTarget.style.opacity = '0';
-                    }}
-                    >
-                      <div style={{
-                        background: 'white',
-                        borderRadius: '50%',
-                        padding: '1rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}>
-                        <Eye size={24} color="#0066A2" />
-                      </div>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Feedback Section */}
+        {/* Professor Review Section */}
         <div style={{
           background: 'white',
-          borderRadius: '20px',
-          padding: '2.5rem',
-          marginBottom: '2rem',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.06)'
+          borderRadius: '16px',
+          padding: '1.5rem',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
         }}>
-          <h2 style={{
-            fontSize: '24px',
-            fontWeight: 700,
+          <h3 style={{
+            fontFamily: 'Montserrat, sans-serif',
+            fontSize: '18px',
+            fontWeight: 600,
             color: '#004A69',
-            margin: '0 0 1.5rem 0',
+            margin: '0 0 1rem 0',
             display: 'flex',
             alignItems: 'center',
-            gap: '0.75rem'
+            gap: '0.5rem'
           }}>
-            <FileText size={24} />
-            Feedback for Apprentice
-          </h2>
-          
-          <div style={{
-            background: 'linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%)',
-            border: '2px solid #BAE6FD',
-            borderRadius: '14px',
-            padding: '1.25rem',
-            marginBottom: '1.5rem'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'start', gap: '0.75rem' }}>
-              <Mail size={20} color="#0369A1" style={{ flexShrink: 0, marginTop: '2px' }} />
-              <p style={{
-                fontSize: '14px',
-                color: '#0C4A6E',
-                margin: 0,
-                lineHeight: '1.5'
-              }}>
-                Your feedback will be sent to <strong>{submission.studentName}</strong> via email at {submission.apprenticeEmail}
-              </p>
-            </div>
-          </div>
-          
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Provide detailed feedback for the apprentice. Be specific about what was done well and what needs improvement..."
-            style={{
-              width: '100%',
-              minHeight: '180px',
-              padding: '1.25rem',
-              fontSize: '15px',
-              lineHeight: '1.6',
-              border: '2px solid #E5E7EB',
-              borderRadius: '14px',
-              fontFamily: 'system-ui, -apple-system, sans-serif',
-              resize: 'vertical',
-              background: 'white',
-              color: '#1F2937',
-              transition: 'all 0.2s ease'
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = '#0066A2';
-              e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0,102,162,0.1)';
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = '#E5E7EB';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
-          />
-          
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginTop: '1rem',
-            fontSize: '13px',
-            color: '#6B7280'
-          }}>
-            <span>{notes.length} characters</span>
-            {notes.length < 20 && (
-              <span style={{ color: '#DC2626', fontWeight: 600 }}>
-                Note: Consider adding more detailed feedback
-              </span>
-            )}
-          </div>
-        </div>
+            <Mail size={20} />
+            Professor Review
+          </h3>
 
-        {/* Action Buttons - ONLY FOR PROFESSORS ON PENDING SUBMISSIONS */}
-        {isProfessorView && !isReviewed ? (
-          <div style={{
-            background: 'white',
-            borderRadius: '20px',
-            padding: '2.5rem',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.06)'
-          }}>
-            <div style={{
-              display: 'flex',
-              gap: '1.25rem',
-              justifyContent: 'center',
-              flexWrap: 'wrap'
-            }}>
-              <button
-                onClick={() => updateStatus('Approved')}
-                disabled={updating}
+          {isProfessorView && !isReviewed ? (
+            <div>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Add notes for the apprentice (optional)..."
                 style={{
-                  fontSize: '16px',
-                  fontWeight: 700,
-                  color: 'white',
-                  background: updating
-                    ? 'linear-gradient(135deg, #9CA3AF 0%, #D1D5DB 100%)'
-                    : 'linear-gradient(135deg, #00952E 0%, #10B981 100%)',
-                  border: 'none',
+                  width: '100%',
+                  minHeight: '120px',
+                  padding: '1rem',
                   borderRadius: '12px',
-                  padding: '1.25rem 2.5rem',
-                  cursor: updating ? 'not-allowed' : 'pointer',
-                  boxShadow: updating ? 'none' : '0 6px 20px rgba(0,149,46,0.3)',
-                  transition: 'all 0.3s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  minWidth: '200px',
-                  justifyContent: 'center'
-                }}
-                onMouseEnter={(e) => {
-                  if (!updating) {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,149,46,0.4)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!updating) {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,149,46,0.3)';
-                  }
-                }}
-              >
-                <CheckCircle size={20} />
-                Approve Submission
-              </button>
-              
-              <button
-                onClick={() => updateStatus('Needs Work')}
-                disabled={updating}
-                style={{
+                  border: '2px solid #E5E7EB',
                   fontSize: '16px',
-                  fontWeight: 700,
-                  color: 'white',
-                  background: updating
-                    ? 'linear-gradient(135deg, #9CA3AF 0%, #D1D5DB 100%)'
-                    : 'linear-gradient(135deg, #DC2626 0%, #EF4444 100%)',
-                  border: 'none',
-                  borderRadius: '12px',
-                  padding: '1.25rem 2.5rem',
-                  cursor: updating ? 'not-allowed' : 'pointer',
-                  boxShadow: updating ? 'none' : '0 6px 20px rgba(220,38,38,0.3)',
-                  transition: 'all 0.3s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  minWidth: '200px',
-                  justifyContent: 'center'
+                  fontFamily: 'inherit',
+                  resize: 'vertical',
+                  marginBottom: '1rem',
+                  outline: 'none',
+                  transition: 'border-color 0.3s ease'
                 }}
-                onMouseEnter={(e) => {
-                  if (!updating) {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(220,38,38,0.4)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!updating) {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 6px 20px rgba(220,38,38,0.3)';
-                  }
-                }}
-              >
-                <XCircle size={20} />
-                Request Revision
-              </button>
-            </div>
-            
-            {updating && (
+                onFocus={(e) => e.currentTarget.style.borderColor = '#0066A2'}
+                onBlur={(e) => e.currentTarget.style.borderColor = '#E5E7EB'}
+              />
               <div style={{
-                marginTop: '1.5rem',
-                textAlign: 'center',
-                color: '#6B7280',
-                fontSize: '14px',
-                fontWeight: 600
+                display: 'flex',
+                gap: '1rem',
+                justifyContent: 'flex-end'
               }}>
-                <Clock size={16} style={{ display: 'inline', marginRight: '0.5rem', animation: 'spin 1s linear infinite' }} />
-                Updating submission and sending notification...
-              </div>
-            )}
-          </div>
-        ) : (
-          <div style={{
-            background: 'white',
-            borderRadius: '20px',
-            padding: '2.5rem',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.06)'
-          }}>
-            {isReviewed ? (
-              <div style={{ textAlign: 'center' }}>
-                <div style={{
-                  background: submission.status === 'Approved'
-                    ? 'linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%)'
-                    : 'linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)',
-                  borderRadius: '16px',
-                  padding: '3rem 2.5rem',
-                  border: submission.status === 'Approved' 
-                    ? '3px solid #10B981' 
-                    : '3px solid #F59E0B',
-                  maxWidth: '600px',
-                  margin: '0 auto 2rem'
-                }}>
-                  <div style={{
-                    width: '72px',
-                    height: '72px',
-                    borderRadius: '50%',
-                    background: submission.status === 'Approved'
-                      ? 'linear-gradient(135deg, #00952E 0%, #10B981 100%)'
-                      : 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-                    margin: '0 auto 1.5rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: submission.status === 'Approved'
-                      ? '0 8px 24px rgba(0,149,46,0.3)'
-                      : '0 8px 24px rgba(245,158,11,0.3)'
-                  }}>
-                    <Lock size={36} color="white" />
-                  </div>
-                  <h3 style={{
-                    fontSize: '28px',
-                    fontWeight: 700,
-                    color: '#004A69',
-                    margin: '0 0 1rem 0'
-                  }}>
-                    Review Complete
-                  </h3>
-                  <div style={{
-                    width: '48px',
-                    height: '3px',
-                    background: submission.status === 'Approved' ? '#10B981' : '#F59E0B',
-                    margin: '0 auto 1.5rem',
-                    borderRadius: '2px'
-                  }}></div>
-                  <p style={{
-                    fontSize: '16px',
-                    color: submission.status === 'Approved' ? '#065F46' : '#92400E',
-                    margin: 0,
-                    lineHeight: '1.7',
-                    fontWeight: 500
-                  }}>
-                    This submission has been {submission.status === 'Approved' ? 'approved' : 'reviewed'}.<br />
-                    The review is now locked and cannot be changed.
-                  </p>
-                </div>
-                
                 <button
-                  onClick={() => {
-                    if (dashboardToken) {
-                      window.location.href = `/dashboard/${dashboardToken}`;
-                    } else {
-                      window.location.href = '/';
-                    }
-                  }}
+                  onClick={() => updateStatus('Needs Work')}
+                  disabled={updating}
                   style={{
-                    padding: '1rem 2.5rem',
+                    padding: '1rem 2rem',
                     fontSize: '16px',
                     fontWeight: 600,
-                    color: '#0066A2',
-                    background: 'white',
-                    border: '2px solid #0066A2',
+                    color: '#DC2626',
+                    background: '#FEE2E2',
+                    border: '2px solid #DC2626',
                     borderRadius: '12px',
-                    cursor: 'pointer',
+                    cursor: updating ? 'not-allowed' : 'pointer',
+                    opacity: updating ? 0.6 : 1,
                     transition: 'all 0.3s ease',
-                    boxShadow: '0 2px 8px rgba(0,102,162,0.1)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#0066A2';
-                    e.currentTarget.style.color = 'white';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,102,162,0.2)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'white';
-                    e.currentTarget.style.color = '#0066A2';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,102,162,0.1)';
-                  }}
-                >
-                  Back to Dashboard
-                </button>
-              </div>
-            ) : (
-              <div style={{ textAlign: 'center' }}>
-                <div style={{
-                  background: 'linear-gradient(135deg, #F0F9FF 0%, #DBEAFE 100%)',
-                  borderRadius: '16px',
-                  padding: '3rem 2.5rem',
-                  border: '3px solid #BAE6FD',
-                  maxWidth: '600px',
-                  margin: '0 auto 2rem'
-                }}>
-                  <div style={{
-                    width: '72px',
-                    height: '72px',
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #0066A2 0%, #004A69 100%)',
-                    margin: '0 auto 1.5rem',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 8px 24px rgba(0,102,162,0.3)'
-                  }}>
-                    <Eye size={36} color="white" />
-                  </div>
-                  <h3 style={{
-                    fontSize: '28px',
-                    fontWeight: 700,
-                    color: '#004A69',
-                    margin: '0 0 1rem 0'
-                  }}>
-                    Viewing Submission
-                  </h3>
-                  <div style={{
-                    width: '48px',
-                    height: '3px',
-                    background: '#0066A2',
-                    margin: '0 auto 1.5rem',
-                    borderRadius: '2px'
-                  }}></div>
-                  <p style={{
-                    fontSize: '16px',
-                    color: '#0C4A6E',
-                    margin: 0,
-                    lineHeight: '1.7',
-                    fontWeight: 500
-                  }}>
-                    You're viewing this submission in read-only mode.<br />
-                    Only your professor can approve or request revisions.
-                  </p>
-                </div>
-                
-                <button
-                  onClick={() => {
-                    const dashboardUrl = document.referrer.includes('/dashboard/') 
-                      ? document.referrer 
-                      : '/';
-                    window.location.href = dashboardUrl;
-                  }}
-                  style={{
-                    padding: '1rem 2.5rem',
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    color: '#0066A2',
-                    background: 'white',
-                    border: '2px solid #0066A2',
-                    borderRadius: '12px',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    boxShadow: '0 2px 8px rgba(0,102,162,0.1)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#0066A2';
-                    e.currentTarget.style.color = 'white';
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,102,162,0.2)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'white';
-                    e.currentTarget.style.color = '#0066A2';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,102,162,0.1)';
+                    gap: '0.5rem'
                   }}
                 >
-                  Back to Dashboard
+                  <XCircle size={20} />
+                  Request Revision
+                </button>
+                <button
+                  onClick={() => updateStatus('Approved')}
+                  disabled={updating}
+                  style={{
+                    padding: '1rem 2rem',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    color: 'white',
+                    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                    border: 'none',
+                    borderRadius: '12px',
+                    cursor: updating ? 'not-allowed' : 'pointer',
+                    opacity: updating ? 0.6 : 1,
+                    transition: 'all 0.3s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    boxShadow: '0 4px 12px rgba(16,185,129,0.3)'
+                  }}
+                >
+                  <CheckCircle size={20} />
+                  Approve
                 </button>
               </div>
-            )}
-          </div>
-        )}
-
-        {/* Lightbox */}
-        {lightboxImage && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(0,0,0,0.95)',
-            zIndex: 9999,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '2rem'
-          }}
-          onClick={closeLightbox}
-          >
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                closeLightbox();
-              }}
-              style={{
-                position: 'absolute',
-                top: '2rem',
-                right: '2rem',
-                background: 'white',
-                border: 'none',
-                borderRadius: '50%',
-                width: '48px',
-                height: '48px',
+            </div>
+          ) : isReviewed ? (
+            <div>
+              {submission.professorNotes && (
+                <div style={{
+                  padding: '1rem',
+                  background: '#F9FAFB',
+                  borderRadius: '12px',
+                  marginBottom: '1.5rem',
+                  border: '1px solid #E5E7EB'
+                }}>
+                  <p style={{ color: '#6B7280', fontSize: '14px', margin: '0 0 0.5rem 0' }}>Professor Notes:</p>
+                  <p style={{ color: '#1F2937', margin: 0 }}>{submission.professorNotes}</p>
+                </div>
+              )}
+              <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                fontSize: '24px',
-                fontWeight: 700,
-                color: '#1F2937',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
-              }}
-            >
-              Ã—
-            </button>
+                gap: '0.75rem',
+                padding: '1rem 1.5rem',
+                background: status.bg,
+                borderRadius: '12px',
+                border: `2px solid ${status.color}`
+              }}>
+                <Lock size={20} color={status.color} />
+                <span style={{ color: status.color, fontWeight: 600 }}>
+                  This submission has been reviewed and is now locked.
+                </span>
+              </div>
+              {dashboardToken && (
+                <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+                  <button
+                    onClick={() => window.location.href = `/dashboard/${dashboardToken}`}
+                    style={{
+                      padding: '1rem 2.5rem',
+                      fontSize: '16px',
+                      fontWeight: 600,
+                      color: '#0066A2',
+                      background: 'white',
+                      border: '2px solid #0066A2',
+                      borderRadius: '12px',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 2px 8px rgba(0,102,162,0.1)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#0066A2';
+                      e.currentTarget.style.color = 'white';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,102,162,0.2)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'white';
+                      e.currentTarget.style.color = '#0066A2';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,102,162,0.1)';
+                    }}
+                  >
+                    Back to Dashboard
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                background: 'linear-gradient(135deg, #F0F9FF 0%, #DBEAFE 100%)',
+                borderRadius: '16px',
+                padding: '3rem 2.5rem',
+                border: '3px solid #BAE6FD',
+                maxWidth: '600px',
+                margin: '0 auto 2rem'
+              }}>
+                <div style={{
+                  width: '72px',
+                  height: '72px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #0066A2 0%, #004A69 100%)',
+                  margin: '0 auto 1.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 8px 24px rgba(0,102,162,0.3)'
+                }}>
+                  <Eye size={36} color="white" />
+                </div>
+                <h3 style={{
+                  fontSize: '28px',
+                  fontWeight: 700,
+                  color: '#004A69',
+                  margin: '0 0 1rem 0'
+                }}>
+                  Viewing Submission
+                </h3>
+                <div style={{
+                  width: '48px',
+                  height: '3px',
+                  background: '#0066A2',
+                  margin: '0 auto 1.5rem',
+                  borderRadius: '2px'
+                }}></div>
+                <p style={{
+                  fontSize: '16px',
+                  color: '#0C4A6E',
+                  margin: 0,
+                  lineHeight: '1.7',
+                  fontWeight: 500
+                }}>
+                  You're viewing this submission in read-only mode.<br />
+                  Only your professor can approve or request revisions.
+                </p>
+              </div>
+              
+              <button
+                onClick={() => {
+                  const dashboardUrl = document.referrer.includes('/dashboard/') 
+                    ? document.referrer 
+                    : '/';
+                  window.location.href = dashboardUrl;
+                }}
+                style={{
+                  padding: '1rem 2.5rem',
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  color: '#0066A2',
+                  background: 'white',
+                  border: '2px solid #0066A2',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 2px 8px rgba(0,102,162,0.1)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#0066A2';
+                  e.currentTarget.style.color = 'white';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,102,162,0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'white';
+                  e.currentTarget.style.color = '#0066A2';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,102,162,0.1)';
+                }}
+              >
+                Back to Dashboard
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
 
-            {screenshotEntries.length > 1 && (
-              <>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigateLightbox('prev');
-                  }}
-                  style={{
-                    position: 'absolute',
-                    left: '2rem',
-                    background: 'white',
-                    border: 'none',
-                    borderRadius: '50%',
-                    width: '48px',
-                    height: '48px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
-                  }}
-                >
-                  <ChevronLeft size={24} color="#1F2937" />
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigateLightbox('next');
-                  }}
-                  style={{
-                    position: 'absolute',
-                    right: '2rem',
-                    background: 'white',
-                    border: 'none',
-                    borderRadius: '50%',
-                    width: '48px',
-                    height: '48px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
-                  }}
-                >
-                  <ChevronRight size={24} color="#1F2937" />
-                </button>
-              </>
-            )}
-
-            <div style={{
+      {/* Lightbox */}
+      {lightboxImage && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.95)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '2rem'
+        }}
+        onClick={closeLightbox}
+        >
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              closeLightbox();
+            }}
+            style={{
               position: 'absolute',
-              bottom: '2rem',
+              top: '2rem',
+              right: '2rem',
               background: 'white',
-              padding: '0.75rem 1.5rem',
-              borderRadius: '12px',
-              fontSize: '14px',
-              fontWeight: 600,
+              border: 'none',
+              borderRadius: '50%',
+              width: '48px',
+              height: '48px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              fontSize: '24px',
+              fontWeight: 700,
               color: '#1F2937',
               boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
-            }}>
-              {lightboxIndex + 1} of {screenshotEntries.length}
-            </div>
+            }}
+          >
+            ×
+          </button>
 
-            <img 
-              src={lightboxImage}
-              alt="Screenshot preview"
-              style={{
-                maxWidth: '90%',
-                maxHeight: '90%',
-                objectFit: 'contain',
-                borderRadius: '12px',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
-              }}
-              onClick={(e) => e.stopPropagation()}
-            />
+          {screenshotEntries.length > 1 && (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateLightbox('prev');
+                }}
+                style={{
+                  position: 'absolute',
+                  left: '2rem',
+                  background: 'white',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '48px',
+                  height: '48px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+                }}
+              >
+                <ChevronLeft size={24} color="#1F2937" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateLightbox('next');
+                }}
+                style={{
+                  position: 'absolute',
+                  right: '2rem',
+                  background: 'white',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '48px',
+                  height: '48px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+                }}
+              >
+                <ChevronRight size={24} color="#1F2937" />
+              </button>
+            </>
+          )}
+
+          <div style={{
+            position: 'absolute',
+            bottom: '2rem',
+            background: 'white',
+            padding: '0.75rem 1.5rem',
+            borderRadius: '12px',
+            fontSize: '14px',
+            fontWeight: 600,
+            color: '#1F2937',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+          }}>
+            {lightboxIndex + 1} of {screenshotEntries.length}
           </div>
-        )}
-      </div>
+
+          <img 
+            src={lightboxImage}
+            alt="Screenshot preview"
+            style={{
+              maxWidth: '90%',
+              maxHeight: '90%',
+              objectFit: 'contain',
+              borderRadius: '12px',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
 
       <style>{`
         @keyframes spin {
