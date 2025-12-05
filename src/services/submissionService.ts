@@ -94,16 +94,27 @@ export const saveToSupabase = async (
     record.phase = (data as ModuleSubmissionData).phase;
   }
 
-  const { error } = await supabase
+  console.log('Attempting to save submission to Supabase:', JSON.stringify(record, null, 2));
+
+  const { data: insertedData, error } = await supabase
     .from('submissions')
-    .insert(record);
+    .insert(record)
+    .select();
 
   if (error) {
     console.error('Supabase Submissions error:', error);
-    throw new Error('Failed to save submission to database');
+    console.error('Error code:', error.code);
+    console.error('Error message:', error.message);
+    console.error('Error details:', error.details);
+    throw new Error(`Failed to save submission to database: ${error.message}`);
   }
 
-  console.log('✓ Submission saved to Supabase');
+  if (!insertedData || insertedData.length === 0) {
+    console.error('⚠️ No data returned after insert - possible RLS policy issue');
+    console.error('Record attempted:', record);
+  } else {
+    console.log('✓ Submission saved to Supabase:', insertedData);
+  }
 };
 
 export const updateProgress = async (
