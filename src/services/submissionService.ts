@@ -75,7 +75,7 @@ export const saveToSupabase = async (
   screenshotUrls: Record<string, string>
 ): Promise<void> => {
   const isModuleSubmission = 'moduleName' in data;
-  
+
   const record: any = {
     submissionId,
     studentName: data.studentName,
@@ -94,27 +94,16 @@ export const saveToSupabase = async (
     record.phase = (data as ModuleSubmissionData).phase;
   }
 
-  console.log('Attempting to save submission to Supabase:', JSON.stringify(record, null, 2));
-
-  const { data: insertedData, error } = await supabase
+  const { error } = await supabase
     .from('submissions')
-    .insert(record)
-    .select();
+    .insert(record);
 
   if (error) {
     console.error('Supabase Submissions error:', error);
-    console.error('Error code:', error.code);
-    console.error('Error message:', error.message);
-    console.error('Error details:', error.details);
-    throw new Error(`Failed to save submission to database: ${error.message}`);
+    throw new Error('Failed to save submission to database');
   }
 
-  if (!insertedData || insertedData.length === 0) {
-    console.error('⚠️ No data returned after insert - possible RLS policy issue');
-    console.error('Record attempted:', record);
-  } else {
-    console.log('✓ Submission saved to Supabase:', insertedData);
-  }
+  console.log('✓ Submission saved to Supabase');
 };
 
 export const updateProgress = async (
@@ -124,7 +113,7 @@ export const updateProgress = async (
   submissionId: string
 ): Promise<void> => {
   console.log(`Updating progress: ${phase} - ${module} for ${apprenticeEmail}`);
-  
+
   try {
     // Check if record exists
     const { data: existing, error: fetchError } = await supabase
@@ -191,15 +180,8 @@ export const sendModuleCompletionEmail = async (
   data: ModuleSubmissionData,
   submissionId: string
 ): Promise<void> => {
-  // Check if professor email is valid before attempting to send
-  if (!data.professorEmail || !data.professorEmail.includes('@')) {
-    console.warn('⚠️ Professor email is missing or invalid, skipping email notification');
-    console.warn('Professor email value:', data.professorEmail || '(empty)');
-    return;
-  }
-
   const reviewUrl = `${window.location.origin}/review/${submissionId}?review=true`;
-  const taskCount = Object.keys(data.uploadedScreenshots).length;
+  const taskCount = Object.keys(data.completedTasks).filter(key => data.completedTasks[key]).length;
 
   const templateParams = {
     to_email: data.professorEmail,
@@ -208,27 +190,21 @@ export const sendModuleCompletionEmail = async (
     module_name: data.moduleName,
     module_number: data.moduleNumber,
     phase: data.phase,
-    operating_system: data.operatingSystem || 'N/A',
-    task_count: taskCount.toString(),
-    review_url: reviewUrl,
-    submitted_at: new Date().toLocaleString()
+    operating_system: data.operatingSystem === 'mac' ? 'Mac' : 'Windows',
+    task_count: `${taskCount} tasks`,
+    submitted_at: new Date().toLocaleString(),
+    review_url: reviewUrl
   };
 
-  console.log('Sending email to professor:', data.professorEmail);
-  console.log('Template params:', JSON.stringify(templateParams, null, 2));
-
   try {
-    const result = await emailjs.send(
+    await emailjs.send(
       import.meta.env.VITE_EMAILJS_SERVICE_ID,
       import.meta.env.VITE_EMAILJS_MODULE_TEMPLATE_ID || import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
       templateParams
     );
     console.log('✓ Module completion email sent to professor');
-    console.log('EmailJS response:', result);
   } catch (error) {
     console.error('Failed to send module email:', error);
-    console.error('EmailJS Service ID:', import.meta.env.VITE_EMAILJS_SERVICE_ID ? 'Set' : 'MISSING');
-    console.error('EmailJS Template ID:', import.meta.env.VITE_EMAILJS_MODULE_TEMPLATE_ID || import.meta.env.VITE_EMAILJS_TEMPLATE_ID ? 'Set' : 'MISSING');
     console.warn('⚠️ Continuing without email notification');
   }
 };
@@ -265,8 +241,13 @@ export const sendOrientationEmail = async (
     to_email: data.professorEmail,
     student_name: data.apprenticeName,
     apprentice_email: data.apprenticeEmail,
-    completed_at: new Date().toLocaleString(),
-    phase: 'Phase 1 - Orientation'
+    module_name: 'Orientation',
+    module_number: '1.0',
+    phase: 'Phase 1 - Orientation',
+    operating_system: 'N/A',
+    task_count: 'Orientation Complete',
+    submitted_at: new Date().toLocaleString(),
+    review_url: `${window.location.origin}/dashboard`
   };
 
   try {
@@ -288,7 +269,7 @@ export const sendOrientationEmail = async (
 
 export const markOrientationComplete = async (data: OrientationData): Promise<string> => {
   const submissionId = `orientation_${uuidv4()}`;
-  
+
   console.log('=== Marking Orientation Complete ===');
   console.log('Submission ID:', submissionId);
   console.log('Apprentice:', data.apprenticeName, `(${data.apprenticeEmail})`);
@@ -351,7 +332,7 @@ export const markOrientationComplete = async (data: OrientationData): Promise<st
 
     console.log('=== Orientation Complete ✓ ===');
     return submissionId;
-    
+
   } catch (error) {
     console.error('=== Orientation Failed ✗ ===');
     console.error('Error:', error);
@@ -361,7 +342,7 @@ export const markOrientationComplete = async (data: OrientationData): Promise<st
 
 export const submitModule = async (data: ModuleSubmissionData): Promise<string> => {
   const submissionId = `${data.moduleNumber.replace('.', '_')}_${uuidv4()}`;
-  
+
   console.log('=== Starting Module Submission ===');
   console.log('Submission ID:', submissionId);
   console.log('Module:', `${data.moduleNumber} - ${data.moduleName}`);
@@ -373,7 +354,7 @@ export const submitModule = async (data: ModuleSubmissionData): Promise<string> 
     console.log('\n--- Step 1: Uploading Screenshots ---');
     const screenshotUrls: Record<string, string> = {};
     const screenshotCount = Object.keys(data.uploadedScreenshots).length;
-    
+
     let uploadedCount = 0;
     for (const [taskId, base64Image] of Object.entries(data.uploadedScreenshots)) {
       try {
@@ -401,7 +382,7 @@ export const submitModule = async (data: ModuleSubmissionData): Promise<string> 
 
     console.log('\n=== Module Submission Complete ✓ ===');
     return submissionId;
-    
+
   } catch (error) {
     console.error('\n=== Module Submission Failed ✗ ===');
     console.error('Error:', error);
@@ -411,7 +392,7 @@ export const submitModule = async (data: ModuleSubmissionData): Promise<string> 
 
 export const submitTraining = async (data: SubmissionData): Promise<string> => {
   const submissionId = uuidv4();
-  
+
   console.log('=== Starting Training Submission ===');
   console.log('Submission ID:', submissionId);
   console.log('Apprentice:', data.studentName, `(${data.apprenticeEmail})`);
@@ -421,7 +402,7 @@ export const submitTraining = async (data: SubmissionData): Promise<string> => {
     console.log('\n--- Step 1: Uploading Screenshots ---');
     const screenshotUrls: Record<string, string> = {};
     const screenshotCount = Object.keys(data.uploadedScreenshots).length;
-    
+
     let uploadedCount = 0;
     for (const [taskId, base64Image] of Object.entries(data.uploadedScreenshots)) {
       try {
@@ -443,7 +424,7 @@ export const submitTraining = async (data: SubmissionData): Promise<string> => {
 
     console.log('\n=== Submission Complete ✓ ===');
     return submissionId;
-    
+
   } catch (error) {
     console.error('\n=== Submission Failed ✗ ===');
     console.error('Error:', error);
