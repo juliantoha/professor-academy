@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import { UserPlus, CheckCircle, Copy } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 const AdminPage = () => {
   const [apprenticeName, setApprenticeName] = useState('');
@@ -22,40 +22,27 @@ const AdminPage = () => {
     setCreating(true);
 
     try {
-      const dashboardToken = uuidv4();
-      const apprenticeId = uuidv4();
+      // Create apprentice in Supabase
+      const { data, error } = await supabase
+        .from('apprentices')
+        .insert({
+          name: apprenticeName.trim(),
+          email: apprenticeEmail.trim().toLowerCase(),
+          professorEmail: professorEmail.trim().toLowerCase(),
+          dateStarted: new Date().toISOString(),
+          currentPhase,
+          hasGmail: 'checked'
+        })
+        .select('dashboardToken')
+        .single();
 
-      // Create apprentice in Airtable - force emails to lowercase for consistency
-      const response = await fetch(
-        `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}/Apprentices`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_AIRTABLE_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            fields: {
-              apprenticeId,
-              name: apprenticeName.trim(),
-              email: apprenticeEmail.trim().toLowerCase(),
-              professorEmail: professorEmail.trim().toLowerCase(),
-              dateStarted: new Date().toISOString(),
-              currentPhase,
-              dashboardToken
-            }
-          })
-        }
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Airtable error:', errorText);
-        throw new Error('Failed to create apprentice');
+      if (error) {
+        console.error('Supabase error:', error);
+        throw new Error(error.message);
       }
 
       // Generate dashboard link
-      const link = `${window.location.origin}/dashboard/${dashboardToken}`;
+      const link = `${window.location.origin}/dashboard/${data.dashboardToken}`;
       setDashboardLink(link);
 
       // Reset form

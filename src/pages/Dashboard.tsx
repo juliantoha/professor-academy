@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { CheckCircle, Clock, XCircle, Award, ArrowRight, Eye, AlertCircle, Play, BookOpen, Video, FileText, CheckSquare, Download, MessageSquare, Smartphone } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 interface ApprenticeData {
+  id: string;
   apprenticeId: string;
   name: string;
   email: string;
@@ -9,10 +11,10 @@ interface ApprenticeData {
   dateStarted: string;
   currentPhase: string;
   dashboardToken: string;
-  preOrientationZoomDownloaded?: boolean;
-  preOrientationGchatBrowser?: boolean;
-  preOrientationGchatPhone?: boolean;
-  hasGmail?: boolean;
+  preOrientationZoomDownloaded?: string;
+  preOrientationGchatBrowser?: string;
+  preOrientationGchatPhone?: string;
+  hasGmail?: string;
 }
 
 interface SubmissionData {
@@ -67,7 +69,6 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
   const [submissions, setSubmissions] = useState<Record<string, SubmissionData>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [apprenticeRecordId, setApprenticeRecordId] = useState<string>('');
   const [preOrientationChecks, setPreOrientationChecks] = useState({
     zoomDownloaded: false,
     gchatBrowser: false,
@@ -90,29 +91,28 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
     console.log('📄 initializeProgress called for:', apprenticeEmail);
     
     try {
-      const progressResponse = await fetch(
-        `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}/Progress?filterByFormula={apprenticeEmail}='${apprenticeEmail}'`,
-        {
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_AIRTABLE_API_KEY}`
-          }
-        }
-      );
+      // Check existing progress records
+      const { data: existingProgress, error: progressError } = await supabase
+        .from('progress')
+        .select('*')
+        .eq('apprenticeEmail', apprenticeEmail);
 
-      if (!progressResponse.ok) return;
+      if (progressError) {
+        console.error('Error fetching progress:', progressError);
+        return;
+      }
 
-      const existingProgress = await progressResponse.json();
-      console.log('📊 Found', existingProgress.records.length, 'existing progress records');
+      console.log('📊 Found', existingProgress?.length || 0, 'existing progress records');
       
       const existingModulesMap = new Map<string, any>();
-      existingProgress.records.forEach((r: any) => {
-        const key = `${r.fields.phase}-${r.fields.module}`;
-        if (!existingModulesMap.has(key) || r.fields.submissionId) {
+      existingProgress?.forEach((r: any) => {
+        const key = `${r.phase}-${r.module}`;
+        if (!existingModulesMap.has(key) || r.submissionId) {
           existingModulesMap.set(key, r);
         }
       });
 
-      console.log('📋 Unique modules already in Airtable:', Array.from(existingModulesMap.keys()));
+      console.log('📋 Unique modules already in Supabase:', Array.from(existingModulesMap.keys()));
 
       const missingModules = CURRICULUM.filter(
         module => !existingModulesMap.has(`${module.phase}-${module.module}`)
@@ -122,30 +122,21 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
         console.log('➕ Creating', missingModules.length, 'missing progress records:', missingModules.map(m => m.module));
         
         const records = missingModules.map(module => ({
-          fields: {
-            apprenticeEmail,
-            phase: module.phase,
-            module: module.module,
-            Status: 'Not Started'
-          }
+          apprenticeEmail,
+          phase: module.phase,
+          module: module.module,
+          Status: 'Not Started'
         }));
 
-        for (let i = 0; i < records.length; i += 10) {
-          const batch = records.slice(i, i + 10);
-          
-          await fetch(
-            `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}/Progress`,
-            {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${import.meta.env.VITE_AIRTABLE_API_KEY}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ records: batch })
-            }
-          );
+        const { error: insertError } = await supabase
+          .from('progress')
+          .insert(records);
+
+        if (insertError) {
+          console.error('Error inserting progress:', insertError);
+        } else {
+          console.log('✅ Progress initialization complete');
         }
-        console.log('✅ Progress initialization complete');
       } else {
         console.log('✅ All progress records already exist for', apprenticeEmail, '- no action needed');
       }
@@ -156,50 +147,37 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
 
   const fetchDashboardData = async () => {
     try {
-      const apprenticeResponse = await fetch(
-        `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}/Apprentices?filterByFormula={dashboardToken}='${dashboardToken}'`,
-        {
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_AIRTABLE_API_KEY}`
-          }
-        }
-      );
+      // Fetch apprentice by dashboard token
+      const { data: apprenticeData, error: apprenticeError } = await supabase
+        .from('apprentices')
+        .select('*')
+        .eq('dashboardToken', dashboardToken)
+        .single();
 
-      if (!apprenticeResponse.ok) throw new Error('Failed to fetch apprentice data');
-      
-      const apprenticeData = await apprenticeResponse.json();
-      
-      if (apprenticeData.records.length === 0) {
+      if (apprenticeError || !apprenticeData) {
         throw new Error('Dashboard not found');
       }
 
-      const apprenticeRecord = apprenticeData.records[0];
-      const apprenticeFields = apprenticeRecord.fields;
-      
-      setApprenticeRecordId(apprenticeRecord.id);
-      setApprentice(apprenticeFields as ApprenticeData);
+      setApprentice(apprenticeData as ApprenticeData);
 
       setPreOrientationChecks({
-        zoomDownloaded: apprenticeFields.preOrientationZoomDownloaded || false,
-        gchatBrowser: apprenticeFields.preOrientationGchatBrowser || false,
-        gchatPhone: apprenticeFields.preOrientationGchatPhone || false,
-        hasGmail: apprenticeFields.hasGmail !== false
+        zoomDownloaded: apprenticeData.preOrientationZoomDownloaded === 'checked',
+        gchatBrowser: apprenticeData.preOrientationGchatBrowser === 'checked',
+        gchatPhone: apprenticeData.preOrientationGchatPhone === 'checked',
+        hasGmail: apprenticeData.hasGmail !== 'unchecked'
       });
 
-      await initializeProgress(apprenticeFields.email);
+      await initializeProgress(apprenticeData.email);
 
-      const progressResponse = await fetch(
-        `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}/Progress?filterByFormula={apprenticeEmail}='${apprenticeFields.email}'`,
-        {
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_AIRTABLE_API_KEY}`
-          }
-        }
-      );
+      // Fetch progress records
+      const { data: progressData, error: progressError } = await supabase
+        .from('progress')
+        .select('*')
+        .eq('apprenticeEmail', apprenticeData.email);
 
-      if (!progressResponse.ok) throw new Error('Failed to fetch progress data');
-      
-      const progressData = await progressResponse.json();
+      if (progressError) {
+        throw new Error('Failed to fetch progress data');
+      }
       
       const curriculumModuleKeys = new Set(
         CURRICULUM.map(m => `${m.phase}-${m.module}`)
@@ -207,8 +185,8 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
       
       const progressMap = new Map<string, ProgressItem>();
       
-      progressData.records.forEach((r: any) => {
-        const item = r.fields as ProgressItem;
+      progressData?.forEach((r: any) => {
+        const item = r as ProgressItem;
         const key = `${item.phase}-${item.module}`;
         
         if (curriculumModuleKeys.has(key)) {
@@ -223,34 +201,24 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
       const progressItems = Array.from(progressMap.values());
       setProgress(progressItems);
 
+      // Fetch submissions
       const submissionIds = progressItems
         .filter(p => p.submissionId)
         .map(p => p.submissionId!);
       
       if (submissionIds.length > 0) {
-        const submissionsMap: Record<string, SubmissionData> = {};
-        
-        for (const subId of submissionIds) {
-          const filterFormula = `{submissionId}='${subId}'`;
-          
-          const subResponse = await fetch(
-            `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}/Submissions?filterByFormula=${encodeURIComponent(filterFormula)}`,
-            {
-              headers: {
-                'Authorization': `Bearer ${import.meta.env.VITE_AIRTABLE_API_KEY}`
-              }
-            }
-          );
-          
-          if (subResponse.ok) {
-            const subData = await subResponse.json();
-            if (subData.records.length > 0) {
-              submissionsMap[subId] = subData.records[0].fields as SubmissionData;
-            }
-          }
+        const { data: submissionsData, error: submissionsError } = await supabase
+          .from('submissions')
+          .select('*')
+          .in('submissionId', submissionIds);
+
+        if (!submissionsError && submissionsData) {
+          const submissionsMap: Record<string, SubmissionData> = {};
+          submissionsData.forEach((sub: any) => {
+            submissionsMap[sub.submissionId] = sub as SubmissionData;
+          });
+          setSubmissions(submissionsMap);
         }
-        
-        setSubmissions(submissionsMap);
       }
       
       setLoading(false);
@@ -261,27 +229,16 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
   };
 
   const updatePreOrientationCheck = async (field: string, value: boolean) => {
-    if (!apprenticeRecordId) return;
+    if (!apprentice) return;
 
     try {
-      const response = await fetch(
-        `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}/Apprentices/${apprenticeRecordId}`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_AIRTABLE_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            fields: {
-              [field]: value
-            }
-          })
-        }
-      );
+      const { error } = await supabase
+        .from('apprentices')
+        .update({ [field]: value ? 'checked' : '' })
+        .eq('dashboardToken', dashboardToken);
 
-      if (!response.ok) {
-        console.error('Failed to update pre-orientation check');
+      if (error) {
+        console.error('Failed to update pre-orientation check:', error);
       } else {
         console.log('✅ Saved', field, '=', value);
       }
@@ -691,14 +648,6 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                         gap: '0.4rem',
                         transition: 'all 0.2s ease'
                       }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = '#0066A2';
-                        e.currentTarget.style.color = 'white';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'white';
-                        e.currentTarget.style.color = '#0066A2';
-                      }}
                     >
                       <Download size={14} />
                       Mac
@@ -720,14 +669,6 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                         alignItems: 'center',
                         gap: '0.4rem',
                         transition: 'all 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = '#0066A2';
-                        e.currentTarget.style.color = 'white';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'white';
-                        e.currentTarget.style.color = '#0066A2';
                       }}
                     >
                       <Download size={14} />
@@ -844,14 +785,6 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                       gap: '0.4rem',
                       transition: 'all 0.2s ease'
                     }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = '#0066A2';
-                      e.currentTarget.style.color = 'white';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'white';
-                      e.currentTarget.style.color = '#0066A2';
-                    }}
                   >
                     <ArrowRight size={14} />
                     Open Google Chat
@@ -937,14 +870,6 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                       gap: '0.4rem',
                       transition: 'all 0.2s ease'
                     }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = '#0066A2';
-                      e.currentTarget.style.color = 'white';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'white';
-                      e.currentTarget.style.color = '#0066A2';
-                    }}
                   >
                     <Download size={14} />
                     iPhone App
@@ -1003,14 +928,6 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
           }}
           onClick={() => {
             window.location.href = getModuleUrl('Phase 1', 'Orientation');
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 6px 20px rgba(235,106,24,0.18)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = 'none';
           }}
           >
             <div style={{
@@ -1161,31 +1078,6 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
               }}>
                 Complete Phase 1 Orientation to unlock Phase 2 modules
               </p>
-              <button
-                onClick={() => window.location.href = '/'}
-                style={{
-                  fontSize: '15px',
-                  fontWeight: 600,
-                  color: 'white',
-                  background: 'linear-gradient(135deg, #0066A2 0%, #004A69 100%)',
-                  border: 'none',
-                  borderRadius: '10px',
-                  padding: '0.9rem 1.8rem',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 16px rgba(0, 102, 162, 0.3)',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 102, 162, 0.4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 102, 162, 0.3)';
-                }}
-              >
-                View Training Home
-              </button>
             </div>
           ) : (
             <div style={{ display: 'grid', gap: '1.25rem' }}>
@@ -1337,14 +1229,6 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                             alignItems: 'center',
                             gap: '0.4rem'
                           }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = '#0066A2';
-                            e.currentTarget.style.color = 'white';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'white';
-                            e.currentTarget.style.color = '#0066A2';
-                          }}
                         >
                           <Eye size={14} />
                           View Submission
@@ -1372,14 +1256,6 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                             display: 'flex',
                             alignItems: 'center',
                             gap: '0.4rem'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = 'translateY(-1px)';
-                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = 'translateY(0)';
-                            e.currentTarget.style.boxShadow = 'none';
                           }}
                         >
                           {submission?.status === 'Needs Work' ? 'Revise & Resubmit' : 'Start Module'}
