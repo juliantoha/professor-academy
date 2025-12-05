@@ -348,20 +348,7 @@ const Module1ComputerEssentials = () => {
   };
 
   const handleSubmit = async () => {
-    // Validation
-    if (!studentName.trim() || !apprenticeEmail.trim() || !professorEmail.trim()) {
-      setError('Please fill in all required fields in the student information section');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(apprenticeEmail) || !emailRegex.test(professorEmail)) {
-      setError('Please enter valid email addresses');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-
+    // Validation - only check progress and token, emails come from URL params
     if (calculateProgress() < 100) {
       setError('Please complete all tasks and upload screenshots before submitting');
       return;
