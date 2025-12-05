@@ -181,7 +181,7 @@ export const sendModuleCompletionEmail = async (
   submissionId: string
 ): Promise<void> => {
   const reviewUrl = `${window.location.origin}/review/${submissionId}?review=true`;
-  const taskCount = Object.keys(data.completedTasks).filter(key => data.completedTasks[key]).length;
+  const taskCount = Object.keys(data.completedTasks || {}).filter(key => data.completedTasks[key]).length;
 
   const templateParams = {
     to_email: data.professorEmail,
