@@ -199,6 +199,7 @@ export const sendModuleCompletionEmail = async (
   }
 
   const reviewUrl = `${window.location.origin}/review/${submissionId}?review=true`;
+  const taskCount = Object.keys(data.uploadedScreenshots).length;
 
   const templateParams = {
     to_email: data.professorEmail,
@@ -208,6 +209,7 @@ export const sendModuleCompletionEmail = async (
     module_number: data.moduleNumber,
     phase: data.phase,
     operating_system: data.operatingSystem || 'N/A',
+    task_count: taskCount.toString(),
     review_url: reviewUrl,
     submitted_at: new Date().toLocaleString()
   };
