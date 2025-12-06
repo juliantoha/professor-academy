@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import { LogOut, Users, Clock, CheckCircle, ExternalLink, RefreshCw } from 'lucide-react';
 
 interface Apprentice {
   id: string;
@@ -24,8 +25,10 @@ interface Submission {
   submissionId: string;
   apprenticeEmail: string;
   moduleName: string;
+  moduleNumber: string;
   status: string;
   submittedAt: string;
+  studentName: string;
 }
 
 const ProfessorDashboard = () => {
@@ -47,8 +50,8 @@ const ProfessorDashboard = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      setError('');
 
-      // Fetch apprentices assigned to this professor
       const { data: apprenticesData, error: apprenticesError } = await supabase
         .from('apprentices')
         .select('*')
@@ -58,7 +61,6 @@ const ProfessorDashboard = () => {
       if (apprenticesError) throw apprenticesError;
       setApprentices(apprenticesData || []);
 
-      // Fetch progress for all apprentices
       if (apprenticesData && apprenticesData.length > 0) {
         const emails = apprenticesData.map(a => a.email);
         const { data: progressData, error: progressError } = await supabase
@@ -68,7 +70,6 @@ const ProfessorDashboard = () => {
 
         if (progressError) throw progressError;
 
-        // Group progress by apprentice email
         const progressMap: Record<string, Progress[]> = {};
         (progressData || []).forEach(p => {
           if (!progressMap[p.apprenticeEmail]) {
@@ -79,7 +80,6 @@ const ProfessorDashboard = () => {
         setProgress(progressMap);
       }
 
-      // Fetch pending submissions for this professor
       const { data: submissionsData, error: submissionsError } = await supabase
         .from('submissions')
         .select('*')
@@ -112,67 +112,297 @@ const ProfessorDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div style={{
+        fontFamily: 'Lato, sans-serif',
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '1rem'
+        }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            border: '4px solid #E5E7EB',
+            borderTopColor: '#0066A2',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite'
+          }} />
+          <span style={{ color: '#004A69', fontWeight: 500 }}>Loading dashboard...</span>
+        </div>
+        <style>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div style={{
+      fontFamily: 'Lato, sans-serif',
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)'
+    }}>
       {/* Header */}
-      <header
-        className="shadow-lg"
-        style={{ background: 'linear-gradient(135deg, #0066A2 0%, #004A69 100%)' }}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
+      <header style={{
+        background: 'linear-gradient(135deg, #003250 0%, #004A69 50%, #0066A2 100%)',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          opacity: 0.1,
+          backgroundImage: 'radial-gradient(circle at 20% 50%, white 1px, transparent 1px)',
+          backgroundSize: '40px 40px'
+        }} />
+
+        <div style={{
+          maxWidth: '1200px',
+          margin: '0 auto',
+          padding: '2rem',
+          position: 'relative',
+          zIndex: 1
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '1rem'
+          }}>
             <div>
-              <h1 className="text-2xl font-bold text-white">Professor Dashboard</h1>
-              <p className="text-blue-100 mt-1">Welcome back, {profile?.name || user?.email}</p>
+              <h1 style={{
+                fontFamily: 'Montserrat, sans-serif',
+                fontSize: '28px',
+                fontWeight: 700,
+                color: 'white',
+                margin: '0 0 0.5rem 0',
+                letterSpacing: '-0.5px'
+              }}>
+                Professor Dashboard
+              </h1>
+              <p style={{
+                fontSize: '16px',
+                color: 'rgba(255,255,255,0.8)',
+                margin: 0
+              }}>
+                Welcome back, {profile?.name || user?.email}
+              </p>
             </div>
-            <button
-              onClick={handleSignOut}
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
-            >
-              Sign Out
-            </button>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <button
+                onClick={fetchData}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1.25rem',
+                  background: 'rgba(255,255,255,0.1)',
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  borderRadius: '10px',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                }}
+              >
+                <RefreshCw size={18} />
+                Refresh
+              </button>
+              <button
+                onClick={handleSignOut}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1.25rem',
+                  background: 'rgba(255,255,255,0.1)',
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  borderRadius: '10px',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                }}
+              >
+                <LogOut size={18} />
+                Sign Out
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main style={{
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: '2rem'
+      }}>
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <div style={{
+            background: 'linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)',
+            border: '2px solid #DC2626',
+            borderRadius: '12px',
+            padding: '1rem 1.5rem',
+            marginBottom: '2rem',
+            color: '#991B1B',
+            fontSize: '14px',
+            fontWeight: 500
+          }}>
             {error}
           </div>
         )}
 
         {/* Pending Reviews Section */}
         {pendingSubmissions.length > 0 && (
-          <section className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">
-              Pending Reviews ({pendingSubmissions.length})
-            </h2>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <section style={{ marginBottom: '2.5rem' }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              marginBottom: '1.5rem'
+            }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #eb6a18 0%, #ff8c3d 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(235,106,24,0.3)'
+              }}>
+                <Clock size={22} color="white" />
+              </div>
+              <h2 style={{
+                fontFamily: 'Montserrat, sans-serif',
+                fontSize: '22px',
+                fontWeight: 700,
+                color: '#004A69',
+                margin: 0
+              }}>
+                Pending Reviews ({pendingSubmissions.length})
+              </h2>
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+              gap: '1.5rem'
+            }}>
               {pendingSubmissions.map((submission) => (
                 <div
                   key={submission.submissionId}
-                  className="bg-white rounded-xl shadow-md p-5 hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-orange-500"
                   onClick={() => navigate(`/review/${submission.submissionId}?review=true`)}
+                  style={{
+                    background: 'white',
+                    borderRadius: '16px',
+                    padding: '1.5rem',
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
+                    borderLeft: '5px solid #eb6a18',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-4px)';
+                    e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.06)';
+                  }}
                 >
-                  <div className="flex items-start justify-between">
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    marginBottom: '1rem'
+                  }}>
                     <div>
-                      <h3 className="font-semibold text-gray-800">{submission.moduleName}</h3>
-                      <p className="text-sm text-gray-500 mt-1">{submission.apprenticeEmail}</p>
+                      <h3 style={{
+                        fontFamily: 'Montserrat, sans-serif',
+                        fontSize: '16px',
+                        fontWeight: 600,
+                        color: '#004A69',
+                        margin: '0 0 0.25rem 0'
+                      }}>
+                        {submission.moduleNumber} - {submission.moduleName}
+                      </h3>
+                      <p style={{
+                        fontSize: '14px',
+                        color: '#6B7280',
+                        margin: 0
+                      }}>
+                        {submission.studentName || submission.apprenticeEmail}
+                      </p>
                     </div>
-                    <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs font-medium rounded-full">
+                    <span style={{
+                      padding: '0.35rem 0.75rem',
+                      background: 'linear-gradient(135deg, #FFF6ED 0%, #FFE0BA 100%)',
+                      color: '#d05510',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      borderRadius: '20px',
+                      border: '1px solid rgba(235,106,24,0.2)'
+                    }}>
                       Pending
                     </span>
                   </div>
-                  <p className="text-xs text-gray-400 mt-3">
-                    Submitted {new Date(submission.submittedAt).toLocaleDateString()}
-                  </p>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <span style={{
+                      fontSize: '13px',
+                      color: '#9CA3AF'
+                    }}>
+                      {new Date(submission.submittedAt).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
+                    <span style={{
+                      fontSize: '13px',
+                      color: '#0066A2',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem'
+                    }}>
+                      Review <ExternalLink size={14} />
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -181,75 +411,246 @@ const ProfessorDashboard = () => {
 
         {/* Apprentices Section */}
         <section>
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            Your Apprentices ({apprentices.length})
-          </h2>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            marginBottom: '1.5rem'
+          }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #004A69 0%, #0066A2 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(0,74,105,0.3)'
+            }}>
+              <Users size={22} color="white" />
+            </div>
+            <h2 style={{
+              fontFamily: 'Montserrat, sans-serif',
+              fontSize: '22px',
+              fontWeight: 700,
+              color: '#004A69',
+              margin: 0
+            }}>
+              Your Apprentices ({apprentices.length})
+            </h2>
+          </div>
 
           {apprentices.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-md p-8 text-center">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
+            <div style={{
+              background: 'white',
+              borderRadius: '20px',
+              padding: '4rem 2rem',
+              textAlign: 'center',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.06)'
+            }}>
+              <div style={{
+                width: '80px',
+                height: '80px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 1.5rem'
+              }}>
+                <Users size={36} color="#9CA3AF" />
               </div>
-              <h3 className="text-lg font-medium text-gray-800 mb-2">No apprentices yet</h3>
-              <p className="text-gray-500">Apprentices assigned to you will appear here.</p>
+              <h3 style={{
+                fontFamily: 'Montserrat, sans-serif',
+                fontSize: '20px',
+                fontWeight: 600,
+                color: '#004A69',
+                margin: '0 0 0.75rem 0'
+              }}>
+                No apprentices yet
+              </h3>
+              <p style={{
+                fontSize: '15px',
+                color: '#6B7280',
+                margin: 0
+              }}>
+                Apprentices assigned to you will appear here.
+              </p>
             </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+              gap: '1.5rem'
+            }}>
               {apprentices.map((apprentice) => {
                 const summary = getProgressSummary(apprentice.email);
                 return (
                   <div
                     key={apprentice.id}
-                    className="bg-white rounded-xl shadow-md p-5 hover:shadow-lg transition-shadow"
+                    style={{
+                      background: 'white',
+                      borderRadius: '20px',
+                      padding: '1.75rem',
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-4px)';
+                      e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.06)';
+                    }}
                   >
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
-                        <h3 className="font-semibold text-gray-800">{apprentice.name}</h3>
-                        <p className="text-sm text-gray-500">{apprentice.email}</p>
-                      </div>
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-blue-600 font-semibold">
-                          {apprentice.name.charAt(0).toUpperCase()}
-                        </span>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      justifyContent: 'space-between',
+                      marginBottom: '1.25rem'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{
+                          width: '52px',
+                          height: '52px',
+                          borderRadius: '14px',
+                          background: 'linear-gradient(135deg, #004A69 0%, #0066A2 100%)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: '0 4px 12px rgba(0,74,105,0.3)'
+                        }}>
+                          <span style={{
+                            fontFamily: 'Montserrat, sans-serif',
+                            fontSize: '20px',
+                            fontWeight: 700,
+                            color: 'white'
+                          }}>
+                            {apprentice.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div>
+                          <h3 style={{
+                            fontFamily: 'Montserrat, sans-serif',
+                            fontSize: '17px',
+                            fontWeight: 600,
+                            color: '#004A69',
+                            margin: '0 0 0.25rem 0'
+                          }}>
+                            {apprentice.name}
+                          </h3>
+                          <p style={{
+                            fontSize: '13px',
+                            color: '#6B7280',
+                            margin: 0
+                          }}>
+                            {apprentice.email}
+                          </p>
+                        </div>
                       </div>
                     </div>
 
                     {/* Progress Bar */}
-                    <div className="mb-4">
-                      <div className="flex justify-between text-sm text-gray-600 mb-1">
-                        <span>Progress</span>
-                        <span>{summary.completed} completed</span>
+                    <div style={{ marginBottom: '1.25rem' }}>
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        fontSize: '13px',
+                        marginBottom: '0.5rem'
+                      }}>
+                        <span style={{ color: '#6B7280', fontWeight: 500 }}>Progress</span>
+                        <span style={{ color: '#004A69', fontWeight: 600 }}>
+                          {summary.completed} of 5 modules
+                        </span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-green-500 h-2 rounded-full transition-all"
-                          style={{ width: `${summary.total > 0 ? (summary.completed / 5) * 100 : 0}%` }}
-                        ></div>
+                      <div style={{
+                        width: '100%',
+                        height: '8px',
+                        background: '#E5E7EB',
+                        borderRadius: '50px',
+                        overflow: 'hidden'
+                      }}>
+                        <div style={{
+                          width: `${(summary.completed / 5) * 100}%`,
+                          height: '100%',
+                          background: 'linear-gradient(90deg, #00952E 0%, #10B981 100%)',
+                          borderRadius: '50px',
+                          transition: 'width 0.5s ease'
+                        }} />
                       </div>
                     </div>
 
                     {/* Stats */}
-                    <div className="flex items-center gap-4 text-sm">
+                    <div style={{
+                      display: 'flex',
+                      gap: '1rem',
+                      marginBottom: '1.25rem'
+                    }}>
                       {summary.submitted > 0 && (
-                        <span className="text-orange-600">
-                          {summary.submitted} awaiting review
-                        </span>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          padding: '0.4rem 0.75rem',
+                          background: 'linear-gradient(135deg, #FFF6ED 0%, #FFE0BA 100%)',
+                          borderRadius: '8px'
+                        }}>
+                          <Clock size={14} color="#d05510" />
+                          <span style={{ fontSize: '13px', color: '#d05510', fontWeight: 600 }}>
+                            {summary.submitted} pending
+                          </span>
+                        </div>
                       )}
                       {summary.completed > 0 && (
-                        <span className="text-green-600">
-                          {summary.completed} approved
-                        </span>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          padding: '0.4rem 0.75rem',
+                          background: 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)',
+                          borderRadius: '8px'
+                        }}>
+                          <CheckCircle size={14} color="#00952E" />
+                          <span style={{ fontSize: '13px', color: '#00952E', fontWeight: 600 }}>
+                            {summary.completed} completed
+                          </span>
+                        </div>
                       )}
                     </div>
 
-                    {/* View Dashboard Link */}
+                    {/* View Dashboard Button */}
                     <button
                       onClick={() => window.open(`/dashboard/${apprentice.dashboardToken}`, '_blank')}
-                      className="mt-4 w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors"
+                      style={{
+                        width: '100%',
+                        padding: '0.85rem',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        color: '#004A69',
+                        background: 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)',
+                        border: '2px solid #E5E7EB',
+                        borderRadius: '10px',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'linear-gradient(135deg, #004A69 0%, #0066A2 100%)';
+                        e.currentTarget.style.color = 'white';
+                        e.currentTarget.style.borderColor = '#004A69';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)';
+                        e.currentTarget.style.color = '#004A69';
+                        e.currentTarget.style.borderColor = '#E5E7EB';
+                      }}
                     >
-                      View Apprentice Dashboard
+                      <ExternalLink size={16} />
+                      View Dashboard
                     </button>
                   </div>
                 );
@@ -258,6 +659,23 @@ const ProfessorDashboard = () => {
           )}
         </section>
       </main>
+
+      {/* Footer */}
+      <footer style={{
+        textAlign: 'center',
+        padding: '2rem',
+        color: '#6B7280',
+        fontSize: '14px'
+      }}>
+        © {new Date().getFullYear()} Oclef Professor Academy
+      </footer>
+
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };
