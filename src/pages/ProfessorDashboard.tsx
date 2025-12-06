@@ -6,29 +6,29 @@ import { LogOut, Users, Clock, CheckCircle, ExternalLink, RefreshCw } from 'luci
 
 interface Apprentice {
   id: string;
-  apprenticeId: string;
+  apprentice_id: string;
   name: string;
   email: string;
-  dashboardToken: string;
-  createdAt: string;
+  dashboard_token: string;
+  created_at: string;
 }
 
 interface Progress {
-  apprenticeEmail: string;
+  apprentice_email: string;
   phase: string;
   module: string;
-  Status: string;
-  submissionId: string | null;
+  status: string;
+  submission_id: string | null;
 }
 
 interface Submission {
-  submissionId: string;
-  apprenticeEmail: string;
-  moduleName: string;
-  moduleNumber: string;
+  submission_id: string;
+  apprentice_email: string;
+  module_name: string;
+  module_number: string;
   status: string;
-  submittedAt: string;
-  studentName: string;
+  submitted_at: string;
+  student_name: string;
 }
 
 const ProfessorDashboard = () => {
@@ -55,8 +55,8 @@ const ProfessorDashboard = () => {
       const { data: apprenticesData, error: apprenticesError } = await supabase
         .from('apprentices')
         .select('*')
-        .eq('professorEmail', user?.email)
-        .order('createdAt', { ascending: false });
+        .eq('professor_email', user?.email)
+        .order('created_at', { ascending: false });
 
       if (apprenticesError) throw apprenticesError;
       setApprentices(apprenticesData || []);
@@ -66,16 +66,16 @@ const ProfessorDashboard = () => {
         const { data: progressData, error: progressError } = await supabase
           .from('progress')
           .select('*')
-          .in('apprenticeEmail', emails);
+          .in('apprentice_email', emails);
 
         if (progressError) throw progressError;
 
         const progressMap: Record<string, Progress[]> = {};
         (progressData || []).forEach(p => {
-          if (!progressMap[p.apprenticeEmail]) {
-            progressMap[p.apprenticeEmail] = [];
+          if (!progressMap[p.apprentice_email]) {
+            progressMap[p.apprentice_email] = [];
           }
-          progressMap[p.apprenticeEmail].push(p);
+          progressMap[p.apprentice_email].push(p);
         });
         setProgress(progressMap);
       }
@@ -83,9 +83,9 @@ const ProfessorDashboard = () => {
       const { data: submissionsData, error: submissionsError } = await supabase
         .from('submissions')
         .select('*')
-        .eq('professorEmail', user?.email)
+        .eq('professor_email', user?.email)
         .eq('status', 'Pending')
-        .order('submittedAt', { ascending: false });
+        .order('submitted_at', { ascending: false });
 
       if (submissionsError) throw submissionsError;
       setPendingSubmissions(submissionsData || []);
@@ -105,8 +105,8 @@ const ProfessorDashboard = () => {
 
   const getProgressSummary = (email: string) => {
     const apprenticeProgress = progress[email] || [];
-    const completed = apprenticeProgress.filter(p => p.Status === 'Completed' || p.Status === 'Approved').length;
-    const submitted = apprenticeProgress.filter(p => p.Status === 'Submitted').length;
+    const completed = apprenticeProgress.filter(p => p.status === 'Completed' || p.status === 'Approved').length;
+    const submitted = apprenticeProgress.filter(p => p.status === 'Submitted').length;
     return { completed, submitted, total: apprenticeProgress.length };
   };
 
@@ -320,8 +320,8 @@ const ProfessorDashboard = () => {
             }}>
               {pendingSubmissions.map((submission) => (
                 <div
-                  key={submission.submissionId}
-                  onClick={() => navigate(`/review/${submission.submissionId}?review=true`)}
+                  key={submission.submission_id}
+                  onClick={() => navigate(`/review/${submission.submission_id}?review=true`)}
                   style={{
                     background: 'white',
                     borderRadius: '16px',
@@ -354,14 +354,14 @@ const ProfessorDashboard = () => {
                         color: '#004A69',
                         margin: '0 0 0.25rem 0'
                       }}>
-                        {submission.moduleNumber} - {submission.moduleName}
+                        {submission.module_number} - {submission.module_name}
                       </h3>
                       <p style={{
                         fontSize: '14px',
                         color: '#6B7280',
                         margin: 0
                       }}>
-                        {submission.studentName || submission.apprenticeEmail}
+                        {submission.student_name || submission.apprentice_email}
                       </p>
                     </div>
                     <span style={{
@@ -385,7 +385,7 @@ const ProfessorDashboard = () => {
                       fontSize: '13px',
                       color: '#9CA3AF'
                     }}>
-                      {new Date(submission.submittedAt).toLocaleDateString('en-US', {
+                      {new Date(submission.submitted_at).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
                         hour: '2-digit',
@@ -621,7 +621,7 @@ const ProfessorDashboard = () => {
 
                     {/* View Dashboard Button */}
                     <button
-                      onClick={() => window.open(`/dashboard/${apprentice.dashboardToken}`, '_blank')}
+                      onClick={() => window.open(`/dashboard/${apprentice.dashboard_token}`, '_blank')}
                       style={{
                         width: '100%',
                         padding: '0.85rem',
