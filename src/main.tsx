@@ -8,6 +8,17 @@ import AdminPage from './pages/AdminPage.tsx'
 import OrientationWrapper from './pages/OrientationWrapper.tsx'
 import TrainingWrapper from './pages/TrainingWrapper.tsx'
 
+// Auth pages
+import LoginPage from './pages/LoginPage.tsx'
+import SignupPage from './pages/SignupPage.tsx'
+import ForgotPasswordPage from './pages/ForgotPasswordPage.tsx'
+import ResetPasswordPage from './pages/ResetPasswordPage.tsx'
+import ProfessorDashboard from './pages/ProfessorDashboard.tsx'
+
+// Auth components
+import { AuthProvider } from './contexts/AuthContext.tsx'
+import { ProtectedRoute } from './components/ProtectedRoute.tsx'
+
 // Import the modules
 import Module1ComputerEssentials from './components/modules/Module1.tsx'
 import Module2ZoomConfiguration from './components/modules/Module2.tsx'
@@ -21,11 +32,46 @@ const router = createBrowserRouter([
     path: '/',
     element: <App />
   },
+  // Auth routes (public)
+  {
+    path: '/login',
+    element: <LoginPage />
+  },
+  {
+    path: '/signup',
+    element: <SignupPage />
+  },
+  {
+    path: '/forgot-password',
+    element: <ForgotPasswordPage />
+  },
+  {
+    path: '/reset-password',
+    element: <ResetPasswordPage />
+  },
+  // Professor dashboard (protected)
+  {
+    path: '/professor',
+    element: (
+      <ProtectedRoute requiredRole="professor">
+        <ProfessorDashboard />
+      </ProtectedRoute>
+    )
+  },
+  // Admin page (protected - admin only)
+  {
+    path: '/admin',
+    element: (
+      <ProtectedRoute requiredRole="admin">
+        <AdminPage />
+      </ProtectedRoute>
+    )
+  },
+  // Training and module routes (public - accessed via token URLs)
   {
     path: '/training',
     element: <TrainingWrapper />
   },
-  // 🆕 ADD THESE MODULE ROUTES
   {
     path: '/module1',
     element: <Module1ComputerEssentials />
@@ -42,6 +88,7 @@ const router = createBrowserRouter([
     path: '/module4',
     element: <Module4Documentation />
   },
+  // Review and dashboard routes (public - accessed via email links)
   {
     path: '/review/:submissionId',
     element: <ReviewWrapper />
@@ -51,10 +98,6 @@ const router = createBrowserRouter([
     element: <DashboardWrapper />
   },
   {
-    path: '/admin',
-    element: <AdminPage />
-  },
-  {
     path: '/orientation',
     element: <OrientationWrapper />
   }
@@ -62,6 +105,8 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   </React.StrictMode>,
 )
