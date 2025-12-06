@@ -1,11 +1,7 @@
 import { Link } from 'react-router-dom';
-import { Monitor, Video, Navigation, FileText, CheckCircle, UserPlus, ArrowRight, LogIn } from 'lucide-react';
+import { Video, CheckCircle, UserPlus, ArrowRight, LogIn } from 'lucide-react';
 
-interface LandingPageProps {
-  onNavigateToAdmin: () => void;
-}
-
-const LandingPage = ({ onNavigateToAdmin }: LandingPageProps) => {
+const LandingPage = () => {
   const phases = [
     {
       number: 1,
@@ -180,8 +176,8 @@ const LandingPage = ({ onNavigateToAdmin }: LandingPageProps) => {
             Create personalized training dashboards that guide apprentices through a comprehensive three-phase journey—from technical foundations to independent teaching.
           </p>
 
-          <button
-            onClick={onNavigateToAdmin}
+          <Link
+            to="/signup"
             style={{
               fontFamily: 'Montserrat, sans-serif',
               fontSize: '18px',
@@ -196,7 +192,8 @@ const LandingPage = ({ onNavigateToAdmin }: LandingPageProps) => {
               transition: 'all 0.3s ease',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '0.75rem'
+              gap: '0.75rem',
+              textDecoration: 'none'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-2px)';
@@ -209,7 +206,7 @@ const LandingPage = ({ onNavigateToAdmin }: LandingPageProps) => {
           >
             Get Started with Professor Academy
             <ArrowRight size={20} />
-          </button>
+          </Link>
         </div>
       </section>
 
