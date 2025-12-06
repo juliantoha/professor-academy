@@ -6,7 +6,7 @@ interface UserProfile {
   id: string;
   email: string;
   name: string | null;
-  role: 'admin' | 'professor';
+  role: 'admin' | 'professor' | 'apprentice';
 }
 
 interface AuthContextType {
@@ -15,7 +15,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, name: string, role?: 'professor' | 'apprentice') => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
   updatePassword: (password: string) => Promise<{ error: Error | null }>;
@@ -74,11 +74,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error: error as Error | null };
   };
 
-  const signUp = async (email: string, password: string, name: string) => {
+  const signUp = async (email: string, password: string, name: string, role: 'professor' | 'apprentice' = 'apprentice') => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name } }
+      options: { data: { name, role } }
     });
     return { error: error as Error | null };
   };

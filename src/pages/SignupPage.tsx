@@ -32,7 +32,10 @@ const SignupPage = () => {
     setLoading(true);
 
     try {
-      const { error } = await signUp(email, password, name);
+      // Automatically assign role based on email domain
+      const role = email.toLowerCase().endsWith('@oclef.com') ? 'professor' : 'apprentice';
+
+      const { error } = await signUp(email, password, name, role);
       if (error) {
         setError(error.message);
       } else {
