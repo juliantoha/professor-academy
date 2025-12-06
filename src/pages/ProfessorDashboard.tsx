@@ -10,7 +10,7 @@ interface Apprentice {
   name: string;
   email: string;
   dashboardToken: string;
-  createdAt: string;
+  createdAt?: string;
 }
 
 interface Progress {
@@ -55,8 +55,7 @@ const ProfessorDashboard = () => {
       const { data: apprenticesData, error: apprenticesError } = await supabase
         .from('apprentices')
         .select('*')
-        .eq('professorEmail', user?.email)
-        .order('createdAt', { ascending: false });
+        .eq('professorEmail', user?.email);
 
       if (apprenticesError) throw apprenticesError;
       setApprentices(apprenticesData || []);
