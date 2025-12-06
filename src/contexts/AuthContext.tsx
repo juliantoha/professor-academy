@@ -58,29 +58,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
+    console.log('[Auth] Initial getSession starting...');
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('[Auth] getSession complete:', session ? 'has session' : 'no session');
       setSession(session);
       setUser(session?.user ?? null);
-      if (session?.user) fetchProfile(session.user.id);
+      if (session?.user) {
+        console.log('[Auth] Fetching profile for:', session.user.id);
+        fetchProfile(session.user.id);
+      }
       setLoading(false);
+      console.log('[Auth] Loading set to false');
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('[Auth] onAuthStateChange:', event, session ? 'has session' : 'no session');
         setLoading(true);
         setSession(session);
         setUser(session?.user ?? null);
         try {
           if (session?.user) {
+            console.log('[Auth] Fetching profile for:', session.user.id);
             await fetchProfile(session.user.id);
+            console.log('[Auth] Profile fetch complete');
           } else {
             setProfile(null);
           }
         } catch (err) {
-          console.error('Error during auth state change:', err);
+          console.error('[Auth] Error during auth state change:', err);
           setProfile(null);
         } finally {
           setLoading(false);
+          console.log('[Auth] Loading set to false after auth change');
         }
       }
     );
