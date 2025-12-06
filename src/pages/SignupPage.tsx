@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { UserPlus, Mail, Lock, User, CheckCircle } from 'lucide-react';
+import { UserPlus, Mail, Lock, User, CheckCircle, Eye, EyeOff } from 'lucide-react';
 
 const SignupPage = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -276,7 +278,9 @@ const SignupPage = () => {
                     borderRadius: '12px',
                     outline: 'none',
                     transition: 'all 0.3s ease',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    backgroundColor: 'white',
+                    color: '#1F2937'
                   }}
                   onFocus={(e) => {
                     e.target.style.borderColor = '#0066A2';
@@ -321,7 +325,9 @@ const SignupPage = () => {
                     borderRadius: '12px',
                     outline: 'none',
                     transition: 'all 0.3s ease',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    backgroundColor: 'white',
+                    color: '#1F2937'
                   }}
                   onFocus={(e) => {
                     e.target.style.borderColor = '#0066A2';
@@ -353,20 +359,22 @@ const SignupPage = () => {
                   transform: 'translateY(-50%)'
                 }} />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="At least 6 characters"
                   style={{
                     width: '100%',
-                    padding: '1rem 1rem 1rem 3rem',
+                    padding: '1rem 3rem 1rem 3rem',
                     fontSize: '15px',
                     border: '2px solid #E5E7EB',
                     borderRadius: '12px',
                     outline: 'none',
                     transition: 'all 0.3s ease',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    backgroundColor: 'white',
+                    color: '#1F2937'
                   }}
                   onFocus={(e) => {
                     e.target.style.borderColor = '#0066A2';
@@ -377,6 +385,29 @@ const SignupPage = () => {
                     e.target.style.boxShadow = 'none';
                   }}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '1rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  {showPassword ? (
+                    <EyeOff size={20} color="#6B7280" />
+                  ) : (
+                    <Eye size={20} color="#6B7280" />
+                  )}
+                </button>
               </div>
             </div>
 
@@ -398,20 +429,22 @@ const SignupPage = () => {
                   transform: 'translateY(-50%)'
                 }} />
                 <input
-                  type="password"
+                  type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   placeholder="Confirm your password"
                   style={{
                     width: '100%',
-                    padding: '1rem 1rem 1rem 3rem',
+                    padding: '1rem 3rem 1rem 3rem',
                     fontSize: '15px',
                     border: '2px solid #E5E7EB',
                     borderRadius: '12px',
                     outline: 'none',
                     transition: 'all 0.3s ease',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    backgroundColor: 'white',
+                    color: '#1F2937'
                   }}
                   onFocus={(e) => {
                     e.target.style.borderColor = '#0066A2';
@@ -422,6 +455,29 @@ const SignupPage = () => {
                     e.target.style.boxShadow = 'none';
                   }}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '1rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  {showConfirmPassword ? (
+                    <EyeOff size={20} color="#6B7280" />
+                  ) : (
+                    <Eye size={20} color="#6B7280" />
+                  )}
+                </button>
               </div>
             </div>
 

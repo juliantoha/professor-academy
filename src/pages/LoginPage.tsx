@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LogIn, Mail, Lock } from 'lucide-react';
+import { LogIn, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -159,7 +160,9 @@ const LoginPage = () => {
                     borderRadius: '12px',
                     outline: 'none',
                     transition: 'all 0.3s ease',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    backgroundColor: 'white',
+                    color: '#1F2937'
                   }}
                   onFocus={(e) => {
                     e.target.style.borderColor = '#0066A2';
@@ -209,20 +212,22 @@ const LoginPage = () => {
                   transform: 'translateY(-50%)'
                 }} />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="Enter your password"
                   style={{
                     width: '100%',
-                    padding: '1rem 1rem 1rem 3rem',
+                    padding: '1rem 3rem 1rem 3rem',
                     fontSize: '15px',
                     border: '2px solid #E5E7EB',
                     borderRadius: '12px',
                     outline: 'none',
                     transition: 'all 0.3s ease',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    backgroundColor: 'white',
+                    color: '#1F2937'
                   }}
                   onFocus={(e) => {
                     e.target.style.borderColor = '#0066A2';
@@ -233,6 +238,29 @@ const LoginPage = () => {
                     e.target.style.boxShadow = 'none';
                   }}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '1rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  {showPassword ? (
+                    <EyeOff size={20} color="#6B7280" />
+                  ) : (
+                    <Eye size={20} color="#6B7280" />
+                  )}
+                </button>
               </div>
             </div>
 

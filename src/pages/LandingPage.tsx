@@ -1,4 +1,5 @@
-import { Monitor, Video, Navigation, FileText, CheckCircle, UserPlus, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Monitor, Video, Navigation, FileText, CheckCircle, UserPlus, ArrowRight, LogIn } from 'lucide-react';
 
 interface LandingPageProps {
   onNavigateToAdmin: () => void;
@@ -58,25 +59,92 @@ const LandingPage = ({ onNavigateToAdmin }: LandingPageProps) => {
         }} />
         
         <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
+          {/* Navigation Bar */}
           <div style={{
-            background: 'rgba(255,255,255,0.1)',
-            backdropFilter: 'blur(10px)',
-            padding: '0.75rem 1.5rem',
-            borderRadius: '50px',
-            border: '1px solid rgba(255,255,255,0.2)',
-            display: 'inline-block',
-            marginBottom: '2rem'
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '3rem'
           }}>
-            <span style={{
-              fontFamily: 'Montserrat, sans-serif',
-              fontSize: '15px',
-              fontWeight: 600,
-              color: 'white',
-              letterSpacing: '1px',
-              textTransform: 'uppercase'
+            <div style={{
+              background: 'rgba(255,255,255,0.1)',
+              backdropFilter: 'blur(10px)',
+              padding: '0.75rem 1.5rem',
+              borderRadius: '50px',
+              border: '1px solid rgba(255,255,255,0.2)',
+              display: 'inline-block'
             }}>
-              Oclef Training Program
-            </span>
+              <span style={{
+                fontFamily: 'Montserrat, sans-serif',
+                fontSize: '15px',
+                fontWeight: 600,
+                color: 'white',
+                letterSpacing: '1px',
+                textTransform: 'uppercase'
+              }}>
+                Oclef Training Program
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <Link
+                to="/signup"
+                style={{
+                  fontFamily: 'Montserrat, sans-serif',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  color: 'white',
+                  background: 'rgba(255,255,255,0.15)',
+                  backdropFilter: 'blur(10px)',
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  borderRadius: '12px',
+                  padding: '0.75rem 1.5rem',
+                  textDecoration: 'none',
+                  transition: 'all 0.3s ease',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.25)';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.5)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)';
+                }}
+              >
+                <UserPlus size={18} />
+                Join
+              </Link>
+              <Link
+                to="/login"
+                style={{
+                  fontFamily: 'Montserrat, sans-serif',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  color: '#003250',
+                  background: 'white',
+                  border: '2px solid white',
+                  borderRadius: '12px',
+                  padding: '0.75rem 1.5rem',
+                  textDecoration: 'none',
+                  transition: 'all 0.3s ease',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.9)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'white';
+                }}
+              >
+                <LogIn size={18} />
+                Login
+              </Link>
+            </div>
           </div>
 
           <h1 style={{
@@ -139,8 +207,7 @@ const LandingPage = ({ onNavigateToAdmin }: LandingPageProps) => {
               e.currentTarget.style.boxShadow = '0 8px 32px rgba(235,106,24,0.4)';
             }}
           >
-            <UserPlus size={22} />
-            Launch Apprentice Dashboard
+            Get Started with Professor Academy
             <ArrowRight size={20} />
           </button>
         </div>

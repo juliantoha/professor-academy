@@ -263,7 +263,9 @@ const ForgotPasswordPage = () => {
                     borderRadius: '12px',
                     outline: 'none',
                     transition: 'all 0.3s ease',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    backgroundColor: 'white',
+                    color: '#1F2937'
                   }}
                   onFocus={(e) => {
                     e.target.style.borderColor = '#0066A2';
