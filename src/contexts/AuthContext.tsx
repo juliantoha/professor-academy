@@ -36,13 +36,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
-    if (!error && data) setProfile(data);
+      if (error) {
+        console.error('Error fetching profile:', error);
+        // Profile may not exist yet for this user
+        setProfile(null);
+        return;
+      }
+
+      if (data) setProfile(data);
+    } catch (err) {
+      console.error('Exception fetching profile:', err);
+      setProfile(null);
+    }
   };
 
   useEffect(() => {
@@ -55,14 +67,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        setLoading(true);
         setSession(session);
         setUser(session?.user ?? null);
-        if (session?.user) {
-          await fetchProfile(session.user.id);
-        } else {
+        try {
+          if (session?.user) {
+            await fetchProfile(session.user.id);
+          } else {
+            setProfile(null);
+          }
+        } catch (err) {
+          console.error('Error during auth state change:', err);
           setProfile(null);
+        } finally {
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 

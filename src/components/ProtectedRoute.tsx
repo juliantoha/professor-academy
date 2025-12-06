@@ -22,7 +22,10 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (requiredRole && profile?.role !== requiredRole && profile?.role !== 'admin') {
+  // Get role from profile, or fall back to user metadata (from signup)
+  const userRole = profile?.role || user.user_metadata?.role;
+
+  if (requiredRole && userRole !== requiredRole && userRole !== 'admin') {
     return <Navigate to="/unauthorized" replace />;
   }
 
