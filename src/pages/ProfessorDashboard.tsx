@@ -657,6 +657,100 @@ const ProfessorDashboard = () => {
             </div>
           )}
         </section>
+
+        {/* Apps & Resources */}
+        <section style={{ marginTop: '2.5rem' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            marginBottom: '1.5rem'
+          }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #471657 0%, #6B2C7B 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(71,22,87,0.3)'
+            }}>
+              <ExternalLink size={22} color="white" />
+            </div>
+            <h2 style={{
+              fontFamily: 'Montserrat, sans-serif',
+              fontSize: '22px',
+              fontWeight: 700,
+              color: '#004A69',
+              margin: 0
+            }}>
+              Apps & Resources
+            </h2>
+          </div>
+
+          <div style={{
+            background: 'white',
+            borderRadius: '20px',
+            padding: '2rem',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.06)'
+          }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: '1.25rem'
+            }}>
+              <ResourceCard
+                href="https://studio.oclef.com/notation"
+                icon="🎼"
+                title="Oclef Notation App"
+                subtitle="PDF Annotation Tool"
+                description="Annotate lesson scores with practice icons, shapes, and notes"
+                color="#471657"
+              />
+              <ResourceCard
+                href="https://events.oclef.com"
+                icon="🎭"
+                title="Oclef Events"
+                subtitle="Community Calendar"
+                description="Browse upcoming recitals, masterclasses, and performances"
+                color="#B9314F"
+              />
+              <ResourceCard
+                href="https://studio.oclef.com/virtuoso-piano"
+                icon="🎹"
+                title="Virtuoso Piano"
+                subtitle="MIDI Instrument"
+                description="Browser-based MIDI piano with velocity-sensitive playback"
+                color="#471657"
+              />
+              <ResourceCard
+                href="https://blog.oclef.com"
+                icon="✍️"
+                title="Oclef Blog"
+                subtitle="Articles & Insights"
+                description="Teaching strategies, pedagogy insights, and faculty reflections"
+                color="#FFA6B4"
+              />
+              <ResourceCard
+                href="https://www.thevivekproject.com"
+                icon="📚"
+                title="The Vivek Project"
+                subtitle="Pedagogical Study"
+                description="Longitudinal study with teaching videos and expert commentary"
+                color="#00952E"
+              />
+              <ResourceCard
+                href="https://studio.oclef.com/instructor.html"
+                icon="🎯"
+                title="Instructor Assessment"
+                subtitle="Evaluation Rubric"
+                description="Official rubric for instructor promotion evaluations"
+                color="#eb6a18"
+              />
+            </div>
+          </div>
+        </section>
       </main>
 
       {/* Footer */}
@@ -676,6 +770,79 @@ const ProfessorDashboard = () => {
         }
       `}</style>
     </div>
+  );
+};
+
+const ResourceCard = ({ href, icon, title, subtitle, description, color }: {
+  href: string;
+  icon: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  color: string;
+}) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{
+        textDecoration: 'none',
+        background: 'linear-gradient(135deg, #F9FAFB 0%, #FFFFFF 100%)',
+        border: `2px solid ${isHovered ? color : '#E5E7EB'}`,
+        borderRadius: '14px',
+        padding: '1.5rem',
+        transition: 'all 0.3s ease',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1rem',
+        cursor: 'pointer',
+        transform: isHovered ? 'translateY(-4px)' : 'translateY(0)',
+        boxShadow: isHovered ? `0 8px 20px ${color}20` : 'none'
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{
+          width: '44px',
+          height: '44px',
+          borderRadius: '10px',
+          background: `linear-gradient(135deg, ${color} 0%, ${color}dd 100%)`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '22px',
+          boxShadow: `0 4px 10px ${color}30`,
+          flexShrink: 0
+        }}>
+          {icon}
+        </div>
+        <div style={{ flex: 1 }}>
+          <h3 style={{
+            fontSize: '15px',
+            fontWeight: 600,
+            color: '#1F2937',
+            margin: 0
+          }}>
+            {title}
+          </h3>
+          <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>
+            {subtitle}
+          </p>
+        </div>
+      </div>
+      <p style={{
+        fontSize: '13px',
+        color: '#4B5563',
+        margin: 0,
+        lineHeight: '1.5'
+      }}>
+        {description}
+      </p>
+    </a>
   );
 };
 
