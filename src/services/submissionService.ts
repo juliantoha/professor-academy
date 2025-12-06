@@ -329,8 +329,6 @@ export const markOrientationComplete = async (data: OrientationData): Promise<st
       console.log('✓ Created orientation record');
     }
 
-    await sendOrientationEmail(data);
-
     console.log('=== Orientation Complete ✓ ===');
     return submissionId;
 
