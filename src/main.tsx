@@ -15,6 +15,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage.tsx'
 import ResetPasswordPage from './pages/ResetPasswordPage.tsx'
 import ProfessorDashboard from './pages/ProfessorDashboard.tsx'
 import SettingsPage from './pages/SettingsPage.tsx'
+import UnauthorizedPage from './pages/UnauthorizedPage.tsx'
 
 // Auth components
 import { AuthProvider } from './contexts/AuthContext.tsx'
@@ -49,6 +50,11 @@ const router = createBrowserRouter([
   {
     path: '/reset-password',
     element: <ResetPasswordPage />
+  },
+  // Unauthorized page
+  {
+    path: '/unauthorized',
+    element: <UnauthorizedPage />
   },
   // Professor dashboard (protected)
   {
