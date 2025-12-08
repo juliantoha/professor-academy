@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useRef, ReactNode, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 
@@ -38,27 +38,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const isProcessingAuth = useRef(false);
-  const hasInitializedUser = useRef(false);
+
+  // Use refs to avoid stale closure issues
+  const profileRef = useRef<UserProfile | null>(null);
   const lastProfileFetch = useRef<number>(0);
+  const isFetchingProfile = useRef(false);
+  const hasInitialized = useRef(false);
 
   // Only refetch profile if it's been more than 1 hour
   const PROFILE_REFRESH_INTERVAL = 60 * 60 * 1000; // 1 hour in ms
 
-  const fetchProfile = async (userId: string, forceRefresh = false) => {
-    // Skip if we recently fetched and have a profile (unless forced)
+  const fetchProfile = useCallback(async (userId: string, forceRefresh = false) => {
     const now = Date.now();
-    if (!forceRefresh && profile && (now - lastProfileFetch.current) < PROFILE_REFRESH_INTERVAL) {
+
+    // Skip if already fetching
+    if (isFetchingProfile.current) {
+      console.log('[Auth] Skipping profile fetch - already in progress');
+      return;
+    }
+
+    // Skip if we recently fetched (use ref to avoid stale closure)
+    if (!forceRefresh && profileRef.current && (now - lastProfileFetch.current) < PROFILE_REFRESH_INTERVAL) {
       console.log('[Auth] Skipping profile fetch - recently fetched');
       return;
     }
 
+    isFetchingProfile.current = true;
+
     try {
       console.log('[Auth] fetchProfile starting for:', userId);
 
-      // Add timeout to prevent hanging
+      // Add timeout to prevent hanging - increased to 10s
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
+        setTimeout(() => reject(new Error('Profile fetch timeout')), 10000)
       );
 
       const fetchPromise = supabase
@@ -71,97 +83,99 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) {
         console.error('[Auth] Error fetching profile:', error);
-        // Profile may not exist yet for this user - don't clear existing profile
-        if (!profile) setProfile(null);
         return;
       }
 
       console.log('[Auth] Profile fetched successfully:', data?.role);
       if (data) {
+        profileRef.current = data;
         setProfile(data);
         lastProfileFetch.current = now;
       }
     } catch (err) {
       console.error('[Auth] Exception fetching profile:', err);
-      // Don't clear existing profile on timeout
-      if (!profile) setProfile(null);
+      // Don't clear existing profile on timeout - keep using cached profile
+    } finally {
+      isFetchingProfile.current = false;
     }
-  };
+  }, []);
 
   // Function to force refresh profile (called from settings page after updates)
-  const refreshProfile = async () => {
+  const refreshProfile = useCallback(async () => {
     if (user) {
       await fetchProfile(user.id, true);
     }
-  };
+  }, [user, fetchProfile]);
 
   useEffect(() => {
+    // Only run initialization once
+    if (hasInitialized.current) {
+      return;
+    }
+    hasInitialized.current = true;
+
     console.log('[Auth] Initial getSession starting...');
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log('[Auth] getSession complete:', session ? 'has session' : 'no session');
       setSession(session);
       setUser(session?.user ?? null);
+
       if (session?.user) {
-        hasInitializedUser.current = true;
-        console.log('[Auth] Fetching profile for:', session.user.id);
         fetchProfile(session.user.id);
       }
+
       setLoading(false);
-      console.log('[Auth] Loading set to false');
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('[Auth] onAuthStateChange:', event, session ? 'has session' : 'no session');
+        console.log('[Auth] onAuthStateChange:', event);
 
-        // Prevent duplicate processing
-        if (isProcessingAuth.current) {
-          console.log('[Auth] Already processing auth, skipping duplicate');
+        // For tab focus events (TOKEN_REFRESHED, SIGNED_IN when we already have a session),
+        // don't refetch profile if we already have one
+        const isTabFocusEvent = (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') && profileRef.current;
+
+        if (isTabFocusEvent) {
+          console.log('[Auth] Tab focus event - skipping profile refetch, using cached profile');
+          // Just update session/user state without refetching profile
+          setSession(session);
+          setUser(session?.user ?? null);
           return;
-        }
-
-        isProcessingAuth.current = true;
-
-        // Only show loading spinner if we haven't initialized yet
-        // This prevents the flash when returning to tab
-        const isFirstTimeUser = !hasInitializedUser.current;
-
-        if (isFirstTimeUser && session?.user) {
-          setLoading(true);
         }
 
         setSession(session);
         setUser(session?.user ?? null);
 
-        if (session?.user) {
-          hasInitializedUser.current = true;
+        if (event === 'SIGNED_OUT') {
+          profileRef.current = null;
+          setProfile(null);
+          lastProfileFetch.current = 0;
+          setLoading(false);
+          return;
         }
 
-        try {
-          if (session?.user) {
-            console.log('[Auth] Fetching profile for:', session.user.id);
+        if (session?.user) {
+          // Only fetch profile for actual sign-in events when we don't have a profile
+          if (event === 'SIGNED_IN' && !profileRef.current) {
+            setLoading(true);
             await fetchProfile(session.user.id);
-            console.log('[Auth] Profile fetch complete');
-          } else {
-            setProfile(null);
-            hasInitializedUser.current = false;
+            setLoading(false);
+          } else if (event === 'INITIAL_SESSION' && !profileRef.current) {
+            // Initial session after page load
+            await fetchProfile(session.user.id);
           }
-        } catch (err) {
-          console.error('[Auth] Error during auth state change:', err);
-          // Don't clear profile on error if we already had one - just keep using it
-          console.log('[Auth] Keeping existing profile due to error');
-        } finally {
-          setLoading(false);
-          isProcessingAuth.current = false;
-          console.log('[Auth] Loading set to false after auth change');
         }
       }
     );
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [fetchProfile]);
 
   const signIn = async (email: string, password: string) => {
+    // Reset profile state on new sign in
+    profileRef.current = null;
+    lastProfileFetch.current = 0;
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error: error as Error | null };
   };
@@ -179,6 +193,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signOut = async () => {
+    profileRef.current = null;
+    lastProfileFetch.current = 0;
     await supabase.auth.signOut();
     setProfile(null);
   };
