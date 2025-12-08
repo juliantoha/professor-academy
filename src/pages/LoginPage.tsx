@@ -45,11 +45,11 @@ const LoginPage = () => {
       const { error } = await signIn(email, password);
       if (error) {
         setError(error.message);
-        setLoading(false);
       }
-      // Don't navigate here - let the useEffect handle it based on role
+      // Navigation is handled by useEffect based on role
     } catch (err) {
       setError('An unexpected error occurred');
+    } finally {
       setLoading(false);
     }
   };
