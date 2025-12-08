@@ -82,8 +82,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
 
       if (error) {
-        // Check if profile doesn't exist (PGRST116 = no rows returned)
-        if (error.code === 'PGRST116') {
+        // Log the full error for debugging
+        console.log('[Auth] Profile fetch error details:', { code: error.code, message: error.message, details: error.details, hint: error.hint });
+
+        // Check if profile doesn't exist - handle multiple error formats
+        // PGRST116 = no rows returned, or 406 status for .single() with no rows
+        const isNoRowsError = error.code === 'PGRST116' ||
+                              error.message?.includes('no rows') ||
+                              error.details?.includes('0 rows');
+
+        if (isNoRowsError) {
           console.log('[Auth] No profile found, creating one...');
 
           // Extract name parts from metadata
