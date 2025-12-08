@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Only refetch profile if it's been more than 1 hour
   const PROFILE_REFRESH_INTERVAL = 60 * 60 * 1000; // 1 hour in ms
 
-  const fetchProfile = useCallback(async (userId: string, forceRefresh = false) => {
+  const fetchProfile = useCallback(async (userId: string, userEmail: string, userMetadata: any, forceRefresh = false) => {
     const now = Date.now();
 
     // Skip if already fetching
@@ -82,6 +82,43 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
 
       if (error) {
+        // Check if profile doesn't exist (PGRST116 = no rows returned)
+        if (error.code === 'PGRST116') {
+          console.log('[Auth] No profile found, creating one...');
+
+          // Extract name parts from metadata
+          const fullName = userMetadata?.name || '';
+          const nameParts = fullName.split(' ');
+          const firstName = nameParts[0] || null;
+          const lastName = nameParts.slice(1).join(' ') || null;
+
+          // Create new profile
+          const newProfile = {
+            id: userId,
+            email: userEmail,
+            name: fullName || null,
+            firstName,
+            lastName,
+            role: userMetadata?.role || 'apprentice',
+            avatarUrl: null
+          };
+
+          const { error: insertError } = await supabase
+            .from('user_profiles')
+            .insert(newProfile);
+
+          if (insertError) {
+            console.error('[Auth] Error creating profile:', insertError);
+            return;
+          }
+
+          console.log('[Auth] Profile created successfully:', newProfile.role);
+          profileRef.current = newProfile as UserProfile;
+          setProfile(newProfile as UserProfile);
+          lastProfileFetch.current = now;
+          return;
+        }
+
         console.error('[Auth] Error fetching profile:', error);
         return;
       }
@@ -103,7 +140,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Function to force refresh profile (called from settings page after updates)
   const refreshProfile = useCallback(async () => {
     if (user) {
-      await fetchProfile(user.id, true);
+      await fetchProfile(user.id, user.email || '', user.user_metadata, true);
     }
   }, [user, fetchProfile]);
 
@@ -122,7 +159,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        fetchProfile(session.user.id);
+        fetchProfile(session.user.id, session.user.email || '', session.user.user_metadata);
       }
 
       setLoading(false);
@@ -159,11 +196,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           // Only fetch profile for actual sign-in events when we don't have a profile
           if (event === 'SIGNED_IN' && !profileRef.current) {
             setLoading(true);
-            await fetchProfile(session.user.id);
+            await fetchProfile(session.user.id, session.user.email || '', session.user.user_metadata);
             setLoading(false);
           } else if (event === 'INITIAL_SESSION' && !profileRef.current) {
             // Initial session after page load
-            await fetchProfile(session.user.id);
+            await fetchProfile(session.user.id, session.user.email || '', session.user.user_metadata);
           }
         }
       }
