@@ -6,6 +6,9 @@ interface UserProfile {
   id: string;
   email: string;
   name: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  avatarUrl?: string | null;
   role: 'admin' | 'professor' | 'apprentice';
 }
 
@@ -19,6 +22,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
   updatePassword: (password: string) => Promise<{ error: Error | null }>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,8 +40,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const isProcessingAuth = useRef(false);
   const hasInitializedUser = useRef(false);
+  const lastProfileFetch = useRef<number>(0);
 
-  const fetchProfile = async (userId: string) => {
+  // Only refetch profile if it's been more than 1 hour
+  const PROFILE_REFRESH_INTERVAL = 60 * 60 * 1000; // 1 hour in ms
+
+  const fetchProfile = async (userId: string, forceRefresh = false) => {
+    // Skip if we recently fetched and have a profile (unless forced)
+    const now = Date.now();
+    if (!forceRefresh && profile && (now - lastProfileFetch.current) < PROFILE_REFRESH_INTERVAL) {
+      console.log('[Auth] Skipping profile fetch - recently fetched');
+      return;
+    }
+
     try {
       console.log('[Auth] fetchProfile starting for:', userId);
 
@@ -56,16 +71,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) {
         console.error('[Auth] Error fetching profile:', error);
-        // Profile may not exist yet for this user
-        setProfile(null);
+        // Profile may not exist yet for this user - don't clear existing profile
+        if (!profile) setProfile(null);
         return;
       }
 
       console.log('[Auth] Profile fetched successfully:', data?.role);
-      if (data) setProfile(data);
+      if (data) {
+        setProfile(data);
+        lastProfileFetch.current = now;
+      }
     } catch (err) {
       console.error('[Auth] Exception fetching profile:', err);
-      setProfile(null);
+      // Don't clear existing profile on timeout
+      if (!profile) setProfile(null);
+    }
+  };
+
+  // Function to force refresh profile (called from settings page after updates)
+  const refreshProfile = async () => {
+    if (user) {
+      await fetchProfile(user.id, true);
     }
   };
 
@@ -172,7 +198,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   return (
     <AuthContext.Provider value={{
       user, profile, session, loading,
-      signIn, signUp, signOut, resetPassword, updatePassword
+      signIn, signUp, signOut, resetPassword, updatePassword, refreshProfile
     }}>
       {children}
     </AuthContext.Provider>

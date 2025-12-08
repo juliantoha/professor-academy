@@ -14,6 +14,7 @@ import SignupPage from './pages/SignupPage.tsx'
 import ForgotPasswordPage from './pages/ForgotPasswordPage.tsx'
 import ResetPasswordPage from './pages/ResetPasswordPage.tsx'
 import ProfessorDashboard from './pages/ProfessorDashboard.tsx'
+import SettingsPage from './pages/SettingsPage.tsx'
 
 // Auth components
 import { AuthProvider } from './contexts/AuthContext.tsx'
@@ -55,6 +56,15 @@ const router = createBrowserRouter([
     element: (
       <ProtectedRoute requiredRole="professor">
         <ProfessorDashboard />
+      </ProtectedRoute>
+    )
+  },
+  // Settings page (protected)
+  {
+    path: '/settings',
+    element: (
+      <ProtectedRoute requiredRole="professor">
+        <SettingsPage />
       </ProtectedRoute>
     )
   },
