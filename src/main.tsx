@@ -14,7 +14,9 @@ import SignupPage from './pages/SignupPage.tsx'
 import ForgotPasswordPage from './pages/ForgotPasswordPage.tsx'
 import ResetPasswordPage from './pages/ResetPasswordPage.tsx'
 import ProfessorDashboard from './pages/ProfessorDashboard.tsx'
+import ApprenticeDashboard from './pages/ApprenticeDashboard.tsx'
 import SettingsPage from './pages/SettingsPage.tsx'
+import ApprenticeSettingsPage from './pages/ApprenticeSettingsPage.tsx'
 import UnauthorizedPage from './pages/UnauthorizedPage.tsx'
 
 // Auth components
@@ -65,12 +67,30 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     )
   },
-  // Settings page (protected)
+  // Settings page (protected - professor)
   {
     path: '/settings',
     element: (
       <ProtectedRoute requiredRole="professor">
         <SettingsPage />
+      </ProtectedRoute>
+    )
+  },
+  // Apprentice dashboard (protected)
+  {
+    path: '/apprentice',
+    element: (
+      <ProtectedRoute requiredRole="apprentice">
+        <ApprenticeDashboard />
+      </ProtectedRoute>
+    )
+  },
+  // Apprentice settings page (protected)
+  {
+    path: '/apprentice/settings',
+    element: (
+      <ProtectedRoute requiredRole="apprentice">
+        <ApprenticeSettingsPage />
       </ProtectedRoute>
     )
   },

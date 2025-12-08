@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { LogIn, Mail, Lock, Eye, EyeOff } from 'lucide-react';
@@ -10,11 +10,31 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { signIn } = useAuth();
+  const { signIn, user, profile } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/professor';
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname;
+
+  // Redirect after successful login based on role
+  useEffect(() => {
+    if (user && !loading) {
+      const userRole = profile?.role || user.user_metadata?.role;
+
+      // If there's a specific page they were trying to access, go there
+      if (from) {
+        navigate(from, { replace: true });
+        return;
+      }
+
+      // Otherwise redirect based on role
+      if (userRole === 'professor' || userRole === 'admin') {
+        navigate('/professor', { replace: true });
+      } else if (userRole === 'apprentice') {
+        navigate('/apprentice', { replace: true });
+      }
+    }
+  }, [user, profile, loading, from, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,12 +45,11 @@ const LoginPage = () => {
       const { error } = await signIn(email, password);
       if (error) {
         setError(error.message);
-      } else {
-        navigate(from, { replace: true });
+        setLoading(false);
       }
+      // Don't navigate here - let the useEffect handle it based on role
     } catch (err) {
       setError('An unexpected error occurred');
-    } finally {
       setLoading(false);
     }
   };
