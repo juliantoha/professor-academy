@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, User, Lock, Camera, Save, CheckCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, User, Lock, Camera, Save, CheckCircle, AlertCircle, Home, ChevronRight } from 'lucide-react';
 
 const SettingsPage = () => {
   const { user, profile, updatePassword, refreshProfile } = useAuth();
@@ -154,8 +154,7 @@ const SettingsPage = () => {
       <header style={{
         background: 'linear-gradient(135deg, #003250 0%, #004A69 50%, #0066A2 100%)',
         boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-        position: 'relative',
-        overflow: 'hidden'
+        position: 'relative'
       }}>
         <div style={{
           position: 'absolute',
@@ -171,36 +170,93 @@ const SettingsPage = () => {
         <div style={{
           maxWidth: '800px',
           margin: '0 auto',
-          padding: '2rem',
+          padding: '1.5rem 2rem 2rem',
           position: 'relative',
           zIndex: 1
         }}>
-          <Link
-            to="/professor"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              color: 'rgba(255,255,255,0.8)',
-              textDecoration: 'none',
-              fontSize: '14px',
-              marginBottom: '1rem'
-            }}
-          >
-            <ArrowLeft size={18} />
-            Back to Dashboard
-          </Link>
-
-          <h1 style={{
-            fontFamily: 'Montserrat, sans-serif',
-            fontSize: '28px',
-            fontWeight: 700,
-            color: 'white',
-            margin: 0,
-            letterSpacing: '-0.5px'
+          {/* Breadcrumb Navigation */}
+          <nav style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            marginBottom: '1.25rem'
           }}>
-            Account Settings
-          </h1>
+            <Link
+              to="/professor"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                color: 'rgba(255,255,255,0.7)',
+                textDecoration: 'none',
+                fontSize: '14px',
+                fontWeight: 500,
+                transition: 'color 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'white'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.7)'}
+            >
+              <Home size={16} />
+              Dashboard
+            </Link>
+            <ChevronRight size={16} color="rgba(255,255,255,0.5)" />
+            <span style={{
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: 600
+            }}>
+              Settings
+            </span>
+          </nav>
+
+          {/* Title Row with Back Button */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '1rem'
+          }}>
+            <h1 style={{
+              fontFamily: 'Montserrat, sans-serif',
+              fontSize: '28px',
+              fontWeight: 700,
+              color: 'white',
+              margin: 0,
+              letterSpacing: '-0.5px'
+            }}>
+              Account Settings
+            </h1>
+
+            <button
+              onClick={() => navigate('/professor')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem 1.25rem',
+                background: 'rgba(255,255,255,0.15)',
+                border: '2px solid rgba(255,255,255,0.3)',
+                borderRadius: '10px',
+                color: 'white',
+                fontSize: '14px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.25)';
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)';
+              }}
+            >
+              <ArrowLeft size={18} />
+              Back to Dashboard
+            </button>
+          </div>
         </div>
       </header>
 
