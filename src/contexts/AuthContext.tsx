@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 
@@ -34,25 +34,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const isProcessingAuth = useRef(false);
 
   const fetchProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase
+      console.log('[Auth] fetchProfile starting for:', userId);
+
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
+      );
+
+      const fetchPromise = supabase
         .from('user_profiles')
         .select('*')
         .eq('id', userId)
         .single();
 
+      const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+
       if (error) {
-        console.error('Error fetching profile:', error);
+        console.error('[Auth] Error fetching profile:', error);
         // Profile may not exist yet for this user
         setProfile(null);
         return;
       }
 
+      console.log('[Auth] Profile fetched successfully:', data?.role);
       if (data) setProfile(data);
     } catch (err) {
-      console.error('Exception fetching profile:', err);
+      console.error('[Auth] Exception fetching profile:', err);
       setProfile(null);
     }
   };
@@ -74,6 +85,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('[Auth] onAuthStateChange:', event, session ? 'has session' : 'no session');
+
+        // Prevent duplicate processing
+        if (isProcessingAuth.current) {
+          console.log('[Auth] Already processing auth, skipping duplicate');
+          return;
+        }
+
+        isProcessingAuth.current = true;
         setLoading(true);
         setSession(session);
         setUser(session?.user ?? null);
@@ -90,6 +109,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setProfile(null);
         } finally {
           setLoading(false);
+          isProcessingAuth.current = false;
           console.log('[Auth] Loading set to false after auth change');
         }
       }
