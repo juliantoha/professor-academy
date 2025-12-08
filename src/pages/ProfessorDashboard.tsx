@@ -281,37 +281,74 @@ const ProfessorDashboard = () => {
         )}
 
         {/* Pending Reviews Section */}
-        {pendingSubmissions.length > 0 && (
-          <section style={{ marginBottom: '2.5rem' }}>
+        <section style={{ marginBottom: '2.5rem' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            marginBottom: '1.5rem'
+          }}>
             <div style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #eb6a18 0%, #ff8c3d 100%)',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.75rem',
-              marginBottom: '1.5rem'
+              justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(235,106,24,0.3)'
+            }}>
+              <Clock size={22} color="white" />
+            </div>
+            <h2 style={{
+              fontFamily: 'Montserrat, sans-serif',
+              fontSize: '22px',
+              fontWeight: 700,
+              color: '#004A69',
+              margin: 0
+            }}>
+              Pending Reviews ({pendingSubmissions.length})
+            </h2>
+          </div>
+
+          {pendingSubmissions.length === 0 ? (
+            <div style={{
+              background: 'white',
+              borderRadius: '20px',
+              padding: '4rem 2rem',
+              textAlign: 'center',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.06)'
             }}>
               <div style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '10px',
-                background: 'linear-gradient(135deg, #eb6a18 0%, #ff8c3d 100%)',
+                width: '80px',
+                height: '80px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #FFF6ED 0%, #FFE0BA 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 4px 12px rgba(235,106,24,0.3)'
+                margin: '0 auto 1.5rem'
               }}>
-                <Clock size={22} color="white" />
+                <CheckCircle size={36} color="#eb6a18" />
               </div>
-              <h2 style={{
+              <h3 style={{
                 fontFamily: 'Montserrat, sans-serif',
-                fontSize: '22px',
-                fontWeight: 700,
+                fontSize: '20px',
+                fontWeight: 600,
                 color: '#004A69',
+                margin: '0 0 0.75rem 0'
+              }}>
+                All caught up!
+              </h3>
+              <p style={{
+                fontSize: '15px',
+                color: '#6B7280',
                 margin: 0
               }}>
-                Pending Reviews ({pendingSubmissions.length})
-              </h2>
+                No pending submissions to review. New submissions will appear here.
+              </p>
             </div>
-
+          ) : (
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
@@ -405,8 +442,8 @@ const ProfessorDashboard = () => {
                 </div>
               ))}
             </div>
-          </section>
-        )}
+          )}
+        </section>
 
         {/* Apprentices Section */}
         <section>
