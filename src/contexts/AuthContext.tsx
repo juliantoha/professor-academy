@@ -35,6 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const isProcessingAuth = useRef(false);
+  const hasInitializedUser = useRef(false);
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -75,6 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
+        hasInitializedUser.current = true;
         console.log('[Auth] Fetching profile for:', session.user.id);
         fetchProfile(session.user.id);
       }
@@ -93,9 +95,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
 
         isProcessingAuth.current = true;
-        setLoading(true);
+
+        // Only show loading spinner if we haven't initialized yet
+        // This prevents the flash when returning to tab
+        const isFirstTimeUser = !hasInitializedUser.current;
+
+        if (isFirstTimeUser && session?.user) {
+          setLoading(true);
+        }
+
         setSession(session);
         setUser(session?.user ?? null);
+
+        if (session?.user) {
+          hasInitializedUser.current = true;
+        }
+
         try {
           if (session?.user) {
             console.log('[Auth] Fetching profile for:', session.user.id);
@@ -103,10 +118,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             console.log('[Auth] Profile fetch complete');
           } else {
             setProfile(null);
+            hasInitializedUser.current = false;
           }
         } catch (err) {
           console.error('[Auth] Error during auth state change:', err);
-          setProfile(null);
+          // Don't clear profile on error if we already had one - just keep using it
+          console.log('[Auth] Keeping existing profile due to error');
         } finally {
           setLoading(false);
           isProcessingAuth.current = false;
