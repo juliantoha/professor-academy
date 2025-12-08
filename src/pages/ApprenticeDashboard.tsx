@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import Dashboard from './Dashboard';
-import { LogOut, Settings, ChevronDown, AlertCircle } from 'lucide-react';
+import { LogOut, Settings, ChevronDown, AlertCircle, Clock, RefreshCw, Mail } from 'lucide-react';
 
 const ApprenticeDashboard = () => {
   const { user, profile, signOut } = useAuth();
@@ -11,6 +11,7 @@ const ApprenticeDashboard = () => {
   const [dashboardToken, setDashboardToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [waitingForProfessor, setWaitingForProfessor] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const displayName = profile?.firstName || profile?.name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Student';
@@ -25,6 +26,7 @@ const ApprenticeDashboard = () => {
     try {
       setLoading(true);
       setError('');
+      setWaitingForProfessor(false);
 
       // Look up the apprentice record by email
       const { data, error: fetchError } = await supabase
@@ -35,8 +37,8 @@ const ApprenticeDashboard = () => {
 
       if (fetchError) {
         if (fetchError.code === 'PGRST116') {
-          // No record found
-          setError('No apprentice record found for your account. Please contact your professor.');
+          // No record found - apprentice signed up before professor added them
+          setWaitingForProfessor(true);
         } else {
           throw fetchError;
         }
@@ -93,6 +95,175 @@ const ApprenticeDashboard = () => {
             to { transform: rotate(360deg); }
           }
         `}</style>
+      </div>
+    );
+  }
+
+  // Friendly waiting state when apprentice signs up before professor adds them
+  if (waitingForProfessor) {
+    return (
+      <div style={{
+        fontFamily: 'Lato, sans-serif',
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '2rem'
+      }}>
+        <div style={{
+          background: 'white',
+          borderRadius: '24px',
+          padding: '3rem',
+          maxWidth: '520px',
+          width: '100%',
+          textAlign: 'center',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+        }}>
+          <div style={{
+            width: '100px',
+            height: '100px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 1.5rem',
+            border: '3px solid #F59E0B'
+          }}>
+            <Clock size={48} color="#D97706" />
+          </div>
+
+          <h1 style={{
+            fontFamily: 'Montserrat, sans-serif',
+            fontSize: '26px',
+            fontWeight: 700,
+            color: '#004A69',
+            margin: '0 0 0.5rem 0'
+          }}>
+            Almost There!
+          </h1>
+
+          <p style={{
+            fontSize: '17px',
+            color: '#D97706',
+            fontWeight: 600,
+            margin: '0 0 1.5rem 0'
+          }}>
+            Waiting for your professor to set up your dashboard
+          </p>
+
+          <div style={{
+            background: 'linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%)',
+            borderRadius: '14px',
+            padding: '1.5rem',
+            marginBottom: '1.5rem',
+            border: '2px solid rgba(0,102,162,0.2)',
+            textAlign: 'left'
+          }}>
+            <p style={{
+              fontSize: '15px',
+              color: '#004A69',
+              margin: '0 0 1rem 0',
+              lineHeight: 1.6
+            }}>
+              <strong>What's happening?</strong>
+            </p>
+            <p style={{
+              fontSize: '14px',
+              color: '#374151',
+              margin: '0 0 1rem 0',
+              lineHeight: 1.7
+            }}>
+              Your account is created successfully! Your professor just needs to add you to their studio before you can access your training dashboard.
+            </p>
+            <p style={{
+              fontSize: '14px',
+              color: '#374151',
+              margin: 0,
+              lineHeight: 1.7
+            }}>
+              <strong>What to do:</strong> Reach out to your professor and let them know you've signed up with this email. They'll add you to the system, and you'll be good to go!
+            </p>
+          </div>
+
+          <div style={{
+            background: '#FEF3C7',
+            borderRadius: '10px',
+            padding: '1rem',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem'
+          }}>
+            <Mail size={20} color="#D97706" />
+            <span style={{
+              fontSize: '14px',
+              color: '#92400E'
+            }}>
+              Your email: <strong>{user?.email}</strong>
+            </span>
+          </div>
+
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.75rem'
+          }}>
+            <button
+              onClick={() => fetchDashboardToken()}
+              style={{
+                padding: '1rem 1.5rem',
+                fontSize: '15px',
+                fontWeight: 600,
+                color: 'white',
+                background: 'linear-gradient(135deg, #0066A2 0%, #004A69 100%)',
+                border: 'none',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                boxShadow: '0 4px 12px rgba(0,102,162,0.3)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,102,162,0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,102,162,0.3)';
+              }}
+            >
+              <RefreshCw size={18} />
+              Check Again
+            </button>
+
+            <button
+              onClick={handleSignOut}
+              style={{
+                padding: '0.875rem 1.5rem',
+                fontSize: '14px',
+                fontWeight: 500,
+                color: '#6B7280',
+                background: 'transparent',
+                border: '2px solid #E5E7EB',
+                borderRadius: '10px',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              <LogOut size={16} />
+              Sign Out
+            </button>
+          </div>
+        </div>
       </div>
     );
   }

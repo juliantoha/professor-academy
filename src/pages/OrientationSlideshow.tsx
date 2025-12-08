@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, CheckCircle, Award, Target, TrendingUp, Users, Zap, Book, Maximize, Minimize } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle, Award, Target, TrendingUp, Users, Zap, Book, Maximize, Minimize, Briefcase, DollarSign, Clock, Shield, FileText, Calendar } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface OrientationProps {
@@ -16,6 +16,7 @@ const OrientationSlideshow = ({ apprenticeName, apprenticeEmail, professorEmail,
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [alreadyCompleted, setAlreadyCompleted] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(true);
+  const [employmentType, setEmploymentType] = useState<'1099' | 'part-time' | null>(null);
 
   // Check if orientation is already completed on mount
   useEffect(() => {
@@ -145,6 +146,15 @@ const OrientationSlideshow = ({ apprenticeName, apprenticeEmail, professorEmail,
       color: '#0066A2'
     },
     {
+      id: 'employment',
+      icon: Briefcase,
+      title: 'Choose Your Path',
+      subtitle: 'Employment Type Selection',
+      content: [],
+      isEmploymentSlide: true,
+      color: '#8B5CF6'
+    },
+    {
       id: 'complete',
       icon: Award,
       title: 'Ready to Begin',
@@ -212,16 +222,32 @@ const OrientationSlideshow = ({ apprenticeName, apprenticeEmail, professorEmail,
       return;
     }
 
+    if (!employmentType) {
+      alert('❌ Please select your preferred employment type before completing orientation.');
+      return;
+    }
+
     setSubmitting(true);
-    
+
     try {
       const { markOrientationComplete } = await import('../services/submissionService');
-      
+
       await markOrientationComplete({
         apprenticeName: apprenticeName || 'Apprentice',
         apprenticeEmail,
         professorEmail
       });
+
+      // Save employment type preference to apprentice record
+      const { error: updateError } = await supabase
+        .from('apprentices')
+        .update({ employmentType })
+        .eq('email', apprenticeEmail);
+
+      if (updateError) {
+        console.warn('Could not save employment type preference:', updateError);
+        // Don't block completion if this fails - it's not critical
+      }
       
       setCompleted(true);
       setAlreadyCompleted(true);
@@ -465,31 +491,316 @@ const OrientationSlideshow = ({ apprenticeName, apprenticeEmail, professorEmail,
 
         {/* Content */}
         <div style={{ marginBottom: '2rem' }}>
-          {currentSlideData.content.map((item, index) => (
-            <div
-              key={index}
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                marginBottom: '1.25rem',
-                padding: '1.25rem 1.5rem',
-                background: 'linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%)',
-                borderRadius: '14px',
-                borderLeft: `5px solid ${currentSlideData.color}`,
-                transition: 'all 0.3s ease',
-                animation: `fadeIn 0.5s ease-out ${index * 0.1}s both`
-              }}
-            >
-              <span style={{
-                fontSize: '1.15rem',
+          {currentSlideData.id === 'employment' ? (
+            // Employment Type Selection UI
+            <div style={{ animation: 'fadeIn 0.5s ease-out' }}>
+              <p style={{
+                fontSize: '1.1rem',
                 color: '#374151',
                 lineHeight: '1.7',
-                fontWeight: 500
+                marginBottom: '2rem',
+                textAlign: 'center'
               }}>
-                {item}
-              </span>
+                At Oclef, you can choose how you'd like to work with us. Please select your preferred employment arrangement:
+              </p>
+
+              {/* Selection Cards */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                gap: '1.5rem',
+                marginBottom: '2rem'
+              }}>
+                {/* 1099 Contractor Option */}
+                <div
+                  onClick={() => setEmploymentType('1099')}
+                  style={{
+                    background: employmentType === '1099'
+                      ? 'linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%)'
+                      : 'linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%)',
+                    border: employmentType === '1099'
+                      ? '3px solid #8B5CF6'
+                      : '2px solid #E5E7EB',
+                    borderRadius: '16px',
+                    padding: '1.5rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    transform: employmentType === '1099' ? 'scale(1.02)' : 'scale(1)',
+                    boxShadow: employmentType === '1099' ? '0 8px 24px rgba(139,92,246,0.25)' : 'none'
+                  }}
+                >
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1rem',
+                    marginBottom: '1rem'
+                  }}>
+                    <div style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '12px',
+                      background: employmentType === '1099'
+                        ? 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)'
+                        : 'linear-gradient(135deg, #9CA3AF 0%, #6B7280 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <FileText size={24} color="white" />
+                    </div>
+                    <div>
+                      <h3 style={{
+                        fontSize: '1.25rem',
+                        fontWeight: 700,
+                        color: '#004A69',
+                        margin: 0
+                      }}>
+                        1099 Contractor
+                      </h3>
+                      <p style={{
+                        fontSize: '0.9rem',
+                        color: '#6B7280',
+                        margin: '0.25rem 0 0 0'
+                      }}>
+                        Independent contractor status
+                      </p>
+                    </div>
+                    {employmentType === '1099' && (
+                      <CheckCircle size={28} color="#8B5CF6" style={{ marginLeft: 'auto' }} />
+                    )}
+                  </div>
+
+                  <div style={{
+                    background: 'rgba(255,255,255,0.7)',
+                    borderRadius: '12px',
+                    padding: '1rem'
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      marginBottom: '0.75rem',
+                      color: '#059669'
+                    }}>
+                      <DollarSign size={16} />
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Pros:</span>
+                    </div>
+                    <ul style={{
+                      margin: '0 0 1rem 0',
+                      paddingLeft: '1.5rem',
+                      fontSize: '0.85rem',
+                      color: '#374151',
+                      lineHeight: '1.6'
+                    }}>
+                      <li>Higher per-hour pay rate</li>
+                      <li>Flexibility in scheduling</li>
+                      <li>Tax deductions for work expenses</li>
+                      <li>Work with multiple clients</li>
+                    </ul>
+
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      marginBottom: '0.75rem',
+                      color: '#DC2626'
+                    }}>
+                      <Clock size={16} />
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Considerations:</span>
+                    </div>
+                    <ul style={{
+                      margin: 0,
+                      paddingLeft: '1.5rem',
+                      fontSize: '0.85rem',
+                      color: '#374151',
+                      lineHeight: '1.6'
+                    }}>
+                      <li>Responsible for self-employment taxes (~15.3%)</li>
+                      <li>No employer-provided benefits</li>
+                      <li>Must file quarterly estimated taxes</li>
+                      <li>No paid time off</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Part-Time Employee Option */}
+                <div
+                  onClick={() => setEmploymentType('part-time')}
+                  style={{
+                    background: employmentType === 'part-time'
+                      ? 'linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%)'
+                      : 'linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%)',
+                    border: employmentType === 'part-time'
+                      ? '3px solid #0066A2'
+                      : '2px solid #E5E7EB',
+                    borderRadius: '16px',
+                    padding: '1.5rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    transform: employmentType === 'part-time' ? 'scale(1.02)' : 'scale(1)',
+                    boxShadow: employmentType === 'part-time' ? '0 8px 24px rgba(0,102,162,0.25)' : 'none'
+                  }}
+                >
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1rem',
+                    marginBottom: '1rem'
+                  }}>
+                    <div style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '12px',
+                      background: employmentType === 'part-time'
+                        ? 'linear-gradient(135deg, #0066A2 0%, #004A69 100%)'
+                        : 'linear-gradient(135deg, #9CA3AF 0%, #6B7280 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <Calendar size={24} color="white" />
+                    </div>
+                    <div>
+                      <h3 style={{
+                        fontSize: '1.25rem',
+                        fontWeight: 700,
+                        color: '#004A69',
+                        margin: 0
+                      }}>
+                        Part-Time Employee
+                      </h3>
+                      <p style={{
+                        fontSize: '0.9rem',
+                        color: '#6B7280',
+                        margin: '0.25rem 0 0 0'
+                      }}>
+                        W-2 employee status
+                      </p>
+                    </div>
+                    {employmentType === 'part-time' && (
+                      <CheckCircle size={28} color="#0066A2" style={{ marginLeft: 'auto' }} />
+                    )}
+                  </div>
+
+                  <div style={{
+                    background: 'rgba(255,255,255,0.7)',
+                    borderRadius: '12px',
+                    padding: '1rem'
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      marginBottom: '0.75rem',
+                      color: '#059669'
+                    }}>
+                      <Shield size={16} />
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Pros:</span>
+                    </div>
+                    <ul style={{
+                      margin: '0 0 1rem 0',
+                      paddingLeft: '1.5rem',
+                      fontSize: '0.85rem',
+                      color: '#374151',
+                      lineHeight: '1.6'
+                    }}>
+                      <li>Employer handles tax withholding</li>
+                      <li>May qualify for benefits (health, etc.)</li>
+                      <li>Simpler tax filing (W-2)</li>
+                      <li>Stable, predictable pay schedule</li>
+                    </ul>
+
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      marginBottom: '0.75rem',
+                      color: '#DC2626'
+                    }}>
+                      <Clock size={16} />
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Considerations:</span>
+                    </div>
+                    <ul style={{
+                      margin: 0,
+                      paddingLeft: '1.5rem',
+                      fontSize: '0.85rem',
+                      color: '#374151',
+                      lineHeight: '1.6'
+                    }}>
+                      <li>Lower hourly rate than contractors</li>
+                      <li>Set schedule requirements</li>
+                      <li>Exclusivity requirements may apply</li>
+                      <li>Fewer tax deduction opportunities</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Selection Status */}
+              {employmentType && (
+                <div style={{
+                  background: employmentType === '1099'
+                    ? 'linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%)'
+                    : 'linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%)',
+                  borderRadius: '12px',
+                  padding: '1rem 1.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  border: employmentType === '1099'
+                    ? '2px solid #8B5CF6'
+                    : '2px solid #0066A2',
+                  animation: 'fadeIn 0.3s ease-out'
+                }}>
+                  <CheckCircle size={24} color={employmentType === '1099' ? '#8B5CF6' : '#0066A2'} />
+                  <span style={{
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                    color: employmentType === '1099' ? '#6D28D9' : '#004A69'
+                  }}>
+                    You've selected: {employmentType === '1099' ? '1099 Contractor' : 'Part-Time Employee'}
+                  </span>
+                </div>
+              )}
+
+              <p style={{
+                fontSize: '0.9rem',
+                color: '#6B7280',
+                textAlign: 'center',
+                marginTop: '1.5rem',
+                fontStyle: 'italic'
+              }}>
+                Note: This preference will be shared with your professor. You can discuss and finalize the arrangement with them.
+              </p>
             </div>
-          ))}
+          ) : (
+            // Regular content for other slides
+            currentSlideData.content.map((item, index) => (
+              <div
+                key={index}
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  marginBottom: '1.25rem',
+                  padding: '1.25rem 1.5rem',
+                  background: 'linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%)',
+                  borderRadius: '14px',
+                  borderLeft: `5px solid ${currentSlideData.color}`,
+                  transition: 'all 0.3s ease',
+                  animation: `fadeIn 0.5s ease-out ${index * 0.1}s both`
+                }}
+              >
+                <span style={{
+                  fontSize: '1.15rem',
+                  color: '#374151',
+                  lineHeight: '1.7',
+                  fontWeight: 500
+                }}>
+                  {item}
+                </span>
+              </div>
+            ))
+          )}
         </div>
 
         {/* Complete Button or Back to Dashboard (on last slide) */}
