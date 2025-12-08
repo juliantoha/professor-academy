@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { LogOut, Users, Clock, CheckCircle, ExternalLink, RefreshCw, Settings, ChevronDown } from 'lucide-react';
+import { LogOut, Users, Clock, CheckCircle, ExternalLink, RefreshCw, Settings, ChevronDown, Plus, X, UserPlus, Copy, Check } from 'lucide-react';
 
 interface Apprentice {
   id: string;
@@ -41,6 +41,15 @@ const ProfessorDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+  // Add Apprentice modal state
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newApprenticeName, setNewApprenticeName] = useState('');
+  const [newApprenticeEmail, setNewApprenticeEmail] = useState('');
+  const [adding, setAdding] = useState(false);
+  const [addError, setAddError] = useState('');
+  const [addSuccess, setAddSuccess] = useState<{ email: string; dashboardUrl: string } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   // Get display name
   const displayName = profile?.firstName || profile?.name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Professor';
@@ -111,6 +120,106 @@ const ProfessorDashboard = () => {
     const completed = apprenticeProgress.filter(p => p.Status === 'Completed' || p.Status === 'Approved').length;
     const submitted = apprenticeProgress.filter(p => p.Status === 'Submitted').length;
     return { completed, submitted, total: apprenticeProgress.length };
+  };
+
+  // Generate a unique token for the dashboard
+  const generateToken = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let token = '';
+    for (let i = 0; i < 32; i++) {
+      token += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return token;
+  };
+
+  // Generate a unique apprentice ID
+  const generateApprenticeId = () => {
+    const prefix = 'APP';
+    const timestamp = Date.now().toString(36).toUpperCase();
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `${prefix}-${timestamp}-${random}`;
+  };
+
+  const handleAddApprentice = async () => {
+    if (!newApprenticeName.trim() || !newApprenticeEmail.trim()) {
+      setAddError('Please enter both name and email');
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newApprenticeEmail)) {
+      setAddError('Please enter a valid email address');
+      return;
+    }
+
+    setAdding(true);
+    setAddError('');
+
+    try {
+      // Check if apprentice already exists
+      const { data: existing } = await supabase
+        .from('apprentices')
+        .select('email')
+        .eq('email', newApprenticeEmail.toLowerCase())
+        .single();
+
+      if (existing) {
+        setAddError('An apprentice with this email already exists');
+        setAdding(false);
+        return;
+      }
+
+      const dashboardToken = generateToken();
+      const apprenticeId = generateApprenticeId();
+
+      const { error: insertError } = await supabase
+        .from('apprentices')
+        .insert({
+          apprenticeId,
+          name: newApprenticeName.trim(),
+          email: newApprenticeEmail.toLowerCase().trim(),
+          professorEmail: user?.email,
+          dashboardToken
+        });
+
+      if (insertError) throw insertError;
+
+      const dashboardUrl = `${window.location.origin}/dashboard/${dashboardToken}`;
+
+      setAddSuccess({
+        email: newApprenticeEmail.toLowerCase().trim(),
+        dashboardUrl
+      });
+
+      // Refresh the apprentices list
+      fetchData();
+
+    } catch (err: any) {
+      console.error('Error adding apprentice:', err);
+      setAddError(err.message || 'Failed to add apprentice');
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const handleCopyLink = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  const resetAddModal = () => {
+    setShowAddModal(false);
+    setNewApprenticeName('');
+    setNewApprenticeEmail('');
+    setAddError('');
+    setAddSuccess(null);
+    setCopied(false);
   };
 
   if (loading) {
@@ -597,30 +706,68 @@ const ProfessorDashboard = () => {
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.75rem',
-            marginBottom: '1.5rem'
+            justifyContent: 'space-between',
+            marginBottom: '1.5rem',
+            flexWrap: 'wrap',
+            gap: '1rem'
           }}>
             <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #004A69 0%, #0066A2 100%)',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(0,74,105,0.3)'
+              gap: '0.75rem'
             }}>
-              <Users size={22} color="white" />
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #004A69 0%, #0066A2 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(0,74,105,0.3)'
+              }}>
+                <Users size={22} color="white" />
+              </div>
+              <h2 style={{
+                fontFamily: 'Montserrat, sans-serif',
+                fontSize: '22px',
+                fontWeight: 700,
+                color: '#004A69',
+                margin: 0
+              }}>
+                Your Apprentices ({apprentices.length})
+              </h2>
             </div>
-            <h2 style={{
-              fontFamily: 'Montserrat, sans-serif',
-              fontSize: '22px',
-              fontWeight: 700,
-              color: '#004A69',
-              margin: 0
-            }}>
-              Your Apprentices ({apprentices.length})
-            </h2>
+
+            <button
+              onClick={() => setShowAddModal(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem 1.25rem',
+                fontSize: '14px',
+                fontWeight: 600,
+                color: 'white',
+                background: 'linear-gradient(135deg, #eb6a18 0%, #ff8c3d 100%)',
+                border: 'none',
+                borderRadius: '10px',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(235,106,24,0.3)',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 6px 16px rgba(235,106,24,0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(235,106,24,0.3)';
+              }}
+            >
+              <UserPlus size={18} />
+              Add Apprentice
+            </button>
           </div>
 
           {apprentices.length === 0 ? (
@@ -946,6 +1093,344 @@ const ProfessorDashboard = () => {
       }}>
         © {new Date().getFullYear()} Oclef Professor Academy
       </footer>
+
+      {/* Add Apprentice Modal */}
+      {showAddModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '1rem'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '24px',
+            width: '100%',
+            maxWidth: '480px',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              background: 'linear-gradient(135deg, #003250 0%, #004A69 50%, #0066A2 100%)',
+              padding: '1.5rem 2rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <UserPlus size={24} color="white" />
+                <h3 style={{
+                  fontFamily: 'Montserrat, sans-serif',
+                  fontSize: '20px',
+                  fontWeight: 700,
+                  color: 'white',
+                  margin: 0
+                }}>
+                  Add Apprentice
+                </h3>
+              </div>
+              <button
+                onClick={resetAddModal}
+                style={{
+                  background: 'rgba(255,255,255,0.1)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '0.5rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <X size={20} color="white" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div style={{ padding: '2rem' }}>
+              {addSuccess ? (
+                // Success state
+                <div>
+                  <div style={{
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 1.5rem'
+                  }}>
+                    <CheckCircle size={32} color="#059669" />
+                  </div>
+
+                  <h4 style={{
+                    fontFamily: 'Montserrat, sans-serif',
+                    fontSize: '18px',
+                    fontWeight: 600,
+                    color: '#004A69',
+                    textAlign: 'center',
+                    margin: '0 0 0.5rem 0'
+                  }}>
+                    Apprentice Added!
+                  </h4>
+
+                  <p style={{
+                    fontSize: '14px',
+                    color: '#6B7280',
+                    textAlign: 'center',
+                    margin: '0 0 1.5rem 0'
+                  }}>
+                    {addSuccess.email} can now register and access their dashboard.
+                  </p>
+
+                  <div style={{
+                    background: '#F9FAFB',
+                    border: '2px solid #E5E7EB',
+                    borderRadius: '12px',
+                    padding: '1rem',
+                    marginBottom: '1rem'
+                  }}>
+                    <p style={{
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: '#004A69',
+                      margin: '0 0 0.5rem 0'
+                    }}>
+                      Dashboard Link (optional - they can also just login):
+                    </p>
+                    <div style={{
+                      display: 'flex',
+                      gap: '0.5rem',
+                      alignItems: 'center'
+                    }}>
+                      <input
+                        type="text"
+                        value={addSuccess.dashboardUrl}
+                        readOnly
+                        style={{
+                          flex: 1,
+                          padding: '0.75rem',
+                          fontSize: '13px',
+                          border: '1px solid #E5E7EB',
+                          borderRadius: '8px',
+                          background: 'white',
+                          color: '#4B5563'
+                        }}
+                      />
+                      <button
+                        onClick={() => handleCopyLink(addSuccess.dashboardUrl)}
+                        style={{
+                          padding: '0.75rem',
+                          background: copied ? '#059669' : '#004A69',
+                          border: 'none',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'background 0.2s ease'
+                        }}
+                      >
+                        {copied ? <Check size={18} color="white" /> : <Copy size={18} color="white" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={{
+                    background: 'linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%)',
+                    border: '2px solid #0066A2',
+                    borderRadius: '12px',
+                    padding: '1rem',
+                    marginBottom: '1.5rem'
+                  }}>
+                    <p style={{
+                      fontSize: '13px',
+                      color: '#004A69',
+                      margin: 0,
+                      lineHeight: 1.5
+                    }}>
+                      <strong>Next step:</strong> Tell your apprentice to sign up at the login page using the email <strong>{addSuccess.email}</strong>. They'll automatically be connected to their dashboard.
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={resetAddModal}
+                    style={{
+                      width: '100%',
+                      padding: '0.875rem',
+                      fontSize: '15px',
+                      fontWeight: 600,
+                      color: 'white',
+                      background: 'linear-gradient(135deg, #004A69 0%, #0066A2 100%)',
+                      border: 'none',
+                      borderRadius: '10px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Done
+                  </button>
+                </div>
+              ) : (
+                // Form state
+                <div>
+                  <p style={{
+                    fontSize: '14px',
+                    color: '#6B7280',
+                    margin: '0 0 1.5rem 0',
+                    lineHeight: 1.5
+                  }}>
+                    Add an apprentice to your program. They'll receive access to their training dashboard once they register with the same email.
+                  </p>
+
+                  {addError && (
+                    <div style={{
+                      background: 'linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)',
+                      border: '2px solid #DC2626',
+                      borderRadius: '10px',
+                      padding: '0.875rem 1rem',
+                      marginBottom: '1rem',
+                      fontSize: '14px',
+                      color: '#991B1B'
+                    }}>
+                      {addError}
+                    </div>
+                  )}
+
+                  <div style={{ marginBottom: '1.25rem' }}>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      color: '#004A69',
+                      marginBottom: '0.5rem'
+                    }}>
+                      Apprentice Name
+                    </label>
+                    <input
+                      type="text"
+                      value={newApprenticeName}
+                      onChange={(e) => setNewApprenticeName(e.target.value)}
+                      placeholder="e.g., John Smith"
+                      style={{
+                        width: '100%',
+                        padding: '0.875rem 1rem',
+                        fontSize: '15px',
+                        border: '2px solid #E5E7EB',
+                        borderRadius: '10px',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        transition: 'border-color 0.2s ease'
+                      }}
+                      onFocus={(e) => e.target.style.borderColor = '#0066A2'}
+                      onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      color: '#004A69',
+                      marginBottom: '0.5rem'
+                    }}>
+                      Apprentice Email
+                    </label>
+                    <input
+                      type="email"
+                      value={newApprenticeEmail}
+                      onChange={(e) => setNewApprenticeEmail(e.target.value)}
+                      placeholder="e.g., john@example.com"
+                      style={{
+                        width: '100%',
+                        padding: '0.875rem 1rem',
+                        fontSize: '15px',
+                        border: '2px solid #E5E7EB',
+                        borderRadius: '10px',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        transition: 'border-color 0.2s ease'
+                      }}
+                      onFocus={(e) => e.target.style.borderColor = '#0066A2'}
+                      onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <button
+                      onClick={resetAddModal}
+                      style={{
+                        flex: 1,
+                        padding: '0.875rem',
+                        fontSize: '15px',
+                        fontWeight: 600,
+                        color: '#004A69',
+                        background: 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)',
+                        border: '2px solid #E5E7EB',
+                        borderRadius: '10px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleAddApprentice}
+                      disabled={adding}
+                      style={{
+                        flex: 1,
+                        padding: '0.875rem',
+                        fontSize: '15px',
+                        fontWeight: 600,
+                        color: 'white',
+                        background: adding
+                          ? 'linear-gradient(135deg, #9CA3AF 0%, #D1D5DB 100%)'
+                          : 'linear-gradient(135deg, #eb6a18 0%, #ff8c3d 100%)',
+                        border: 'none',
+                        borderRadius: '10px',
+                        cursor: adding ? 'not-allowed' : 'pointer',
+                        boxShadow: adding ? 'none' : '0 4px 12px rgba(235,106,24,0.3)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem'
+                      }}
+                    >
+                      {adding ? (
+                        <>
+                          <div style={{
+                            width: '18px',
+                            height: '18px',
+                            border: '2px solid rgba(255,255,255,0.3)',
+                            borderTopColor: 'white',
+                            borderRadius: '50%',
+                            animation: 'spin 1s linear infinite'
+                          }} />
+                          Adding...
+                        </>
+                      ) : (
+                        <>
+                          <Plus size={18} />
+                          Add Apprentice
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <style>{`
         @keyframes spin {
