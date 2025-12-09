@@ -572,7 +572,7 @@ const OrientationSlideshow = ({ apprenticeName, apprenticeEmail, professorEmail,
                   }}>
                     <li>You handle your own taxes (quarterly estimated payments)</li>
                     <li>Flexibility to work with other clients</li>
-                    <li>Can deduct work-related expenses</li>
+                    <li>Can deduct work expenses to reduce tax liability</li>
                     <li>No workers' compensation coverage</li>
                   </ul>
                 </div>
