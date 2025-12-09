@@ -11,6 +11,7 @@ interface Apprentice {
   email: string;
   dashboardToken: string;
   createdAt?: string;
+  employmentType?: '1099' | 'part-time' | null;
 }
 
 interface Progress {
@@ -879,6 +880,24 @@ const ProfessorDashboard = () => {
                           </p>
                         </div>
                       </div>
+                      {apprentice.employmentType && (
+                        <span style={{
+                          padding: '0.3rem 0.6rem',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          borderRadius: '6px',
+                          background: apprentice.employmentType === '1099'
+                            ? 'linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%)'
+                            : 'linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%)',
+                          color: apprentice.employmentType === '1099' ? '#6D28D9' : '#1E40AF',
+                          border: apprentice.employmentType === '1099'
+                            ? '1px solid #8B5CF6'
+                            : '1px solid #3B82F6',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {apprentice.employmentType === '1099' ? '1099' : 'W-2'}
+                        </span>
+                      )}
                     </div>
 
                     {/* Progress Bar */}
