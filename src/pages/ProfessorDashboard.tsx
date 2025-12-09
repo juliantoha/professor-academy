@@ -39,6 +39,7 @@ const ProfessorDashboard = () => {
   const [apprentices, setApprentices] = useState<Apprentice[]>([]);
   const [progress, setProgress] = useState<Record<string, Progress[]>>({});
   const [pendingSubmissions, setPendingSubmissions] = useState<Submission[]>([]);
+  const [apprenticeProfiles, setApprenticeProfiles] = useState<Record<string, { avatarUrl?: string }>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -91,6 +92,22 @@ const ProfessorDashboard = () => {
           progressMap[p.apprenticeEmail].push(p);
         });
         setProgress(progressMap);
+
+        // Fetch apprentice profile photos
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('user_profiles')
+          .select('email, avatarUrl')
+          .in('email', emails);
+
+        if (profilesError) {
+          console.error('Error fetching apprentice profiles:', profilesError);
+        } else {
+          const profilesMap: Record<string, { avatarUrl?: string }> = {};
+          (profilesData || []).forEach(p => {
+            profilesMap[p.email] = { avatarUrl: p.avatarUrl };
+          });
+          setApprenticeProfiles(profilesMap);
+        }
       }
 
       const { data: submissionsData, error: submissionsError } = await supabase
@@ -846,20 +863,24 @@ const ProfessorDashboard = () => {
                           width: '52px',
                           height: '52px',
                           borderRadius: '14px',
-                          background: 'linear-gradient(135deg, #004A69 0%, #0066A2 100%)',
+                          background: apprenticeProfiles[apprentice.email]?.avatarUrl
+                            ? `url(${apprenticeProfiles[apprentice.email].avatarUrl}) center/cover no-repeat`
+                            : 'linear-gradient(135deg, #004A69 0%, #0066A2 100%)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           boxShadow: '0 4px 12px rgba(0,74,105,0.3)'
                         }}>
-                          <span style={{
-                            fontFamily: 'Montserrat, sans-serif',
-                            fontSize: '20px',
-                            fontWeight: 700,
-                            color: 'white'
-                          }}>
-                            {apprentice.name.charAt(0).toUpperCase()}
-                          </span>
+                          {!apprenticeProfiles[apprentice.email]?.avatarUrl && (
+                            <span style={{
+                              fontFamily: 'Montserrat, sans-serif',
+                              fontSize: '20px',
+                              fontWeight: 700,
+                              color: 'white'
+                            }}>
+                              {apprentice.name.charAt(0).toUpperCase()}
+                            </span>
+                          )}
                         </div>
                         <div>
                           <h3 style={{
