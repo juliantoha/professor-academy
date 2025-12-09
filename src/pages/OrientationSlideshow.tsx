@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, CheckCircle, Award, Target, TrendingUp, Users, Zap, Book, Maximize, Minimize, Briefcase, DollarSign, Clock, Shield, FileText, Calendar } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle, Award, Target, TrendingUp, Users, Zap, Book, Maximize, Minimize, Briefcase, FileText, Calendar } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface OrientationProps {
@@ -501,13 +501,13 @@ const OrientationSlideshow = ({ apprenticeName, apprenticeEmail, professorEmail,
                 marginBottom: '2rem',
                 textAlign: 'center'
               }}>
-                At Oclef, you can choose how you'd like to work with us. Please select your preferred employment arrangement:
+                How would you like to work with Oclef? Select your preferred arrangement:
               </p>
 
               {/* Selection Cards */}
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
                 gap: '1.5rem',
                 marginBottom: '2rem'
               }}>
@@ -533,7 +533,7 @@ const OrientationSlideshow = ({ apprenticeName, apprenticeEmail, professorEmail,
                     display: 'flex',
                     alignItems: 'center',
                     gap: '1rem',
-                    marginBottom: '1rem'
+                    marginBottom: '1.25rem'
                   }}>
                     <div style={{
                       width: '48px',
@@ -548,79 +548,33 @@ const OrientationSlideshow = ({ apprenticeName, apprenticeEmail, professorEmail,
                     }}>
                       <FileText size={24} color="white" />
                     </div>
-                    <div>
+                    <div style={{ flex: 1 }}>
                       <h3 style={{
-                        fontSize: '1.25rem',
+                        fontSize: '1.2rem',
                         fontWeight: 700,
                         color: '#004A69',
                         margin: 0
                       }}>
                         1099 Contractor
                       </h3>
-                      <p style={{
-                        fontSize: '0.9rem',
-                        color: '#6B7280',
-                        margin: '0.25rem 0 0 0'
-                      }}>
-                        Independent contractor status
-                      </p>
                     </div>
                     {employmentType === '1099' && (
-                      <CheckCircle size={28} color="#8B5CF6" style={{ marginLeft: 'auto' }} />
+                      <CheckCircle size={28} color="#8B5CF6" />
                     )}
                   </div>
 
-                  <div style={{
-                    background: 'rgba(255,255,255,0.7)',
-                    borderRadius: '12px',
-                    padding: '1rem'
+                  <ul style={{
+                    margin: 0,
+                    paddingLeft: '1.25rem',
+                    fontSize: '0.95rem',
+                    color: '#374151',
+                    lineHeight: '1.8'
                   }}>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      marginBottom: '0.75rem',
-                      color: '#059669'
-                    }}>
-                      <DollarSign size={16} />
-                      <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Pros:</span>
-                    </div>
-                    <ul style={{
-                      margin: '0 0 1rem 0',
-                      paddingLeft: '1.5rem',
-                      fontSize: '0.85rem',
-                      color: '#374151',
-                      lineHeight: '1.6'
-                    }}>
-                      <li>Higher per-hour pay rate</li>
-                      <li>Flexibility in scheduling</li>
-                      <li>Tax deductions for work expenses</li>
-                      <li>Work with multiple clients</li>
-                    </ul>
-
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      marginBottom: '0.75rem',
-                      color: '#DC2626'
-                    }}>
-                      <Clock size={16} />
-                      <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Considerations:</span>
-                    </div>
-                    <ul style={{
-                      margin: 0,
-                      paddingLeft: '1.5rem',
-                      fontSize: '0.85rem',
-                      color: '#374151',
-                      lineHeight: '1.6'
-                    }}>
-                      <li>Responsible for self-employment taxes (~15.3%)</li>
-                      <li>No employer-provided benefits</li>
-                      <li>Must file quarterly estimated taxes</li>
-                      <li>No paid time off</li>
-                    </ul>
-                  </div>
+                    <li>You handle your own taxes (quarterly estimated payments)</li>
+                    <li>Flexibility to work with other clients</li>
+                    <li>Can deduct work-related expenses</li>
+                    <li>No workers' compensation coverage</li>
+                  </ul>
                 </div>
 
                 {/* Part-Time Employee Option */}
@@ -645,7 +599,7 @@ const OrientationSlideshow = ({ apprenticeName, apprenticeEmail, professorEmail,
                     display: 'flex',
                     alignItems: 'center',
                     gap: '1rem',
-                    marginBottom: '1rem'
+                    marginBottom: '1.25rem'
                   }}>
                     <div style={{
                       width: '48px',
@@ -660,79 +614,33 @@ const OrientationSlideshow = ({ apprenticeName, apprenticeEmail, professorEmail,
                     }}>
                       <Calendar size={24} color="white" />
                     </div>
-                    <div>
+                    <div style={{ flex: 1 }}>
                       <h3 style={{
-                        fontSize: '1.25rem',
+                        fontSize: '1.2rem',
                         fontWeight: 700,
                         color: '#004A69',
                         margin: 0
                       }}>
                         Part-Time Employee
                       </h3>
-                      <p style={{
-                        fontSize: '0.9rem',
-                        color: '#6B7280',
-                        margin: '0.25rem 0 0 0'
-                      }}>
-                        W-2 employee status
-                      </p>
                     </div>
                     {employmentType === 'part-time' && (
-                      <CheckCircle size={28} color="#0066A2" style={{ marginLeft: 'auto' }} />
+                      <CheckCircle size={28} color="#0066A2" />
                     )}
                   </div>
 
-                  <div style={{
-                    background: 'rgba(255,255,255,0.7)',
-                    borderRadius: '12px',
-                    padding: '1rem'
+                  <ul style={{
+                    margin: 0,
+                    paddingLeft: '1.25rem',
+                    fontSize: '0.95rem',
+                    color: '#374151',
+                    lineHeight: '1.8'
                   }}>
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      marginBottom: '0.75rem',
-                      color: '#059669'
-                    }}>
-                      <Shield size={16} />
-                      <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Pros:</span>
-                    </div>
-                    <ul style={{
-                      margin: '0 0 1rem 0',
-                      paddingLeft: '1.5rem',
-                      fontSize: '0.85rem',
-                      color: '#374151',
-                      lineHeight: '1.6'
-                    }}>
-                      <li>Employer handles tax withholding</li>
-                      <li>May qualify for benefits (health, etc.)</li>
-                      <li>Simpler tax filing (W-2)</li>
-                      <li>Stable, predictable pay schedule</li>
-                    </ul>
-
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem',
-                      marginBottom: '0.75rem',
-                      color: '#DC2626'
-                    }}>
-                      <Clock size={16} />
-                      <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Considerations:</span>
-                    </div>
-                    <ul style={{
-                      margin: 0,
-                      paddingLeft: '1.5rem',
-                      fontSize: '0.85rem',
-                      color: '#374151',
-                      lineHeight: '1.6'
-                    }}>
-                      <li>Lower hourly rate than contractors</li>
-                      <li>Set schedule requirements</li>
-                      <li>Exclusivity requirements may apply</li>
-                      <li>Fewer tax deduction opportunities</li>
-                    </ul>
-                  </div>
+                    <li>Oclef handles tax withholding (W-2)</li>
+                    <li>Covered by workers' compensation</li>
+                    <li>Simpler tax filing at year-end</li>
+                    <li>No exclusivity required</li>
+                  </ul>
                 </div>
               </div>
 
@@ -770,7 +678,7 @@ const OrientationSlideshow = ({ apprenticeName, apprenticeEmail, professorEmail,
                 marginTop: '1.5rem',
                 fontStyle: 'italic'
               }}>
-                Note: This preference will be shared with your professor. You can discuss and finalize the arrangement with them.
+                This preference will be shared with your professor. You can discuss details with them.
               </p>
             </div>
           ) : (
