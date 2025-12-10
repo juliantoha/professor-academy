@@ -96,9 +96,14 @@ const ProfessorDashboard = () => {
         // Fetch apprentice profile photos
         // Use lowercase emails for case-insensitive matching
         const lowercaseEmails = emails.map(e => e.toLowerCase());
+        console.log('[ProfessorDashboard] Looking for profiles with emails:', lowercaseEmails);
+
         const { data: profilesData, error: profilesError } = await supabase
           .from('user_profiles')
           .select('email, avatarUrl');
+
+        console.log('[ProfessorDashboard] Profiles fetched:', profilesData);
+        console.log('[ProfessorDashboard] Profiles error:', profilesError);
 
         if (profilesError) {
           console.error('Error fetching apprentice profiles:', profilesError);
@@ -107,9 +112,11 @@ const ProfessorDashboard = () => {
           (profilesData || []).forEach(p => {
             // Store with lowercase key for case-insensitive lookup
             if (p.email && lowercaseEmails.includes(p.email.toLowerCase())) {
+              console.log('[ProfessorDashboard] Matched profile:', p.email, 'avatarUrl:', p.avatarUrl);
               profilesMap[p.email.toLowerCase()] = { avatarUrl: p.avatarUrl };
             }
           });
+          console.log('[ProfessorDashboard] Final profilesMap:', profilesMap);
           setApprenticeProfiles(profilesMap);
         }
       }
