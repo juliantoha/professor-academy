@@ -94,17 +94,21 @@ const ProfessorDashboard = () => {
         setProgress(progressMap);
 
         // Fetch apprentice profile photos
+        // Use lowercase emails for case-insensitive matching
+        const lowercaseEmails = emails.map(e => e.toLowerCase());
         const { data: profilesData, error: profilesError } = await supabase
           .from('user_profiles')
-          .select('email, avatarUrl')
-          .in('email', emails);
+          .select('email, avatarUrl');
 
         if (profilesError) {
           console.error('Error fetching apprentice profiles:', profilesError);
         } else {
           const profilesMap: Record<string, { avatarUrl?: string }> = {};
           (profilesData || []).forEach(p => {
-            profilesMap[p.email] = { avatarUrl: p.avatarUrl };
+            // Store with lowercase key for case-insensitive lookup
+            if (p.email && lowercaseEmails.includes(p.email.toLowerCase())) {
+              profilesMap[p.email.toLowerCase()] = { avatarUrl: p.avatarUrl };
+            }
           });
           setApprenticeProfiles(profilesMap);
         }
@@ -863,15 +867,15 @@ const ProfessorDashboard = () => {
                           width: '52px',
                           height: '52px',
                           borderRadius: '14px',
-                          background: apprenticeProfiles[apprentice.email]?.avatarUrl
-                            ? `url(${apprenticeProfiles[apprentice.email].avatarUrl}) center/cover no-repeat`
+                          background: apprenticeProfiles[apprentice.email.toLowerCase()]?.avatarUrl
+                            ? `url(${apprenticeProfiles[apprentice.email.toLowerCase()].avatarUrl}) center/cover no-repeat`
                             : 'linear-gradient(135deg, #004A69 0%, #0066A2 100%)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           boxShadow: '0 4px 12px rgba(0,74,105,0.3)'
                         }}>
-                          {!apprenticeProfiles[apprentice.email]?.avatarUrl && (
+                          {!apprenticeProfiles[apprentice.email.toLowerCase()]?.avatarUrl && (
                             <span style={{
                               fontFamily: 'Montserrat, sans-serif',
                               fontSize: '20px',
