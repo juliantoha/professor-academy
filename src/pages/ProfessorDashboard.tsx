@@ -121,12 +121,17 @@ const ProfessorDashboard = () => {
         }
       }
 
+      console.log('[ProfessorDashboard] Fetching submissions for professor:', user?.email);
+
       const { data: submissionsData, error: submissionsError } = await supabase
         .from('submissions')
         .select('*')
         .eq('professorEmail', user?.email)
         .eq('status', 'Pending')
         .order('submittedAt', { ascending: false });
+
+      console.log('[ProfessorDashboard] Submissions fetched:', submissionsData);
+      console.log('[ProfessorDashboard] Submissions error:', submissionsError);
 
       if (submissionsError) throw submissionsError;
       setPendingSubmissions(submissionsData || []);
