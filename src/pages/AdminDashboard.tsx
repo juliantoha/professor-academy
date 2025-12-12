@@ -19,7 +19,9 @@ import {
   UserX,
   UserCheck,
   AlertTriangle,
-  X
+  X,
+  RotateCcw,
+  Inbox
 } from 'lucide-react';
 
 interface Professor {
@@ -46,6 +48,17 @@ interface Apprentice {
   pendingSubmissions: number;
 }
 
+interface Submission {
+  id: string;
+  submissionId: string;
+  moduleName: string;
+  moduleNumber: number;
+  status: string;
+  submittedAt: string;
+  apprenticeEmail: string;
+  professorEmail: string;
+}
+
 // Super admin emails - only these users can access this page
 const SUPER_ADMIN_EMAILS = ['julian@oclef.com'];
 
@@ -69,6 +82,15 @@ const AdminDashboard = () => {
     target: Professor | Apprentice | null;
   }>({ show: false, type: null, targetType: null, target: null });
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Submissions modal state
+  const [submissionsModal, setSubmissionsModal] = useState<{
+    show: boolean;
+    apprentice: Apprentice | null;
+    submissions: Submission[];
+    loading: boolean;
+  }>({ show: false, apprentice: null, submissions: [], loading: false });
+  const [resetLoading, setResetLoading] = useState<string | null>(null);
 
   // Check if user is super admin
   const isSuperAdmin = user?.email && SUPER_ADMIN_EMAILS.includes(user.email.toLowerCase());
@@ -287,6 +309,98 @@ const AdminDashboard = () => {
       setError(err.message || 'Failed to delete apprentice');
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleViewSubmissions = async (apprentice: Apprentice) => {
+    setSubmissionsModal({
+      show: true,
+      apprentice,
+      submissions: [],
+      loading: true
+    });
+
+    try {
+      // Fetch submissions for this apprentice
+      const { data: submissions, error } = await supabase
+        .from('submissions')
+        .select('*')
+        .ilike('apprenticeEmail', apprentice.email);
+
+      if (error) throw error;
+
+      setSubmissionsModal(prev => ({
+        ...prev,
+        submissions: (submissions || []).map(s => ({
+          id: s.id,
+          submissionId: s.submissionId || s.id,
+          moduleName: s.moduleName || `Module ${s.moduleNumber}`,
+          moduleNumber: s.moduleNumber,
+          status: s.status,
+          submittedAt: s.submittedAt || s.created_at,
+          apprenticeEmail: s.apprenticeEmail,
+          professorEmail: s.professorEmail
+        })),
+        loading: false
+      }));
+    } catch (err: any) {
+      console.error('Error fetching submissions:', err);
+      setSubmissionsModal(prev => ({
+        ...prev,
+        loading: false
+      }));
+      setError(err.message || 'Failed to load submissions');
+    }
+  };
+
+  const handleResetSubmission = async (submission: Submission) => {
+    setResetLoading(submission.submissionId);
+
+    try {
+      // Delete the submission
+      const { error: deleteError } = await supabase
+        .from('submissions')
+        .delete()
+        .eq('submissionId', submission.submissionId);
+
+      if (deleteError) {
+        // Try by id if submissionId doesn't work
+        const { error: deleteByIdError } = await supabase
+          .from('submissions')
+          .delete()
+          .eq('id', submission.id);
+
+        if (deleteByIdError) throw deleteByIdError;
+      }
+
+      // Reset the progress entry for this module
+      const { error: progressError } = await supabase
+        .from('progress')
+        .update({
+          Status: 'Not Started',
+          submissionId: null
+        })
+        .ilike('apprenticeEmail', submission.apprenticeEmail)
+        .eq('moduleNumber', submission.moduleNumber);
+
+      if (progressError) {
+        console.warn('Could not reset progress:', progressError);
+        // Don't throw - submission was deleted which is the main goal
+      }
+
+      // Refresh the submissions list
+      if (submissionsModal.apprentice) {
+        await handleViewSubmissions(submissionsModal.apprentice);
+      }
+
+      // Refresh main data to update counts
+      await fetchData();
+
+    } catch (err: any) {
+      console.error('Error resetting submission:', err);
+      setError(err.message || 'Failed to reset submission');
+    } finally {
+      setResetLoading(null);
     }
   };
 
@@ -1214,6 +1328,33 @@ const AdminDashboard = () => {
                           View
                         </button>
                         <button
+                          onClick={() => handleViewSubmissions(apprentice)}
+                          title="View and manage submissions"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            padding: '0.4rem 0.75rem',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            color: '#8B5CF6',
+                            background: 'rgba(139,92,246,0.1)',
+                            border: '1px solid rgba(139,92,246,0.3)',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(139,92,246,0.2)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(139,92,246,0.1)';
+                          }}
+                        >
+                          <FileText size={14} />
+                          Submissions
+                        </button>
+                        <button
                           onClick={() => setActionModal({
                             show: true,
                             type: 'delete',
@@ -1439,6 +1580,266 @@ const AdminDashboard = () => {
                   )}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Submissions Modal */}
+      {submissionsModal.show && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '1rem'
+        }}>
+          <div style={{
+            background: '#1a1a2e',
+            borderRadius: '20px',
+            border: '2px solid rgba(139,92,246,0.3)',
+            width: '100%',
+            maxWidth: '700px',
+            maxHeight: '80vh',
+            overflow: 'hidden',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              background: 'linear-gradient(135deg, #5B21B6 0%, #7C3AED 100%)',
+              padding: '1.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexShrink: 0
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <FileText size={24} color="white" />
+                <div>
+                  <h3 style={{
+                    fontFamily: 'Montserrat, sans-serif',
+                    fontSize: '18px',
+                    fontWeight: 700,
+                    color: 'white',
+                    margin: 0
+                  }}>
+                    Submissions
+                  </h3>
+                  <p style={{
+                    fontSize: '13px',
+                    color: 'rgba(255,255,255,0.8)',
+                    margin: 0
+                  }}>
+                    {submissionsModal.apprentice?.name} ({submissionsModal.apprentice?.email})
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSubmissionsModal({ show: false, apprentice: null, submissions: [], loading: false })}
+                style={{
+                  background: 'rgba(255,255,255,0.1)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '0.5rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <X size={20} color="white" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div style={{
+              padding: '1.5rem',
+              overflowY: 'auto',
+              flex: 1
+            }}>
+              {submissionsModal.loading ? (
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '3rem',
+                  gap: '1rem'
+                }}>
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    border: '3px solid rgba(139,92,246,0.2)',
+                    borderTopColor: '#8B5CF6',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                  }} />
+                  <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px' }}>
+                    Loading submissions...
+                  </span>
+                </div>
+              ) : submissionsModal.submissions.length === 0 ? (
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '3rem',
+                  gap: '1rem'
+                }}>
+                  <Inbox size={48} color="rgba(255,255,255,0.3)" />
+                  <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px' }}>
+                    No submissions found for this apprentice
+                  </span>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {submissionsModal.submissions.map((submission) => (
+                    <div
+                      key={submission.submissionId}
+                      style={{
+                        background: 'rgba(255,255,255,0.05)',
+                        borderRadius: '12px',
+                        padding: '1rem 1.25rem',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '1rem'
+                      }}
+                    >
+                      <div style={{ flex: 1 }}>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.75rem',
+                          marginBottom: '0.5rem'
+                        }}>
+                          <span style={{
+                            fontSize: '15px',
+                            fontWeight: 600,
+                            color: 'white'
+                          }}>
+                            {submission.moduleName}
+                          </span>
+                          <span style={{
+                            padding: '0.25rem 0.75rem',
+                            borderRadius: '20px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            background: submission.status === 'Pending'
+                              ? 'rgba(245,158,11,0.2)'
+                              : submission.status === 'Approved'
+                              ? 'rgba(16,185,129,0.2)'
+                              : submission.status === 'Rejected'
+                              ? 'rgba(239,68,68,0.2)'
+                              : 'rgba(255,255,255,0.1)',
+                            color: submission.status === 'Pending'
+                              ? '#F59E0B'
+                              : submission.status === 'Approved'
+                              ? '#10B981'
+                              : submission.status === 'Rejected'
+                              ? '#EF4444'
+                              : 'rgba(255,255,255,0.6)'
+                          }}>
+                            {submission.status}
+                          </span>
+                        </div>
+                        <div style={{
+                          display: 'flex',
+                          gap: '1.5rem',
+                          fontSize: '12px',
+                          color: 'rgba(255,255,255,0.5)'
+                        }}>
+                          <span>
+                            Submitted: {new Date(submission.submittedAt).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </span>
+                          <span>ID: {submission.submissionId.substring(0, 20)}...</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleResetSubmission(submission)}
+                        disabled={resetLoading === submission.submissionId}
+                        title="Reset this submission - allows apprentice to resubmit"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                          padding: '0.5rem 1rem',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          color: '#F59E0B',
+                          background: 'rgba(245,158,11,0.1)',
+                          border: '1px solid rgba(245,158,11,0.3)',
+                          borderRadius: '8px',
+                          cursor: resetLoading === submission.submissionId ? 'not-allowed' : 'pointer',
+                          opacity: resetLoading === submission.submissionId ? 0.6 : 1,
+                          transition: 'all 0.3s ease',
+                          whiteSpace: 'nowrap'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (resetLoading !== submission.submissionId) {
+                            e.currentTarget.style.background = 'rgba(245,158,11,0.2)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'rgba(245,158,11,0.1)';
+                        }}
+                      >
+                        {resetLoading === submission.submissionId ? (
+                          <>
+                            <div style={{
+                              width: '14px',
+                              height: '14px',
+                              border: '2px solid rgba(245,158,11,0.3)',
+                              borderTopColor: '#F59E0B',
+                              borderRadius: '50%',
+                              animation: 'spin 1s linear infinite'
+                            }} />
+                            Resetting...
+                          </>
+                        ) : (
+                          <>
+                            <RotateCcw size={14} />
+                            Reset
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{
+              padding: '1rem 1.5rem',
+              borderTop: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(0,0,0,0.2)',
+              flexShrink: 0
+            }}>
+              <p style={{
+                fontSize: '12px',
+                color: 'rgba(255,255,255,0.5)',
+                margin: 0,
+                textAlign: 'center'
+              }}>
+                Resetting a submission will delete it and allow the apprentice to submit again for that module.
+              </p>
             </div>
           </div>
         </div>
