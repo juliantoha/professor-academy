@@ -4,7 +4,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import App from './App.tsx'
 import ReviewWrapper from './pages/ReviewWrapper.tsx'
 import DashboardWrapper from './pages/DashboardWrapper.tsx'
-import AdminPage from './pages/AdminPage.tsx'
+import AdminDashboard from './pages/AdminDashboard.tsx'
 import OrientationWrapper from './pages/OrientationWrapper.tsx'
 import TrainingWrapper from './pages/TrainingWrapper.tsx'
 
@@ -94,12 +94,12 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     )
   },
-  // Admin page (protected - admin only)
+  // Super Admin dashboard (protected - professors only, with additional email check inside)
   {
     path: '/admin',
     element: (
-      <ProtectedRoute requiredRole="admin">
-        <AdminPage />
+      <ProtectedRoute requiredRole="professor">
+        <AdminDashboard />
       </ProtectedRoute>
     )
   },
