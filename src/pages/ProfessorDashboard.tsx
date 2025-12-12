@@ -2,7 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { LogOut, Users, Clock, CheckCircle, ExternalLink, RefreshCw, Settings, ChevronDown, Plus, X, UserPlus, Copy, Check } from 'lucide-react';
+import { LogOut, Users, Clock, CheckCircle, ExternalLink, RefreshCw, Settings, ChevronDown, Plus, X, UserPlus, Copy, Check, Shield } from 'lucide-react';
+import MasqueradeBanner from '../components/MasqueradeBanner';
+
+// Super admin emails
+const SUPER_ADMIN_EMAILS = ['julian@oclef.com'];
 
 interface Apprentice {
   id: string;
@@ -292,12 +296,16 @@ const ProfessorDashboard = () => {
     );
   }
 
+  const isMasquerading = sessionStorage.getItem('adminMasqueradeActive') === 'true';
+
   return (
     <div style={{
       fontFamily: 'Lato, sans-serif',
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)'
+      background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)',
+      paddingTop: isMasquerading ? '52px' : '0'
     }}>
+      <MasqueradeBanner />
       {/* Header */}
       <header style={{
         background: 'linear-gradient(135deg, #003250 0%, #004A69 50%, #0066A2 100%)',
@@ -484,6 +492,37 @@ const ProfessorDashboard = () => {
                         </p>
                       </div>
                       <div style={{ padding: '0.5rem' }}>
+                        {user?.email && SUPER_ADMIN_EMAILS.includes(user.email.toLowerCase()) && (
+                          <button
+                            onClick={() => {
+                              setShowProfileMenu(false);
+                              navigate('/admin');
+                            }}
+                            style={{
+                              width: '100%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.75rem',
+                              padding: '0.75rem 1rem',
+                              background: 'linear-gradient(135deg, rgba(255,215,0,0.1) 0%, rgba(255,165,0,0.1) 100%)',
+                              border: 'none',
+                              borderRadius: '8px',
+                              cursor: 'pointer',
+                              transition: 'background 0.2s ease',
+                              textAlign: 'left',
+                              marginBottom: '0.25rem'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255,215,0,0.2) 0%, rgba(255,165,0,0.2) 100%)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255,215,0,0.1) 0%, rgba(255,165,0,0.1) 100%)';
+                            }}
+                          >
+                            <Shield size={18} color="#D97706" />
+                            <span style={{ fontSize: '14px', color: '#D97706', fontWeight: 600 }}>Admin View</span>
+                          </button>
+                        )}
                         <button
                           onClick={() => {
                             setShowProfileMenu(false);

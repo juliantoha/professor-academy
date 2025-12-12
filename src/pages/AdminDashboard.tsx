@@ -14,7 +14,12 @@ import {
   ChevronDown,
   Settings,
   Search,
-  FileText
+  FileText,
+  Trash2,
+  UserX,
+  UserCheck,
+  AlertTriangle,
+  X
 } from 'lucide-react';
 
 interface Professor {
@@ -25,6 +30,7 @@ interface Professor {
   lastName: string | null;
   apprenticeCount: number;
   pendingSubmissions: number;
+  isActive?: boolean;
 }
 
 interface Apprentice {
@@ -54,6 +60,15 @@ const AdminDashboard = () => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [activeTab, setActiveTab] = useState<'professors' | 'apprentices'>('professors');
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Action modal state
+  const [actionModal, setActionModal] = useState<{
+    show: boolean;
+    type: 'delete' | 'deactivate' | 'activate' | null;
+    targetType: 'professor' | 'apprentice' | null;
+    target: Professor | Apprentice | null;
+  }>({ show: false, type: null, targetType: null, target: null });
+  const [actionLoading, setActionLoading] = useState(false);
 
   // Check if user is super admin
   const isSuperAdmin = user?.email && SUPER_ADMIN_EMAILS.includes(user.email.toLowerCase());
@@ -119,7 +134,8 @@ const AdminDashboard = () => {
           firstName: prof.firstName,
           lastName: prof.lastName,
           apprenticeCount,
-          pendingSubmissions
+          pendingSubmissions,
+          isActive: prof.isActive !== false // Default to true if not set
         };
       });
 
@@ -171,17 +187,127 @@ const AdminDashboard = () => {
     navigate('/login');
   };
 
-  const handleMasqueradeAsProfessor = (professorEmail: string) => {
-    // Store the professor email we want to view as
-    sessionStorage.setItem('masqueradeAs', professorEmail);
+  const handleMasqueradeAsProfessor = (professorEmail: string, professorName: string) => {
+    // Store masquerade info in sessionStorage
+    sessionStorage.setItem('adminMasqueradeActive', 'true');
+    sessionStorage.setItem('adminOriginalEmail', user?.email || '');
+    sessionStorage.setItem('masqueradeEmail', professorEmail);
+    sessionStorage.setItem('masqueradeName', professorName);
     sessionStorage.setItem('masqueradeType', 'professor');
-    // Navigate to professor dashboard - will need to handle this in the dashboard
-    window.open(`/professor?viewAs=${encodeURIComponent(professorEmail)}`, '_blank');
+    // Open in new tab
+    window.open(`/professor`, '_blank');
   };
 
-  const handleMasqueradeAsApprentice = (dashboardToken: string) => {
+  const handleMasqueradeAsApprentice = (dashboardToken: string, apprenticeName: string, apprenticeEmail: string) => {
+    // Store masquerade info in sessionStorage
+    sessionStorage.setItem('adminMasqueradeActive', 'true');
+    sessionStorage.setItem('adminOriginalEmail', user?.email || '');
+    sessionStorage.setItem('masqueradeEmail', apprenticeEmail);
+    sessionStorage.setItem('masqueradeName', apprenticeName);
+    sessionStorage.setItem('masqueradeType', 'apprentice');
+    sessionStorage.setItem('masqueradeDashboardToken', dashboardToken);
     // Open the apprentice's dashboard in a new tab
     window.open(`/dashboard/${dashboardToken}`, '_blank');
+  };
+
+  const handleDeactivateProfessor = async (professor: Professor) => {
+    setActionLoading(true);
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ isActive: false })
+        .eq('id', professor.id);
+
+      if (error) throw error;
+
+      await fetchData();
+      setActionModal({ show: false, type: null, targetType: null, target: null });
+    } catch (err: any) {
+      console.error('Error deactivating professor:', err);
+      setError(err.message || 'Failed to deactivate professor');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleActivateProfessor = async (professor: Professor) => {
+    setActionLoading(true);
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ isActive: true })
+        .eq('id', professor.id);
+
+      if (error) throw error;
+
+      await fetchData();
+      setActionModal({ show: false, type: null, targetType: null, target: null });
+    } catch (err: any) {
+      console.error('Error activating professor:', err);
+      setError(err.message || 'Failed to activate professor');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteProfessor = async (professor: Professor) => {
+    setActionLoading(true);
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .delete()
+        .eq('id', professor.id);
+
+      if (error) throw error;
+
+      await fetchData();
+      setActionModal({ show: false, type: null, targetType: null, target: null });
+    } catch (err: any) {
+      console.error('Error deleting professor:', err);
+      setError(err.message || 'Failed to delete professor');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteApprentice = async (apprentice: Apprentice) => {
+    setActionLoading(true);
+    try {
+      const { error } = await supabase
+        .from('apprentices')
+        .delete()
+        .eq('apprenticeId', apprentice.apprenticeId);
+
+      if (error) throw error;
+
+      await fetchData();
+      setActionModal({ show: false, type: null, targetType: null, target: null });
+    } catch (err: any) {
+      console.error('Error deleting apprentice:', err);
+      setError(err.message || 'Failed to delete apprentice');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const executeAction = () => {
+    if (!actionModal.target || !actionModal.type) return;
+
+    if (actionModal.targetType === 'professor') {
+      const prof = actionModal.target as Professor;
+      if (actionModal.type === 'delete') {
+        handleDeleteProfessor(prof);
+      } else if (actionModal.type === 'deactivate') {
+        handleDeactivateProfessor(prof);
+      } else if (actionModal.type === 'activate') {
+        handleActivateProfessor(prof);
+      }
+    } else if (actionModal.targetType === 'apprentice') {
+      const app = actionModal.target as Apprentice;
+      if (actionModal.type === 'delete') {
+        handleDeleteApprentice(app);
+      }
+    }
   };
 
   // Filter based on search
@@ -752,6 +878,7 @@ const AdminDashboard = () => {
                 <tr style={{ background: 'rgba(255,215,0,0.1)' }}>
                   <th style={{ padding: '1rem', textAlign: 'left', color: '#FFD700', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase' }}>Professor</th>
                   <th style={{ padding: '1rem', textAlign: 'left', color: '#FFD700', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase' }}>Email</th>
+                  <th style={{ padding: '1rem', textAlign: 'center', color: '#FFD700', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase' }}>Status</th>
                   <th style={{ padding: '1rem', textAlign: 'center', color: '#FFD700', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase' }}>Apprentices</th>
                   <th style={{ padding: '1rem', textAlign: 'center', color: '#FFD700', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase' }}>Pending</th>
                   <th style={{ padding: '1rem', textAlign: 'center', color: '#FFD700', fontSize: '13px', fontWeight: 600, textTransform: 'uppercase' }}>Actions</th>
@@ -763,7 +890,8 @@ const AdminDashboard = () => {
                     key={professor.id}
                     style={{
                       borderTop: '1px solid rgba(255,255,255,0.05)',
-                      background: index % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)'
+                      background: index % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)',
+                      opacity: professor.isActive === false ? 0.5 : 1
                     }}
                   >
                     <td style={{ padding: '1rem' }}>
@@ -772,7 +900,9 @@ const AdminDashboard = () => {
                           width: '40px',
                           height: '40px',
                           borderRadius: '10px',
-                          background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+                          background: professor.isActive === false
+                            ? 'linear-gradient(135deg, #6B7280 0%, #4B5563 100%)'
+                            : 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center'
@@ -790,6 +920,21 @@ const AdminDashboard = () => {
                     </td>
                     <td style={{ padding: '1rem', color: 'rgba(255,255,255,0.7)', fontSize: '14px' }}>
                       {professor.email}
+                    </td>
+                    <td style={{ padding: '1rem', textAlign: 'center' }}>
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        padding: '0.35rem 0.75rem',
+                        background: professor.isActive === false ? 'rgba(107,114,128,0.2)' : 'rgba(16,185,129,0.2)',
+                        color: professor.isActive === false ? '#9CA3AF' : '#10B981',
+                        borderRadius: '20px',
+                        fontSize: '12px',
+                        fontWeight: 600
+                      }}>
+                        {professor.isActive === false ? 'Inactive' : 'Active'}
+                      </span>
                     </td>
                     <td style={{ padding: '1rem', textAlign: 'center' }}>
                       <span style={{
@@ -841,32 +986,86 @@ const AdminDashboard = () => {
                       )}
                     </td>
                     <td style={{ padding: '1rem', textAlign: 'center' }}>
-                      <button
-                        onClick={() => handleMasqueradeAsProfessor(professor.email)}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                          padding: '0.5rem 1rem',
-                          fontSize: '13px',
-                          fontWeight: 600,
-                          color: '#FFD700',
-                          background: 'rgba(255,215,0,0.1)',
-                          border: '1px solid rgba(255,215,0,0.3)',
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'rgba(255,215,0,0.2)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'rgba(255,215,0,0.1)';
-                        }}
-                      >
-                        <Eye size={14} />
-                        View As
-                      </button>
+                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                        <button
+                          onClick={() => handleMasqueradeAsProfessor(
+                            professor.email,
+                            professor.firstName && professor.lastName
+                              ? `${professor.firstName} ${professor.lastName}`
+                              : professor.name || professor.email
+                          )}
+                          title="View as this professor"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            padding: '0.4rem 0.75rem',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            color: '#FFD700',
+                            background: 'rgba(255,215,0,0.1)',
+                            border: '1px solid rgba(255,215,0,0.3)',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(255,215,0,0.2)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(255,215,0,0.1)';
+                          }}
+                        >
+                          <Eye size={14} />
+                          View
+                        </button>
+                        <button
+                          onClick={() => setActionModal({
+                            show: true,
+                            type: professor.isActive === false ? 'activate' : 'deactivate',
+                            targetType: 'professor',
+                            target: professor
+                          })}
+                          title={professor.isActive === false ? 'Activate professor' : 'Deactivate professor'}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            padding: '0.4rem 0.6rem',
+                            fontSize: '12px',
+                            color: professor.isActive === false ? '#10B981' : '#F59E0B',
+                            background: professor.isActive === false ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)',
+                            border: `1px solid ${professor.isActive === false ? 'rgba(16,185,129,0.3)' : 'rgba(245,158,11,0.3)'}`,
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease'
+                          }}
+                        >
+                          {professor.isActive === false ? <UserCheck size={14} /> : <UserX size={14} />}
+                        </button>
+                        <button
+                          onClick={() => setActionModal({
+                            show: true,
+                            type: 'delete',
+                            targetType: 'professor',
+                            target: professor
+                          })}
+                          title="Delete professor"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            padding: '0.4rem 0.6rem',
+                            fontSize: '12px',
+                            color: '#EF4444',
+                            background: 'rgba(239,68,68,0.1)',
+                            border: '1px solid rgba(239,68,68,0.3)',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease'
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -986,32 +1185,58 @@ const AdminDashboard = () => {
                       )}
                     </td>
                     <td style={{ padding: '1rem', textAlign: 'center' }}>
-                      <button
-                        onClick={() => handleMasqueradeAsApprentice(apprentice.dashboardToken)}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.5rem',
-                          padding: '0.5rem 1rem',
-                          fontSize: '13px',
-                          fontWeight: 600,
-                          color: '#FFD700',
-                          background: 'rgba(255,215,0,0.1)',
-                          border: '1px solid rgba(255,215,0,0.3)',
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s ease'
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'rgba(255,215,0,0.2)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'rgba(255,215,0,0.1)';
-                        }}
-                      >
-                        <Eye size={14} />
-                        View Dashboard
-                      </button>
+                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                        <button
+                          onClick={() => handleMasqueradeAsApprentice(apprentice.dashboardToken, apprentice.name, apprentice.email)}
+                          title="View as this apprentice"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            padding: '0.4rem 0.75rem',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            color: '#FFD700',
+                            background: 'rgba(255,215,0,0.1)',
+                            border: '1px solid rgba(255,215,0,0.3)',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(255,215,0,0.2)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(255,215,0,0.1)';
+                          }}
+                        >
+                          <Eye size={14} />
+                          View
+                        </button>
+                        <button
+                          onClick={() => setActionModal({
+                            show: true,
+                            type: 'delete',
+                            targetType: 'apprentice',
+                            target: apprentice
+                          })}
+                          title="Delete apprentice"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            padding: '0.4rem 0.6rem',
+                            fontSize: '12px',
+                            color: '#EF4444',
+                            background: 'rgba(239,68,68,0.1)',
+                            border: '1px solid rgba(239,68,68,0.3)',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease'
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -1039,6 +1264,192 @@ const AdminDashboard = () => {
       }}>
         Oclef Professor Academy - Super Admin
       </footer>
+
+      {/* Action Confirmation Modal */}
+      {actionModal.show && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '1rem'
+        }}>
+          <div style={{
+            background: '#1a1a2e',
+            borderRadius: '20px',
+            border: '2px solid rgba(255,215,0,0.3)',
+            width: '100%',
+            maxWidth: '450px',
+            overflow: 'hidden',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.5)'
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              background: actionModal.type === 'delete'
+                ? 'linear-gradient(135deg, #7F1D1D 0%, #991B1B 100%)'
+                : actionModal.type === 'activate'
+                ? 'linear-gradient(135deg, #065F46 0%, #047857 100%)'
+                : 'linear-gradient(135deg, #78350F 0%, #92400E 100%)',
+              padding: '1.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                {actionModal.type === 'delete' ? (
+                  <Trash2 size={24} color="white" />
+                ) : actionModal.type === 'activate' ? (
+                  <UserCheck size={24} color="white" />
+                ) : (
+                  <AlertTriangle size={24} color="white" />
+                )}
+                <h3 style={{
+                  fontFamily: 'Montserrat, sans-serif',
+                  fontSize: '18px',
+                  fontWeight: 700,
+                  color: 'white',
+                  margin: 0
+                }}>
+                  {actionModal.type === 'delete' && 'Confirm Delete'}
+                  {actionModal.type === 'deactivate' && 'Confirm Deactivate'}
+                  {actionModal.type === 'activate' && 'Confirm Activate'}
+                </h3>
+              </div>
+              <button
+                onClick={() => setActionModal({ show: false, type: null, targetType: null, target: null })}
+                style={{
+                  background: 'rgba(255,255,255,0.1)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '0.5rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <X size={20} color="white" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div style={{ padding: '2rem' }}>
+              <p style={{
+                fontSize: '15px',
+                color: 'rgba(255,255,255,0.8)',
+                margin: '0 0 1.5rem 0',
+                lineHeight: 1.6
+              }}>
+                {actionModal.type === 'delete' && (
+                  <>
+                    Are you sure you want to <strong style={{ color: '#EF4444' }}>permanently delete</strong>{' '}
+                    <strong style={{ color: '#FFD700' }}>
+                      {actionModal.targetType === 'professor'
+                        ? (actionModal.target as Professor)?.email
+                        : (actionModal.target as Apprentice)?.name}
+                    </strong>
+                    ? This action cannot be undone.
+                  </>
+                )}
+                {actionModal.type === 'deactivate' && (
+                  <>
+                    Are you sure you want to <strong style={{ color: '#F59E0B' }}>deactivate</strong>{' '}
+                    <strong style={{ color: '#FFD700' }}>
+                      {(actionModal.target as Professor)?.email}
+                    </strong>
+                    ? They will no longer be able to access the platform.
+                  </>
+                )}
+                {actionModal.type === 'activate' && (
+                  <>
+                    Are you sure you want to <strong style={{ color: '#10B981' }}>reactivate</strong>{' '}
+                    <strong style={{ color: '#FFD700' }}>
+                      {(actionModal.target as Professor)?.email}
+                    </strong>
+                    ? They will regain access to the platform.
+                  </>
+                )}
+              </p>
+
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button
+                  onClick={() => setActionModal({ show: false, type: null, targetType: null, target: null })}
+                  style={{
+                    flex: 1,
+                    padding: '0.875rem',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: 'rgba(255,255,255,0.8)',
+                    background: 'rgba(255,255,255,0.1)',
+                    border: '2px solid rgba(255,255,255,0.2)',
+                    borderRadius: '10px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={executeAction}
+                  disabled={actionLoading}
+                  style={{
+                    flex: 1,
+                    padding: '0.875rem',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: 'white',
+                    background: actionModal.type === 'delete'
+                      ? 'linear-gradient(135deg, #DC2626 0%, #B91C1C 100%)'
+                      : actionModal.type === 'activate'
+                      ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
+                      : 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+                    border: 'none',
+                    borderRadius: '10px',
+                    cursor: actionLoading ? 'not-allowed' : 'pointer',
+                    opacity: actionLoading ? 0.6 : 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  {actionLoading ? (
+                    <>
+                      <div style={{
+                        width: '16px',
+                        height: '16px',
+                        border: '2px solid rgba(255,255,255,0.3)',
+                        borderTopColor: 'white',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                      }} />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      {actionModal.type === 'delete' && 'Delete'}
+                      {actionModal.type === 'deactivate' && 'Deactivate'}
+                      {actionModal.type === 'activate' && 'Activate'}
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };

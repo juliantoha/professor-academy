@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Dashboard from './Dashboard';
+import MasqueradeBanner from '../components/MasqueradeBanner';
 import { LogOut, Settings, ChevronDown } from 'lucide-react';
 
 const DashboardWrapper = () => {
@@ -30,10 +31,13 @@ const DashboardWrapper = () => {
     );
   }
 
+  const isMasquerading = sessionStorage.getItem('adminMasqueradeActive') === 'true';
+
   // If user is logged in, show header with profile dropdown
   if (user) {
     return (
-      <div style={{ fontFamily: 'Lato, sans-serif' }}>
+      <div style={{ fontFamily: 'Lato, sans-serif', paddingTop: isMasquerading ? '52px' : '0' }}>
+        <MasqueradeBanner />
         {/* Header Bar */}
         <div style={{
           background: 'linear-gradient(135deg, #003250 0%, #004A69 50%, #0066A2 100%)',
@@ -226,7 +230,13 @@ const DashboardWrapper = () => {
   }
 
   // Public access (no user logged in) - just show dashboard without header
-  return <Dashboard dashboardToken={dashboardToken} />;
+  // But still show masquerade banner if admin is viewing
+  return (
+    <div style={{ paddingTop: isMasquerading ? '52px' : '0' }}>
+      <MasqueradeBanner />
+      <Dashboard dashboardToken={dashboardToken} />
+    </div>
+  );
 };
 
 export default DashboardWrapper;
