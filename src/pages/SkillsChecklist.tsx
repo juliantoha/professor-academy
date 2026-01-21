@@ -290,11 +290,12 @@ const SkillsChecklist = () => {
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)'
     }}>
-      {/* Header */}
+      {/* Header - Sticky */}
       <header style={{
         background: 'linear-gradient(135deg, #003250 0%, #004A69 50%, #0066A2 100%)',
         boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-        position: 'relative',
+        position: 'sticky',
+        top: 0,
         zIndex: 50
       }}>
         <div style={{
