@@ -1,241 +1,6 @@
 import { useState } from 'react';
 import { Upload, CheckCircle, Circle, CheckSquare, Play, AlertCircle, Loader } from 'lucide-react';
-
-// REAL submission function with Airtable, Cloudinary & EmailJS integration
-const submitModule = async (data: any) => {
-  const {
-    studentName,
-    apprenticeEmail,
-    professorEmail,
-    moduleName,
-    moduleNumber,
-    phase,
-    uploadedScreenshots,
-    dashboardToken
-  } = data;
-
-  // Verify environment variables
-  console.log('Environment check:', {
-    hasBaseId: !!import.meta.env.VITE_AIRTABLE_BASE_ID,
-    hasApiKey: !!import.meta.env.VITE_AIRTABLE_API_KEY,
-    baseId: import.meta.env.VITE_AIRTABLE_BASE_ID,
-    apiKeyLength: import.meta.env.VITE_AIRTABLE_API_KEY?.length
-  });
-
-  // Generate unique submission ID
-  const submissionId = `sub-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  const submittedAt = new Date().toISOString();
-
-  console.log('Starting submission:', { submissionId, moduleName, apprenticeEmail });
-
-  // Count tasks
-  const taskCount = Object.keys(uploadedScreenshots).length;
-
-  // Step 1: Upload all screenshots to Cloudinary
-  const cloudinaryUrls: Record<string, string> = {};
-  
-  try {
-    for (const [taskId, base64Data] of Object.entries(uploadedScreenshots)) {
-      const formData = new FormData();
-      formData.append('file', base64Data as string);
-      formData.append('upload_preset', 'oclef_training');
-      formData.append('folder', `submissions/${submissionId}`);
-      
-      const uploadResponse = await fetch(
-        'https://api.cloudinary.com/v1_1/dhs8ae6kh/image/upload',
-        {
-          method: 'POST',
-          body: formData
-        }
-      );
-      
-      if (!uploadResponse.ok) {
-        throw new Error(`Failed to upload screenshot for ${taskId}`);
-      }
-      
-      const uploadData = await uploadResponse.json();
-      cloudinaryUrls[taskId] = uploadData.secure_url;
-    }
-  } catch (uploadError) {
-    console.error('Cloudinary upload error:', uploadError);
-    throw new Error('Failed to upload screenshots. Please try again.');
-  }
-
-  // Step 2: Create Submission record in Airtable with Cloudinary URLs
-  const submissionResponse = await fetch(
-    `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}/Submissions`,
-    {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${import.meta.env.VITE_AIRTABLE_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        fields: {
-          submissionId,
-          studentName,
-          apprenticeEmail: apprenticeEmail.toLowerCase(),
-          professorEmail: professorEmail.toLowerCase(),
-          moduleName,
-          moduleNumber, 
-          phase,
-          status: 'Pending',
-          submittedAt,
-          screenshotUrls: JSON.stringify(cloudinaryUrls),
-          completedTasks: JSON.stringify(Object.keys(uploadedScreenshots))
-        }
-      })
-    }
-  );
-
-  if (!submissionResponse.ok) {
-    const errorData = await submissionResponse.json();
-    console.error('Airtable error:', errorData);
-    throw new Error(`Failed to create submission record: ${errorData.error?.message || 'Unknown error'}`);
-  }
-  
-  const submissionResult = await submissionResponse.json();
-  console.log('Submission created successfully:', submissionResult);
-
-  // Step 3: Update Progress table
-  console.log('=== PROGRESS UPDATE DEBUG ===');
-  console.log('Looking for progress record with:');
-  console.log('  apprenticeEmail:', apprenticeEmail);
-  console.log('  module:', moduleName);
-  
-  const filterFormula = `AND({apprenticeEmail}='${apprenticeEmail}',{module}='${moduleName}')`;
-  console.log('Filter formula:', filterFormula);
-  
-  const progressFindResponse = await fetch(
-    `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}/Progress?filterByFormula=${encodeURIComponent(filterFormula)}`,
-    {
-      headers: {
-        'Authorization': `Bearer ${import.meta.env.VITE_AIRTABLE_API_KEY}`
-      }
-    }
-  );
-
-  if (progressFindResponse.ok) {
-    const progressData = await progressFindResponse.json();
-    console.log('Progress search returned:', progressData.records.length, 'records');
-    
-    if (progressData.records.length > 0) {
-      // Found existing record(s) - update the best one (prefer one with submissionId already)
-      const recordToUpdate = progressData.records.find((r: any) => r.fields.submissionId) || progressData.records[0];
-      const recordId = recordToUpdate.id;
-      
-      console.log('✅ Found', progressData.records.length, 'existing progress record(s)');
-      console.log('Updating record:', recordId);
-      console.log('Current values:', recordToUpdate.fields);
-      console.log('New submissionId:', submissionId);
-      
-      const updateResponse = await fetch(
-        `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}/Progress/${recordId}`,
-        {
-          method: 'PATCH',
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_AIRTABLE_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            fields: {
-              Status: 'Completed',
-              submissionId
-            }
-          })
-        }
-      );
-      
-      if (updateResponse.ok) {
-        const updateResult = await updateResponse.json();
-        console.log('✅ Progress updated successfully:', updateResult);
-        
-        // If there are duplicate records, log a warning
-        if (progressData.records.length > 1) {
-          console.warn('⚠️ WARNING: Found', progressData.records.length, 'duplicate progress records!');
-          console.warn('You should manually delete the duplicates in Airtable.');
-          console.warn('Duplicate record IDs:', progressData.records.map((r: any) => r.id));
-        }
-      } else {
-        const errorText = await updateResponse.text();
-        console.error('❌ Failed to update progress:', errorText);
-        throw new Error(`Failed to update progress: ${errorText}`);
-      }
-    } else {
-      console.log('⚠️ No existing progress record found');
-      console.log('This should have been created by the dashboard. Creating it now...');
-      
-      // Create new progress record
-      const createResponse = await fetch(
-        `https://api.airtable.com/v0/${import.meta.env.VITE_AIRTABLE_BASE_ID}/Progress`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_AIRTABLE_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            fields: {
-              apprenticeEmail: apprenticeEmail.toLowerCase(),
-              phase,
-              module: moduleName,
-              Status: 'Completed',
-              submissionId
-            }
-          })
-        }
-      );
-      
-      if (createResponse.ok) {
-        const createResult = await createResponse.json();
-        console.log('✅ Progress created successfully:', createResult);
-      } else {
-        const errorText = await createResponse.text();
-        console.error('❌ Failed to create progress:', errorText);
-        throw new Error(`Failed to create progress: ${errorText}`);
-      }
-    }
-  } else {
-    const errorText = await progressFindResponse.text();
-    console.error('❌ Failed to find progress:', errorText);
-    throw new Error(`Failed to find progress: ${errorText}`);
-  }
-  
-  console.log('=== END PROGRESS UPDATE DEBUG ===');
-
-  // Step 4: Send email notification to professor via EmailJS REST API
-  const reviewUrl = `${window.location.origin}/review/${submissionId}?review=true`;
-  
-  try {
-    await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        service_id: 'service_b7vul04',
-        template_id: 'template_9yoskno',
-        user_id: 'GImjhsi-c_0q7ZtUA',
-        template_params: {
-          student_name: studentName,
-          module_number: moduleNumber,
-          module_name: moduleName,
-          phase,
-          operating_system: 'N/A',
-          task_count: taskCount.toString(),
-          submitted_at: new Date(submittedAt).toLocaleString(),
-          review_url: reviewUrl,
-          to_email: professorEmail
-        }
-      })
-    });
-  } catch (emailError) {
-    console.error('Email sending failed:', emailError);
-    // Don't throw - submission is still valid even if email fails
-  }
-
-  return { submissionId, dashboardToken };
-};
+import { submitModule } from '../../services/submissionService';
 
 interface StepObject {
   step: string;
@@ -553,20 +318,20 @@ const Module4Documentation = () => {
         studentName: studentName.trim(),
         apprenticeEmail: apprenticeEmail.trim().toLowerCase(),
         professorEmail: professorEmail.trim().toLowerCase(),
+        operatingSystem: 'windows' as const,
         moduleName: 'Documentation & Lesson Closure',
         moduleNumber: '2.4',
         phase: 'Phase 2',
         completedTasks,
-        uploadedScreenshots,
-        dashboardToken
+        uploadedScreenshots
       };
 
-      const result = await submitModule(submissionData);
+      await submitModule(submissionData);
       setSubmitSuccess(true);
-      
+
       // Redirect back to dashboard with token after 3 seconds
       setTimeout(() => {
-        window.location.href = `/dashboard/${result.dashboardToken}`;
+        window.location.href = `/dashboard/${dashboardToken}`;
       }, 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Submission failed. Please try again.');

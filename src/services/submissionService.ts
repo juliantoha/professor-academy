@@ -75,7 +75,7 @@ export const saveToSupabase = async (
   screenshotUrls: Record<string, string>
 ): Promise<void> => {
   const isModuleSubmission = 'moduleName' in data;
-  
+
   const record: any = {
     submissionId,
     studentName: data.studentName,
@@ -113,7 +113,7 @@ export const updateProgress = async (
   submissionId: string
 ): Promise<void> => {
   console.log(`Updating progress: ${phase} - ${module} for ${apprenticeEmail}`);
-  
+
   try {
     // Check if record exists
     const { data: existing, error: fetchError } = await supabase
@@ -180,6 +180,10 @@ export const sendModuleCompletionEmail = async (
   data: ModuleSubmissionData,
   submissionId: string
 ): Promise<void> => {
+  const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin || 'https://academy.oclef.com';
+  const reviewUrl = `${baseUrl}/review/${submissionId}?review=true`;
+  const taskCount = Object.keys(data.completedTasks || {}).filter(key => data.completedTasks[key]).length;
+
   const reviewUrl = `${window.location.origin}/review/${submissionId}?review=true`;
   const taskCount = Object.keys(data.completedTasks || {}).filter(key => data.completedTasks[key]).length;
   
@@ -241,8 +245,13 @@ export const sendOrientationEmail = async (
     to_email: data.professorEmail,
     student_name: data.apprenticeName,
     apprentice_email: data.apprenticeEmail,
-    completed_at: new Date().toLocaleString(),
-    phase: 'Phase 1 - Orientation'
+    module_name: 'Orientation',
+    module_number: '1.0',
+    phase: 'Phase 1 - Orientation',
+    operating_system: 'N/A',
+    task_count: 'Orientation Complete',
+    submitted_at: new Date().toLocaleString(),
+    review_url: `${window.location.origin}/dashboard`
   };
 
   try {
@@ -264,7 +273,7 @@ export const sendOrientationEmail = async (
 
 export const markOrientationComplete = async (data: OrientationData): Promise<string> => {
   const submissionId = `orientation_${uuidv4()}`;
-  
+
   console.log('=== Marking Orientation Complete ===');
   console.log('Submission ID:', submissionId);
   console.log('Apprentice:', data.apprenticeName, `(${data.apprenticeEmail})`);
@@ -326,7 +335,7 @@ export const markOrientationComplete = async (data: OrientationData): Promise<st
 
     console.log('=== Orientation Complete ✓ ===');
     return submissionId;
-    
+
   } catch (error) {
     console.error('=== Orientation Failed ✗ ===');
     console.error('Error:', error);
@@ -336,7 +345,7 @@ export const markOrientationComplete = async (data: OrientationData): Promise<st
 
 export const submitModule = async (data: ModuleSubmissionData): Promise<string> => {
   const submissionId = `${data.moduleNumber.replace('.', '_')}_${uuidv4()}`;
-  
+
   console.log('=== Starting Module Submission ===');
   console.log('Submission ID:', submissionId);
   console.log('Module:', `${data.moduleNumber} - ${data.moduleName}`);
@@ -348,7 +357,7 @@ export const submitModule = async (data: ModuleSubmissionData): Promise<string> 
     console.log('\n--- Step 1: Uploading Screenshots ---');
     const screenshotUrls: Record<string, string> = {};
     const screenshotCount = Object.keys(data.uploadedScreenshots).length;
-    
+
     let uploadedCount = 0;
     for (const [taskId, base64Image] of Object.entries(data.uploadedScreenshots)) {
       try {
@@ -376,7 +385,7 @@ export const submitModule = async (data: ModuleSubmissionData): Promise<string> 
 
     console.log('\n=== Module Submission Complete ✓ ===');
     return submissionId;
-    
+
   } catch (error) {
     console.error('\n=== Module Submission Failed ✗ ===');
     console.error('Error:', error);
@@ -386,7 +395,7 @@ export const submitModule = async (data: ModuleSubmissionData): Promise<string> 
 
 export const submitTraining = async (data: SubmissionData): Promise<string> => {
   const submissionId = uuidv4();
-  
+
   console.log('=== Starting Training Submission ===');
   console.log('Submission ID:', submissionId);
   console.log('Apprentice:', data.studentName, `(${data.apprenticeEmail})`);
@@ -396,7 +405,7 @@ export const submitTraining = async (data: SubmissionData): Promise<string> => {
     console.log('\n--- Step 1: Uploading Screenshots ---');
     const screenshotUrls: Record<string, string> = {};
     const screenshotCount = Object.keys(data.uploadedScreenshots).length;
-    
+
     let uploadedCount = 0;
     for (const [taskId, base64Image] of Object.entries(data.uploadedScreenshots)) {
       try {
@@ -418,7 +427,7 @@ export const submitTraining = async (data: SubmissionData): Promise<string> => {
 
     console.log('\n=== Submission Complete ✓ ===');
     return submissionId;
-    
+
   } catch (error) {
     console.error('\n=== Submission Failed ✗ ===');
     console.error('Error:', error);

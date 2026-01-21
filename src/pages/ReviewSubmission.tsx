@@ -57,13 +57,19 @@ const ReviewSubmission = ({ submissionId }: { submissionId: string }) => {
 
   const fetchSubmission = async () => {
     try {
+      console.log('[ReviewSubmission] Fetching submission with ID:', submissionId);
+
       const { data, error } = await supabase
         .from('submissions')
         .select('*')
         .eq('submissionId', submissionId)
         .single();
 
+      console.log('[ReviewSubmission] Submission data:', data);
+      console.log('[ReviewSubmission] Submission error:', error);
+
       if (error) {
+        console.error('[ReviewSubmission] Error details:', { code: error.code, message: error.message, details: error.details });
         throw new Error('Failed to fetch submission');
       }
 
