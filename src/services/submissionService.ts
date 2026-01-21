@@ -183,9 +183,6 @@ export const sendModuleCompletionEmail = async (
   const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin || 'https://academy.oclef.com';
   const reviewUrl = `${baseUrl}/review/${submissionId}?review=true`;
   const taskCount = Object.keys(data.completedTasks || {}).filter(key => data.completedTasks[key]).length;
-
-  const reviewUrl = `${window.location.origin}/review/${submissionId}?review=true`;
-  const taskCount = Object.keys(data.completedTasks || {}).filter(key => data.completedTasks[key]).length;
   
   const templateParams = {
     to_email: data.professorEmail,
