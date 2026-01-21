@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Dashboard from './Dashboard';
 import MasqueradeBanner from '../components/MasqueradeBanner';
-import { LogOut, Settings, ChevronDown } from 'lucide-react';
+import { LogOut, Settings, ChevronDown, ArrowLeft } from 'lucide-react';
 
 const DashboardWrapper = () => {
   const { dashboardToken } = useParams<{ dashboardToken: string }>();
@@ -43,11 +43,43 @@ const DashboardWrapper = () => {
           background: 'linear-gradient(135deg, #003250 0%, #004A69 50%, #0066A2 100%)',
           padding: '0.75rem 2rem',
           display: 'flex',
-          justifyContent: 'flex-end',
+          justifyContent: 'space-between',
           alignItems: 'center',
           position: 'relative',
           zIndex: 100
         }}>
+          {/* Back Button for Professors */}
+          <div>
+            {(profile?.role === 'professor' || profile?.role === 'admin') && (
+              <button
+                onClick={() => navigate('/professor')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 1rem',
+                  background: 'rgba(255,255,255,0.1)',
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  borderRadius: '10px',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                }}
+              >
+                <ArrowLeft size={18} />
+                Back to Dashboard
+              </button>
+            )}
+          </div>
+
           {/* Profile Dropdown */}
           <div style={{ position: 'relative' }}>
             <button
