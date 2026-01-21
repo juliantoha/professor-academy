@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { LogOut, Users, Clock, CheckCircle, ExternalLink, RefreshCw, Settings, ChevronDown, Plus, X, UserPlus, Copy, Check, Shield, ClipboardList } from 'lucide-react';
+import { LogOut, Users, Clock, CheckCircle, ExternalLink, RefreshCw, Settings, ChevronDown, Plus, X, UserPlus, Copy, Check, Shield, ClipboardList, GraduationCap, RotateCcw } from 'lucide-react';
 import MasqueradeBanner from '../components/MasqueradeBanner';
 
 // Super admin emails
@@ -16,6 +16,8 @@ interface Apprentice {
   dashboardToken: string;
   createdAt?: string;
   employmentType?: '1099' | 'part-time' | null;
+  graduated?: boolean;
+  graduatedAt?: string;
 }
 
 interface Progress {
@@ -56,6 +58,9 @@ const ProfessorDashboard = () => {
   const [addError, setAddError] = useState('');
   const [addSuccess, setAddSuccess] = useState<{ email: string; dashboardUrl: string } | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Graduated section state
+  const [showGraduated, setShowGraduated] = useState(false);
 
   // Get display name
   const displayName = profile?.firstName || profile?.name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Professor';
@@ -259,6 +264,34 @@ const ProfessorDashboard = () => {
     setAddSuccess(null);
     setCopied(false);
   };
+
+  const toggleGraduated = async (apprentice: Apprentice, graduated: boolean) => {
+    try {
+      const { error: updateError } = await supabase
+        .from('apprentices')
+        .update({
+          graduated,
+          graduatedAt: graduated ? new Date().toISOString() : null
+        })
+        .eq('id', apprentice.id);
+
+      if (updateError) throw updateError;
+
+      // Update local state
+      setApprentices(prev => prev.map(a =>
+        a.id === apprentice.id
+          ? { ...a, graduated, graduatedAt: graduated ? new Date().toISOString() : undefined }
+          : a
+      ));
+    } catch (err: any) {
+      console.error('Error updating graduated status:', err);
+      setError(err.message || 'Failed to update apprentice status');
+    }
+  };
+
+  // Split apprentices into active and graduated
+  const activeApprentices = apprentices.filter(a => !a.graduated);
+  const graduatedApprentices = apprentices.filter(a => a.graduated);
 
   if (loading) {
     return (
@@ -808,7 +841,7 @@ const ProfessorDashboard = () => {
                 color: '#004A69',
                 margin: 0
               }}>
-                Your Apprentices ({apprentices.length})
+                Your Apprentices ({activeApprentices.length})
               </h2>
             </div>
 
@@ -843,7 +876,7 @@ const ProfessorDashboard = () => {
             </button>
           </div>
 
-          {apprentices.length === 0 ? (
+          {activeApprentices.length === 0 ? (
             <div style={{
               background: 'white',
               borderRadius: '20px',
@@ -886,7 +919,7 @@ const ProfessorDashboard = () => {
               gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
               gap: '1.5rem'
             }}>
-              {apprentices.map((apprentice) => {
+              {activeApprentices.map((apprentice) => {
                 const summary = getProgressSummary(apprentice.email);
                 return (
                   <div
@@ -1113,6 +1146,40 @@ const ProfessorDashboard = () => {
                         <ClipboardList size={16} />
                         Skills List
                       </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleGraduated(apprentice, true);
+                        }}
+                        style={{
+                          padding: '0.85rem',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: '#059669',
+                          background: 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)',
+                          border: '2px solid #A7F3D0',
+                          borderRadius: '10px',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.5rem'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'linear-gradient(135deg, #059669 0%, #10B981 100%)';
+                          e.currentTarget.style.color = 'white';
+                          e.currentTarget.style.borderColor = '#059669';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)';
+                          e.currentTarget.style.color = '#059669';
+                          e.currentTarget.style.borderColor = '#A7F3D0';
+                        }}
+                        title="Mark as graduated"
+                      >
+                        <GraduationCap size={16} />
+                      </button>
                     </div>
                   </div>
                 );
@@ -1120,6 +1187,288 @@ const ProfessorDashboard = () => {
             </div>
           )}
         </section>
+
+        {/* Graduated Apprentices Section */}
+        {graduatedApprentices.length > 0 && (
+          <section style={{ marginTop: '2.5rem' }}>
+            <button
+              onClick={() => setShowGraduated(!showGraduated)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                marginBottom: '1.5rem',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0
+              }}
+            >
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '10px',
+                background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(5,150,105,0.3)'
+              }}>
+                <GraduationCap size={22} color="white" />
+              </div>
+              <h2 style={{
+                fontFamily: 'Montserrat, sans-serif',
+                fontSize: '22px',
+                fontWeight: 700,
+                color: '#004A69',
+                margin: 0
+              }}>
+                Graduated ({graduatedApprentices.length})
+              </h2>
+              <ChevronDown
+                size={20}
+                color="#6B7280"
+                style={{
+                  transform: showGraduated ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.2s ease'
+                }}
+              />
+            </button>
+
+            {showGraduated && (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+                gap: '1.5rem'
+              }}>
+                {graduatedApprentices.map((apprentice) => {
+                  const summary = getProgressSummary(apprentice.email);
+                  return (
+                    <div
+                      key={apprentice.id}
+                      style={{
+                        background: 'linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%)',
+                        borderRadius: '20px',
+                        padding: '1.75rem',
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
+                        border: '2px solid #E5E7EB',
+                        opacity: 0.9,
+                        transition: 'all 0.3s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.opacity = '1';
+                        e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.opacity = '0.9';
+                        e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.04)';
+                      }}
+                    >
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        justifyContent: 'space-between',
+                        marginBottom: '1.25rem'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                          <div style={{
+                            width: '52px',
+                            height: '52px',
+                            borderRadius: '14px',
+                            background: apprenticeProfiles[apprentice.email.toLowerCase()]?.avatarUrl
+                              ? `url(${apprenticeProfiles[apprentice.email.toLowerCase()].avatarUrl}) center/cover no-repeat`
+                              : 'linear-gradient(135deg, #6B7280 0%, #9CA3AF 100%)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 4px 12px rgba(107,114,128,0.3)'
+                          }}>
+                            {!apprenticeProfiles[apprentice.email.toLowerCase()]?.avatarUrl && (
+                              <span style={{
+                                fontFamily: 'Montserrat, sans-serif',
+                                fontSize: '20px',
+                                fontWeight: 700,
+                                color: 'white'
+                              }}>
+                                {apprentice.name.charAt(0).toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+                          <div>
+                            <h3 style={{
+                              fontFamily: 'Montserrat, sans-serif',
+                              fontSize: '17px',
+                              fontWeight: 600,
+                              color: '#374151',
+                              margin: '0 0 0.25rem 0'
+                            }}>
+                              {apprentice.name}
+                            </h3>
+                            <p style={{
+                              fontSize: '13px',
+                              color: '#6B7280',
+                              margin: 0
+                            }}>
+                              {apprentice.email}
+                            </p>
+                          </div>
+                        </div>
+                        <span style={{
+                          padding: '0.3rem 0.6rem',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          borderRadius: '6px',
+                          background: 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)',
+                          color: '#059669',
+                          border: '1px solid #A7F3D0',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.25rem'
+                        }}>
+                          <GraduationCap size={12} />
+                          Graduated
+                        </span>
+                      </div>
+
+                      {/* Graduated date */}
+                      {apprentice.graduatedAt && (
+                        <p style={{
+                          fontSize: '12px',
+                          color: '#9CA3AF',
+                          margin: '0 0 1rem 0'
+                        }}>
+                          Graduated {new Date(apprentice.graduatedAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
+                        </p>
+                      )}
+
+                      {/* Completed modules info */}
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.4rem',
+                        padding: '0.5rem 0.75rem',
+                        background: 'white',
+                        borderRadius: '8px',
+                        marginBottom: '1.25rem',
+                        width: 'fit-content'
+                      }}>
+                        <CheckCircle size={14} color="#059669" />
+                        <span style={{ fontSize: '13px', color: '#059669', fontWeight: 600 }}>
+                          {summary.completed} of 5 modules completed
+                        </span>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div style={{
+                        display: 'flex',
+                        gap: '0.75rem'
+                      }}>
+                        <button
+                          onClick={() => window.open(`/dashboard/${apprentice.dashboardToken}`, '_blank')}
+                          style={{
+                            flex: 1,
+                            padding: '0.75rem',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            color: '#6B7280',
+                            background: 'white',
+                            border: '2px solid #E5E7EB',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.5rem'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = '#F3F4F6';
+                            e.currentTarget.style.color = '#374151';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'white';
+                            e.currentTarget.style.color = '#6B7280';
+                          }}
+                        >
+                          <ExternalLink size={14} />
+                          Dashboard
+                        </button>
+                        <button
+                          onClick={() => window.open(`/skills/${apprentice.dashboardToken}`, '_blank')}
+                          style={{
+                            flex: 1,
+                            padding: '0.75rem',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            color: '#6B7280',
+                            background: 'white',
+                            border: '2px solid #E5E7EB',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.5rem'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = '#F3F4F6';
+                            e.currentTarget.style.color = '#374151';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'white';
+                            e.currentTarget.style.color = '#6B7280';
+                          }}
+                        >
+                          <ClipboardList size={14} />
+                          Skills
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleGraduated(apprentice, false);
+                          }}
+                          style={{
+                            padding: '0.75rem',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            color: '#6B7280',
+                            background: 'white',
+                            border: '2px solid #E5E7EB',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.5rem'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = '#FEF3C7';
+                            e.currentTarget.style.color = '#D97706';
+                            e.currentTarget.style.borderColor = '#FCD34D';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'white';
+                            e.currentTarget.style.color = '#6B7280';
+                            e.currentTarget.style.borderColor = '#E5E7EB';
+                          }}
+                          title="Restore to active"
+                        >
+                          <RotateCcw size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        )}
 
         {/* Apps & Resources */}
         <section style={{ marginTop: '2.5rem' }}>
