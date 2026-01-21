@@ -184,6 +184,9 @@ export const sendModuleCompletionEmail = async (
   const reviewUrl = `${baseUrl}/review/${submissionId}?review=true`;
   const taskCount = Object.keys(data.completedTasks || {}).filter(key => data.completedTasks[key]).length;
 
+  const reviewUrl = `${window.location.origin}/review/${submissionId}?review=true`;
+  const taskCount = Object.keys(data.completedTasks || {}).filter(key => data.completedTasks[key]).length;
+  
   const templateParams = {
     to_email: data.professorEmail,
     student_name: data.studentName,
@@ -328,6 +331,7 @@ export const markOrientationComplete = async (data: OrientationData): Promise<st
       }
       console.log('✓ Created orientation record');
     }
+
 
     console.log('=== Orientation Complete ✓ ===');
     return submissionId;
