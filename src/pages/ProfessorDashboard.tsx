@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { LogOut, Users, Clock, CheckCircle, ExternalLink, RefreshCw, Settings, ChevronDown, Plus, X, UserPlus, Copy, Check, Shield } from 'lucide-react';
+import { LogOut, Users, Clock, CheckCircle, ExternalLink, RefreshCw, Settings, ChevronDown, Plus, X, UserPlus, Copy, Check, Shield, ClipboardList } from 'lucide-react';
 import MasqueradeBanner from '../components/MasqueradeBanner';
 
 // Super admin emails
@@ -1044,39 +1044,76 @@ const ProfessorDashboard = () => {
                       )}
                     </div>
 
-                    {/* View Dashboard Button */}
-                    <button
-                      onClick={() => window.open(`/dashboard/${apprentice.dashboardToken}`, '_blank')}
-                      style={{
-                        width: '100%',
-                        padding: '0.85rem',
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        color: '#004A69',
-                        background: 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)',
-                        border: '2px solid #E5E7EB',
-                        borderRadius: '10px',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s ease',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.5rem'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'linear-gradient(135deg, #004A69 0%, #0066A2 100%)';
-                        e.currentTarget.style.color = 'white';
-                        e.currentTarget.style.borderColor = '#004A69';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)';
-                        e.currentTarget.style.color = '#004A69';
-                        e.currentTarget.style.borderColor = '#E5E7EB';
-                      }}
-                    >
-                      <ExternalLink size={16} />
-                      View Dashboard
-                    </button>
+                    {/* Action Buttons */}
+                    <div style={{
+                      display: 'flex',
+                      gap: '0.75rem'
+                    }}>
+                      <button
+                        onClick={() => window.open(`/dashboard/${apprentice.dashboardToken}`, '_blank')}
+                        style={{
+                          flex: 1,
+                          padding: '0.85rem',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: '#004A69',
+                          background: 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)',
+                          border: '2px solid #E5E7EB',
+                          borderRadius: '10px',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.5rem'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'linear-gradient(135deg, #004A69 0%, #0066A2 100%)';
+                          e.currentTarget.style.color = 'white';
+                          e.currentTarget.style.borderColor = '#004A69';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)';
+                          e.currentTarget.style.color = '#004A69';
+                          e.currentTarget.style.borderColor = '#E5E7EB';
+                        }}
+                      >
+                        <ExternalLink size={16} />
+                        Dashboard
+                      </button>
+                      <button
+                        onClick={() => window.open(`/skills/${apprentice.dashboardToken}`, '_blank')}
+                        style={{
+                          flex: 1,
+                          padding: '0.85rem',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: '#471657',
+                          background: 'linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%)',
+                          border: '2px solid #DDD6FE',
+                          borderRadius: '10px',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.5rem'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'linear-gradient(135deg, #471657 0%, #6B2C7B 100%)';
+                          e.currentTarget.style.color = 'white';
+                          e.currentTarget.style.borderColor = '#471657';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%)';
+                          e.currentTarget.style.color = '#471657';
+                          e.currentTarget.style.borderColor = '#DDD6FE';
+                        }}
+                      >
+                        <ClipboardList size={16} />
+                        Skills List
+                      </button>
+                    </div>
                   </div>
                 );
               })}

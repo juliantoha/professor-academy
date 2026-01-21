@@ -18,6 +18,7 @@ import ApprenticeDashboard from './pages/ApprenticeDashboard.tsx'
 import SettingsPage from './pages/SettingsPage.tsx'
 import ApprenticeSettingsPage from './pages/ApprenticeSettingsPage.tsx'
 import UnauthorizedPage from './pages/UnauthorizedPage.tsx'
+import SkillsChecklist from './pages/SkillsChecklist.tsx'
 
 // Auth components
 import { AuthProvider } from './contexts/AuthContext.tsx'
@@ -132,6 +133,14 @@ const router = createBrowserRouter([
   {
     path: '/dashboard/:dashboardToken',
     element: <DashboardWrapper />
+  },
+  {
+    path: '/skills/:dashboardToken',
+    element: (
+      <ProtectedRoute requiredRole="professor">
+        <SkillsChecklist />
+      </ProtectedRoute>
+    )
   },
   {
     path: '/orientation',
