@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, X, Check, CheckCheck, Trash2, FileText, CheckCircle, AlertCircle, MessageSquare, Award, Settings } from 'lucide-react';
+import { X, Check, CheckCheck, Trash2, FileText, CheckCircle, AlertCircle, MessageSquare, Award, Settings } from 'lucide-react';
 import { useNotifications, Notification } from '../contexts/NotificationContext';
 
 const NotificationCenter = () => {
@@ -305,9 +305,22 @@ const NotificationCenter = () => {
           if (!isOpen) e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
         }}
       >
-        <Bell size={22} color="white" strokeWidth={2} style={{
-          animation: unreadCount > 0 ? 'bell-ring 0.5s ease-in-out' : 'none'
-        }} />
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="white"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{
+            animation: unreadCount > 0 ? 'bell-ring 0.5s ease-in-out' : 'none'
+          }}
+        >
+          <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+          <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+        </svg>
 
         {/* Badge */}
         {unreadCount > 0 && (

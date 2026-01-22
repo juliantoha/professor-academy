@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useOnboarding } from '../contexts/OnboardingContext';
-import { X, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 
 interface TargetRect {
   top: number;
@@ -299,7 +299,7 @@ const OnboardingOverlay = () => {
           background: 'linear-gradient(135deg, #003250 0%, #004A69 100%)',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between'
+          justifyContent: 'center'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Sparkles size={18} color="#F97316" />
@@ -313,38 +313,6 @@ const OnboardingOverlay = () => {
               Step {currentStep + 1} of {steps.length}
             </span>
           </div>
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              skipTour();
-            }}
-            aria-label="Close tour"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '32px',
-              height: '32px',
-              borderRadius: '8px',
-              border: '1px solid rgba(255,255,255,0.3)',
-              background: 'rgba(255,255,255,0.2)',
-              color: 'white',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-              zIndex: 10001
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.3)';
-              e.currentTarget.style.transform = 'scale(1.05)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
-          >
-            <X size={18} strokeWidth={2.5} />
-          </button>
         </div>
 
         {/* Content */}
