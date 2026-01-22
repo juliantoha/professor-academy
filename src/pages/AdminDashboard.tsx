@@ -46,6 +46,8 @@ interface Apprentice {
   currentPhase: string | null;
   completedModules: number;
   pendingSubmissions: number;
+  graduated?: boolean;
+  graduatedAt?: string;
 }
 
 interface Submission {
@@ -189,7 +191,9 @@ const AdminDashboard = () => {
           dashboardToken: app.dashboardToken,
           currentPhase: app.currentPhase,
           completedModules,
-          pendingSubmissions
+          pendingSubmissions,
+          graduated: app.graduated || false,
+          graduatedAt: app.graduatedAt
         };
       });
 
@@ -942,6 +946,35 @@ const AdminDashboard = () => {
               </div>
             </div>
           </div>
+
+          <div style={{
+            background: 'rgba(255,255,255,0.05)',
+            borderRadius: '16px',
+            padding: '1.5rem',
+            border: '1px solid rgba(16,185,129,0.3)',
+            boxShadow: '0 0 20px rgba(16,185,129,0.1)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(16,185,129,0.3)'
+              }}>
+                <GraduationCap size={24} color="white" />
+              </div>
+              <div>
+                <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', margin: 0 }}>Graduated</p>
+                <p style={{ color: '#10B981', fontSize: '28px', fontWeight: 700, margin: 0 }}>
+                  {apprentices.filter(a => a.graduated).length}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Search and Tabs */}
@@ -1342,19 +1375,47 @@ const AdminDashboard = () => {
                       {apprentice.professorName || apprentice.professorEmail}
                     </td>
                     <td style={{ padding: '1rem', textAlign: 'center' }}>
-                      <span style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.25rem',
-                        padding: '0.35rem 0.75rem',
-                        background: apprentice.completedModules > 0 ? 'rgba(139,92,246,0.2)' : 'rgba(255,255,255,0.1)',
-                        color: apprentice.completedModules > 0 ? '#8B5CF6' : 'rgba(255,255,255,0.5)',
-                        borderRadius: '20px',
-                        fontSize: '13px',
-                        fontWeight: 600
-                      }}>
-                        {apprentice.completedModules}/5 modules
-                      </span>
+                      {apprentice.graduated ? (
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          padding: '0.35rem 0.85rem',
+                          background: 'linear-gradient(135deg, rgba(0,149,46,0.25) 0%, rgba(16,185,129,0.25) 100%)',
+                          color: '#10B981',
+                          borderRadius: '20px',
+                          fontSize: '13px',
+                          fontWeight: 700,
+                          border: '1px solid rgba(16,185,129,0.3)',
+                          boxShadow: '0 0 12px rgba(16,185,129,0.2)'
+                        }}>
+                          <GraduationCap size={14} />
+                          Graduated
+                        </span>
+                      ) : (
+                        <span style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
+                          padding: '0.35rem 0.75rem',
+                          background: apprentice.completedModules === 5
+                            ? 'rgba(16,185,129,0.2)'
+                            : apprentice.completedModules > 0
+                              ? 'rgba(139,92,246,0.2)'
+                              : 'rgba(255,255,255,0.1)',
+                          color: apprentice.completedModules === 5
+                            ? '#10B981'
+                            : apprentice.completedModules > 0
+                              ? '#8B5CF6'
+                              : 'rgba(255,255,255,0.5)',
+                          borderRadius: '20px',
+                          fontSize: '13px',
+                          fontWeight: 600
+                        }}>
+                          {apprentice.completedModules === 5 && <CheckCircle size={14} />}
+                          {apprentice.completedModules}/5 modules
+                        </span>
+                      )}
                     </td>
                     <td style={{ padding: '1rem', textAlign: 'center' }}>
                       {apprentice.pendingSubmissions > 0 ? (

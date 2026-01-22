@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { LogOut, Users, Clock, CheckCircle, ExternalLink, RefreshCw, Settings, ChevronDown, Plus, X, UserPlus, Copy, Check, Shield, ClipboardList, GraduationCap, RotateCcw, Music2, Theater, Piano, PenLine, BookOpen, Target, Search, UserMinus, ChevronUp } from 'lucide-react';
+import { LogOut, Users, Clock, CheckCircle, ExternalLink, RefreshCw, Settings, ChevronDown, Plus, X, UserPlus, Copy, Check, Shield, ClipboardList, GraduationCap, RotateCcw, Music2, Theater, Piano, PenLine, BookOpen, Target, Search, UserMinus, ChevronUp, Moon, Sun } from 'lucide-react';
 import MasqueradeBanner from '../components/MasqueradeBanner';
+import DarkModeToggle from '../components/DarkModeToggle';
+import { useDarkMode } from '../contexts/DarkModeContext';
 
 // Super admin emails
 const SUPER_ADMIN_EMAILS = ['julian@oclef.com'];
@@ -47,6 +49,7 @@ interface Submission {
 const ProfessorDashboard = () => {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const { isDarkMode } = useDarkMode();
 
   const [apprentices, setApprentices] = useState<Apprentice[]>([]);
   const [progress, setProgress] = useState<Record<string, Progress[]>>({});
@@ -554,8 +557,11 @@ const ProfessorDashboard = () => {
     <div style={{
       fontFamily: "'Inter', system-ui, sans-serif",
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)',
-      paddingTop: isMasquerading ? '52px' : '0'
+      background: isDarkMode
+        ? 'linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%)'
+        : 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)',
+      paddingTop: isMasquerading ? '52px' : '0',
+      transition: 'background 0.4s ease'
     }}>
       <MasqueradeBanner />
       {/* Header */}
@@ -715,21 +721,25 @@ const ProfessorDashboard = () => {
                       top: '100%',
                       right: 0,
                       marginTop: '0.5rem',
-                      background: 'white',
+                      background: isDarkMode ? '#1f2937' : 'white',
                       borderRadius: '12px',
-                      boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
-                      minWidth: '200px',
+                      boxShadow: isDarkMode
+                        ? '0 8px 32px rgba(0,0,0,0.4)'
+                        : '0 8px 32px rgba(0,0,0,0.15)',
+                      border: isDarkMode ? '1px solid #374151' : 'none',
+                      minWidth: '220px',
                       zIndex: 20,
-                      overflow: 'hidden'
+                      overflow: 'hidden',
+                      transition: 'background 0.3s ease, box-shadow 0.3s ease'
                     }}>
                       <div style={{
                         padding: '1rem',
-                        borderBottom: '1px solid #E5E7EB'
+                        borderBottom: isDarkMode ? '1px solid #374151' : '1px solid #E5E7EB'
                       }}>
                         <p style={{
                           fontSize: '14px',
                           fontWeight: 600,
-                          color: '#002642',
+                          color: isDarkMode ? '#F9FAFB' : '#002642',
                           margin: '0 0 0.25rem 0'
                         }}>
                           {profile?.firstName && profile?.lastName
@@ -738,7 +748,7 @@ const ProfessorDashboard = () => {
                         </p>
                         <p style={{
                           fontSize: '12px',
-                          color: 'rgba(0, 38, 66, 0.6)',
+                          color: isDarkMode ? '#9CA3AF' : 'rgba(0, 38, 66, 0.6)',
                           margin: 0
                         }}>
                           {user?.email}
@@ -795,15 +805,45 @@ const ProfessorDashboard = () => {
                             textAlign: 'left'
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.background = '#F3F4F6';
+                            e.currentTarget.style.background = isDarkMode ? '#374151' : '#F3F4F6';
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.background = 'transparent';
                           }}
                         >
-                          <Settings size={18} color="#6B7280" />
-                          <span style={{ fontSize: '14px', color: '#002642' }}>Settings</span>
+                          <Settings size={18} color={isDarkMode ? '#9CA3AF' : '#6B7280'} />
+                          <span style={{ fontSize: '14px', color: isDarkMode ? '#E5E7EB' : '#002642' }}>Settings</span>
                         </button>
+
+                        {/* Dark Mode Toggle */}
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '0.75rem 1rem',
+                            borderRadius: '8px',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            {isDarkMode ? (
+                              <Moon size={18} color="#9CA3AF" />
+                            ) : (
+                              <Sun size={18} color="#F59E0B" />
+                            )}
+                            <span style={{ fontSize: '14px', color: isDarkMode ? '#E5E7EB' : '#002642' }}>
+                              {isDarkMode ? 'Dark Mode' : 'Light Mode'}
+                            </span>
+                          </div>
+                          <DarkModeToggle size="small" />
+                        </div>
+
+                        <div style={{
+                          height: '1px',
+                          background: isDarkMode ? '#374151' : '#E5E7EB',
+                          margin: '0.5rem 0'
+                        }} />
+
                         <button
                           onClick={() => {
                             setShowProfileMenu(false);
@@ -2494,7 +2534,7 @@ const ProfessorDashboard = () => {
                 onClick={resetFollowModal}
                 style={{
                   background: 'rgba(255,255,255,0.2)',
-                  border: 'none',
+                  border: '2px solid rgba(255,255,255,0.3)',
                   borderRadius: '50%',
                   width: '36px',
                   height: '36px',
@@ -2504,8 +2544,19 @@ const ProfessorDashboard = () => {
                   cursor: 'pointer',
                   transition: 'all 0.2s ease'
                 }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.35)';
+                  e.currentTarget.style.transform = 'rotate(90deg)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+                  e.currentTarget.style.transform = 'rotate(0deg)';
+                }}
               >
-                <X size={20} color="white" />
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
               </button>
             </div>
 
