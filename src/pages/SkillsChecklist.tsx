@@ -3,8 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { apprenticeCache } from '../lib/apprenticeCache';
 import { useAuth } from '../contexts/AuthContext';
+import { useDarkMode } from '../contexts/DarkModeContext';
 import PremiumLoader from '../components/PremiumLoader';
-import { ArrowLeft, CheckCircle, BookOpen, Users, Music, Save, Star, Sparkles, Trophy, Zap, MousePointerClick, ChevronDown, Settings, LogOut } from 'lucide-react';
+import DarkModeToggle from '../components/DarkModeToggle';
+import { ArrowLeft, CheckCircle, BookOpen, Users, Music, Save, Star, Sparkles, Trophy, Zap, MousePointerClick, ChevronDown, Settings, LogOut, Moon, Sun } from 'lucide-react';
 
 interface Apprentice {
   id: string;
@@ -483,6 +485,7 @@ const SkillsChecklist = () => {
   const { dashboardToken } = useParams<{ dashboardToken: string }>();
   const navigate = useNavigate();
   const { user, profile, signOut } = useAuth();
+  const { isDarkMode } = useDarkMode();
 
   const [apprentice, setApprentice] = useState<Apprentice | null>(null);
   const [checkedSkills, setCheckedSkills] = useState<Record<string, boolean>>({});
@@ -927,6 +930,32 @@ const SkillsChecklist = () => {
                           <Settings size={14} />
                           Settings
                         </button>
+
+                        {/* Dark Mode Toggle */}
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '0.5rem 0.75rem',
+                            borderRadius: '6px',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            {isDarkMode ? (
+                              <Moon size={14} color="#9CA3AF" />
+                            ) : (
+                              <Sun size={14} color="#F59E0B" />
+                            )}
+                            <span style={{ fontSize: '13px', color: '#374151' }}>
+                              {isDarkMode ? 'Dark Mode' : 'Light Mode'}
+                            </span>
+                          </div>
+                          <DarkModeToggle size="small" />
+                        </div>
+
+                        <div style={{ height: '1px', background: '#E5E7EB', margin: '0.25rem 0' }} />
+
                         <button
                           onClick={() => {
                             setShowProfileMenu(false);

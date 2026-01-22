@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useDarkMode } from '../contexts/DarkModeContext';
 import { supabase } from '../lib/supabase';
 import { ArrowLeft, User, Lock, Camera, Save, CheckCircle, AlertCircle, Home, ChevronRight, LogOut, Settings, ChevronDown, Moon, Sun } from 'lucide-react';
+import DarkModeToggle from '../components/DarkModeToggle';
 
 const SettingsPage = () => {
   const { user, profile, updatePassword, refreshProfile, signOut } = useAuth();
@@ -369,33 +370,28 @@ const SettingsPage = () => {
                         <span>Dashboard</span>
                       </button>
 
-                      <button
-                        onClick={() => toggleDarkMode()}
+                      {/* Dark Mode Toggle */}
+                      <div
                         style={{
-                          width: '100%',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '0.75rem',
+                          justifyContent: 'space-between',
                           padding: '0.75rem 1rem',
-                          background: 'transparent',
-                          border: 'none',
                           borderRadius: '8px',
-                          cursor: 'pointer',
-                          color: isDarkMode ? '#E5E7EB' : '#002642',
-                          fontSize: '14px',
-                          textAlign: 'left',
-                          transition: 'background 0.2s ease'
                         }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = isDarkMode ? '#374151' : '#F3F4F6'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                       >
-                        {isDarkMode ? (
-                          <Moon size={18} color="#9CA3AF" />
-                        ) : (
-                          <Sun size={18} color="#F59E0B" />
-                        )}
-                        <span>{isDarkMode ? 'Dark Mode' : 'Light Mode'}</span>
-                      </button>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          {isDarkMode ? (
+                            <Moon size={18} color="#9CA3AF" />
+                          ) : (
+                            <Sun size={18} color="#F59E0B" />
+                          )}
+                          <span style={{ fontSize: '14px', color: isDarkMode ? '#E5E7EB' : '#002642' }}>
+                            {isDarkMode ? 'Dark Mode' : 'Light Mode'}
+                          </span>
+                        </div>
+                        <DarkModeToggle size="small" />
+                      </div>
 
                       <div style={{
                         height: '1px',
