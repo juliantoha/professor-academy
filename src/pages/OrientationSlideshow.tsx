@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, CheckCircle, Award, Target, TrendingUp, Users, Zap, Book, Maximize, Minimize, Briefcase, FileText, Calendar } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useToast } from '../contexts/ToastContext';
 
 interface OrientationProps {
   apprenticeName?: string;
@@ -17,6 +18,7 @@ const OrientationSlideshow = ({ apprenticeName, apprenticeEmail, professorEmail,
   const [alreadyCompleted, setAlreadyCompleted] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(true);
   const [employmentType, setEmploymentType] = useState<'1099' | 'part-time' | null>(null);
+  const toast = useToast();
 
   // Check if orientation is already completed on mount
   useEffect(() => {
@@ -218,12 +220,12 @@ const OrientationSlideshow = ({ apprenticeName, apprenticeEmail, professorEmail,
 
   const handleComplete = async () => {
     if (!apprenticeEmail || !professorEmail) {
-      alert('❌ Missing required information. Please return to dashboard.');
+      toast.error('Missing required information. Please return to dashboard.');
       return;
     }
 
     if (!employmentType) {
-      alert('❌ Please select your preferred employment type before completing orientation.');
+      toast.warning('Please select your preferred employment type before completing orientation.');
       return;
     }
 
@@ -251,8 +253,8 @@ const OrientationSlideshow = ({ apprenticeName, apprenticeEmail, professorEmail,
       
       setCompleted(true);
       setAlreadyCompleted(true);
-      alert('✅ Orientation marked complete! Redirecting to your dashboard...');
-      
+      toast.success('Orientation marked complete! Redirecting to your dashboard...');
+
       setTimeout(() => {
         if (dashboardToken) {
           window.location.href = `/dashboard/${dashboardToken}`;
@@ -262,23 +264,16 @@ const OrientationSlideshow = ({ apprenticeName, apprenticeEmail, professorEmail,
           if (tokenFromUrl) {
             window.location.href = `/dashboard/${tokenFromUrl}`;
           } else {
-            alert('⚠️ Dashboard token not found. Please check your email for the dashboard link.');
+            toast.warning('Dashboard token not found. Please check your email for the dashboard link.');
             window.location.href = '/';
           }
         }
       }, 2000);
     } catch (error) {
       console.error('Error marking complete:', error);
-      
+
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      let helpText = '\n\nPossible issues:\n';
-      helpText += '• Database tables not set up correctly\n';
-      helpText += '• Missing environment variables\n';
-      helpText += '• No Progress record exists for this apprentice\n';
-      helpText += '• Network connection issue\n\n';
-      helpText += 'Check the browser console for details.';
-      
-      alert(`❌ Failed to mark complete.\n\nError: ${errorMessage}${helpText}`);
+      toast.error(`Failed to mark complete: ${errorMessage}. Check the browser console for details.`, 8000);
     } finally {
       setSubmitting(false);
     }

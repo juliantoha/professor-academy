@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { UserPlus, CheckCircle, Copy } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useToast } from '../contexts/ToastContext';
 
 const AdminPage = () => {
   const [apprenticeName, setApprenticeName] = useState('');
@@ -9,13 +10,14 @@ const AdminPage = () => {
   const [creating, setCreating] = useState(false);
   const [dashboardLink, setDashboardLink] = useState('');
   const [copied, setCopied] = useState(false);
-  
+  const toast = useToast();
+
   // Always start at Phase 1
   const currentPhase = 'Phase 1';
 
   const createApprentice = async () => {
     if (!apprenticeName.trim() || !apprenticeEmail.trim() || !professorEmail.trim()) {
-      alert('Please fill in all required fields');
+      toast.warning('Please fill in all required fields');
       return;
     }
 
@@ -51,7 +53,7 @@ const AdminPage = () => {
       setProfessorEmail('');
     } catch (error) {
       console.error('Creation error:', error);
-      alert(`Failed to create apprentice: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(`Failed to create apprentice: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setCreating(false);
     }

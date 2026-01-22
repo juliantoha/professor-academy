@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle, Clock, XCircle, FileText, ZoomIn, Download, Mail, AlertCircle, Eye, ChevronLeft, ChevronRight, Lock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useToast } from '../contexts/ToastContext';
 
 interface SubmissionData {
   submissionId: string;
@@ -27,6 +28,7 @@ const ReviewSubmission = ({ submissionId }: { submissionId: string }) => {
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [emailSent, setEmailSent] = useState(false);
   const [dashboardToken, setDashboardToken] = useState<string | null>(null);
+  const toast = useToast();
 
   // Check if viewer is professor (has review=true parameter)
   const urlParams = new URLSearchParams(window.location.search);
@@ -148,13 +150,13 @@ const ReviewSubmission = ({ submissionId }: { submissionId: string }) => {
       }
 
       setSubmission({ ...submission, status: newStatus, professorNotes: notes });
-      
+
       // Send email notification
       await sendEmailNotification(newStatus);
-      
-      alert(`Submission ${newStatus === 'Approved' ? 'approved' : 'returned for revision'}!`);
+
+      toast.success(`Submission ${newStatus === 'Approved' ? 'approved' : 'returned for revision'}!`);
     } catch (err) {
-      alert('Failed to update status');
+      toast.error('Failed to update status');
       console.error(err);
     } finally {
       setUpdating(false);
