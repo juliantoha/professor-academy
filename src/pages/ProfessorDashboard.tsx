@@ -296,7 +296,7 @@ const ProfessorDashboard = () => {
   if (loading) {
     return (
       <div style={{
-        fontFamily: 'Lato, sans-serif',
+        fontFamily: "'Inter', system-ui, sans-serif",
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)',
         display: 'flex',
@@ -328,7 +328,7 @@ const ProfessorDashboard = () => {
               inset: 0,
               borderRadius: '50%',
               border: '3px solid transparent',
-              borderTopColor: '#0066A2',
+              borderTopColor: '#004A69',
               borderRightColor: '#0066A2',
               animation: 'spin 0.8s cubic-bezier(0.5, 0, 0.5, 1) infinite'
             }} />
@@ -341,24 +341,24 @@ const ProfessorDashboard = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(0,102,162,0.3)'
+              boxShadow: '0 4px 12px rgba(0,74,105,0.3)'
             }}>
               <Users size={20} color="white" />
             </div>
           </div>
           <div style={{ textAlign: 'center' }}>
             <p style={{
-              fontFamily: 'Montserrat, sans-serif',
-              fontSize: '16px',
+              fontFamily: "'Lora', Georgia, serif",
+              fontSize: '18px',
               fontWeight: 600,
-              color: '#004A69',
+              color: '#002642',
               margin: '0 0 0.25rem 0'
             }}>
               Loading Dashboard
             </p>
             <p style={{
               fontSize: '13px',
-              color: '#6B7280',
+              color: 'rgba(0, 38, 66, 0.6)',
               margin: 0
             }}>
               Fetching your apprentices...
@@ -379,7 +379,7 @@ const ProfessorDashboard = () => {
 
   return (
     <div style={{
-      fontFamily: 'Lato, sans-serif',
+      fontFamily: "'Inter', system-ui, sans-serif",
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)',
       paddingTop: isMasquerading ? '52px' : '0'
@@ -387,8 +387,8 @@ const ProfessorDashboard = () => {
       <MasqueradeBanner />
       {/* Header */}
       <header style={{
-        background: 'linear-gradient(135deg, #003250 0%, #004A69 50%, #0066A2 100%)',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+        background: 'linear-gradient(135deg, #002642 0%, #004A69 50%, #0066A2 100%)',
+        boxShadow: '0 4px 20px rgba(0, 38, 66, 0.15)',
         position: 'relative',
         zIndex: 50
       }}>
@@ -419,7 +419,7 @@ const ProfessorDashboard = () => {
           }}>
             <div>
               <h1 style={{
-                fontFamily: 'Montserrat, sans-serif',
+                fontFamily: "'Lora', Georgia, serif",
                 fontSize: '28px',
                 fontWeight: 700,
                 color: 'white',
@@ -505,7 +505,7 @@ const ProfessorDashboard = () => {
                   }}>
                     {!profile?.avatarUrl && (
                       <span style={{
-                        fontFamily: 'Montserrat, sans-serif',
+                        fontFamily: "'Lora', Georgia, serif",
                         fontSize: '14px',
                         fontWeight: 700,
                         color: 'white'
@@ -555,7 +555,7 @@ const ProfessorDashboard = () => {
                         <p style={{
                           fontSize: '14px',
                           fontWeight: 600,
-                          color: '#1F2937',
+                          color: '#002642',
                           margin: '0 0 0.25rem 0'
                         }}>
                           {profile?.firstName && profile?.lastName
@@ -564,7 +564,7 @@ const ProfessorDashboard = () => {
                         </p>
                         <p style={{
                           fontSize: '12px',
-                          color: '#6B7280',
+                          color: 'rgba(0, 38, 66, 0.6)',
                           margin: 0
                         }}>
                           {user?.email}
@@ -628,7 +628,7 @@ const ProfessorDashboard = () => {
                           }}
                         >
                           <Settings size={18} color="#6B7280" />
-                          <span style={{ fontSize: '14px', color: '#1F2937' }}>Settings</span>
+                          <span style={{ fontSize: '14px', color: '#002642' }}>Settings</span>
                         </button>
                         <button
                           onClick={() => {
@@ -709,10 +709,10 @@ const ProfessorDashboard = () => {
               <Clock size={22} color="white" />
             </div>
             <h2 style={{
-              fontFamily: 'Montserrat, sans-serif',
+              fontFamily: "'Lora', Georgia, serif",
               fontSize: '22px',
               fontWeight: 700,
-              color: '#004A69',
+              color: '#002642',
               margin: 0
             }}>
               Pending Reviews ({pendingSubmissions.length})
@@ -740,17 +740,17 @@ const ProfessorDashboard = () => {
                 <CheckCircle size={36} color="#eb6a18" />
               </div>
               <h3 style={{
-                fontFamily: 'Montserrat, sans-serif',
+                fontFamily: "'Lora', Georgia, serif",
                 fontSize: '20px',
                 fontWeight: 600,
-                color: '#004A69',
+                color: '#002642',
                 margin: '0 0 0.75rem 0'
               }}>
                 All caught up!
               </h3>
               <p style={{
                 fontSize: '15px',
-                color: '#6B7280',
+                color: 'rgba(0, 38, 66, 0.6)',
                 margin: 0
               }}>
                 No pending submissions to review. New submissions will appear here.
@@ -792,17 +792,17 @@ const ProfessorDashboard = () => {
                   }}>
                     <div>
                       <h3 style={{
-                        fontFamily: 'Montserrat, sans-serif',
+                        fontFamily: "'Lora', Georgia, serif",
                         fontSize: '16px',
                         fontWeight: 600,
-                        color: '#004A69',
+                        color: '#002642',
                         margin: '0 0 0.25rem 0'
                       }}>
                         {submission.moduleNumber} - {submission.moduleName}
                       </h3>
                       <p style={{
                         fontSize: '14px',
-                        color: '#6B7280',
+                        color: 'rgba(0, 38, 66, 0.6)',
                         margin: 0
                       }}>
                         {submission.studentName || submission.apprenticeEmail}
@@ -881,10 +881,10 @@ const ProfessorDashboard = () => {
                 <Users size={22} color="white" />
               </div>
               <h2 style={{
-                fontFamily: 'Montserrat, sans-serif',
+                fontFamily: "'Lora', Georgia, serif",
                 fontSize: '22px',
                 fontWeight: 700,
-                color: '#004A69',
+                color: '#002642',
                 margin: 0
               }}>
                 Your Apprentices ({activeApprentices.length})
@@ -943,17 +943,17 @@ const ProfessorDashboard = () => {
                 <Users size={36} color="#9CA3AF" />
               </div>
               <h3 style={{
-                fontFamily: 'Montserrat, sans-serif',
+                fontFamily: "'Lora', Georgia, serif",
                 fontSize: '20px',
                 fontWeight: 600,
-                color: '#004A69',
+                color: '#002642',
                 margin: '0 0 0.75rem 0'
               }}>
                 No apprentices yet
               </h3>
               <p style={{
                 fontSize: '15px',
-                color: '#6B7280',
+                color: 'rgba(0, 38, 66, 0.6)',
                 margin: 0
               }}>
                 Apprentices assigned to you will appear here.
@@ -1007,7 +1007,7 @@ const ProfessorDashboard = () => {
                         }}>
                           {!apprenticeProfiles[apprentice.email.toLowerCase()]?.avatarUrl && (
                             <span style={{
-                              fontFamily: 'Montserrat, sans-serif',
+                              fontFamily: "'Lora', Georgia, serif",
                               fontSize: '20px',
                               fontWeight: 700,
                               color: 'white'
@@ -1018,17 +1018,17 @@ const ProfessorDashboard = () => {
                         </div>
                         <div>
                           <h3 style={{
-                            fontFamily: 'Montserrat, sans-serif',
+                            fontFamily: "'Lora', Georgia, serif",
                             fontSize: '17px',
                             fontWeight: 600,
-                            color: '#004A69',
+                            color: '#002642',
                             margin: '0 0 0.25rem 0'
                           }}>
                             {apprentice.name}
                           </h3>
                           <p style={{
                             fontSize: '13px',
-                            color: '#6B7280',
+                            color: 'rgba(0, 38, 66, 0.6)',
                             margin: 0
                           }}>
                             {apprentice.email}
@@ -1063,8 +1063,8 @@ const ProfessorDashboard = () => {
                         fontSize: '13px',
                         marginBottom: '0.5rem'
                       }}>
-                        <span style={{ color: '#6B7280', fontWeight: 500 }}>Progress</span>
-                        <span style={{ color: '#004A69', fontWeight: 600 }}>
+                        <span style={{ color: 'rgba(0, 38, 66, 0.6)', fontWeight: 500 }}>Progress</span>
+                        <span style={{ color: '#002642', fontWeight: 600 }}>
                           {summary.completed} of 5 modules
                         </span>
                       </div>
@@ -1135,7 +1135,7 @@ const ProfessorDashboard = () => {
                           padding: '0.85rem',
                           fontSize: '14px',
                           fontWeight: 600,
-                          color: '#004A69',
+                          color: '#002642',
                           background: 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)',
                           border: '2px solid #E5E7EB',
                           borderRadius: '10px',
@@ -1263,10 +1263,10 @@ const ProfessorDashboard = () => {
                 <GraduationCap size={22} color="white" />
               </div>
               <h2 style={{
-                fontFamily: 'Montserrat, sans-serif',
+                fontFamily: "'Lora', Georgia, serif",
                 fontSize: '22px',
                 fontWeight: 700,
-                color: '#004A69',
+                color: '#002642',
                 margin: 0
               }}>
                 Graduated ({graduatedApprentices.length})
@@ -1331,7 +1331,7 @@ const ProfessorDashboard = () => {
                           }}>
                             {!apprenticeProfiles[apprentice.email.toLowerCase()]?.avatarUrl && (
                               <span style={{
-                                fontFamily: 'Montserrat, sans-serif',
+                                fontFamily: "'Lora', Georgia, serif",
                                 fontSize: '20px',
                                 fontWeight: 700,
                                 color: 'white'
@@ -1342,7 +1342,7 @@ const ProfessorDashboard = () => {
                           </div>
                           <div>
                             <h3 style={{
-                              fontFamily: 'Montserrat, sans-serif',
+                              fontFamily: "'Lora', Georgia, serif",
                               fontSize: '17px',
                               fontWeight: 600,
                               color: '#374151',
@@ -1352,7 +1352,7 @@ const ProfessorDashboard = () => {
                             </h3>
                             <p style={{
                               fontSize: '13px',
-                              color: '#6B7280',
+                              color: 'rgba(0, 38, 66, 0.6)',
                               margin: 0
                             }}>
                               {apprentice.email}
@@ -1420,7 +1420,7 @@ const ProfessorDashboard = () => {
                             padding: '0.75rem',
                             fontSize: '13px',
                             fontWeight: 600,
-                            color: '#6B7280',
+                            color: 'rgba(0, 38, 66, 0.6)',
                             background: 'white',
                             border: '2px solid #E5E7EB',
                             borderRadius: '10px',
@@ -1450,7 +1450,7 @@ const ProfessorDashboard = () => {
                             padding: '0.75rem',
                             fontSize: '13px',
                             fontWeight: 600,
-                            color: '#6B7280',
+                            color: 'rgba(0, 38, 66, 0.6)',
                             background: 'white',
                             border: '2px solid #E5E7EB',
                             borderRadius: '10px',
@@ -1482,7 +1482,7 @@ const ProfessorDashboard = () => {
                             padding: '0.75rem',
                             fontSize: '13px',
                             fontWeight: 600,
-                            color: '#6B7280',
+                            color: 'rgba(0, 38, 66, 0.6)',
                             background: 'white',
                             border: '2px solid #E5E7EB',
                             borderRadius: '10px',
@@ -1537,10 +1537,10 @@ const ProfessorDashboard = () => {
               <ExternalLink size={22} color="white" />
             </div>
             <h2 style={{
-              fontFamily: 'Montserrat, sans-serif',
+              fontFamily: "'Lora', Georgia, serif",
               fontSize: '22px',
               fontWeight: 700,
-              color: '#004A69',
+              color: '#002642',
               margin: 0
             }}>
               Apps & Resources
@@ -1615,7 +1615,7 @@ const ProfessorDashboard = () => {
       <footer style={{
         textAlign: 'center',
         padding: '2rem',
-        color: '#6B7280',
+        color: 'rgba(0, 38, 66, 0.6)',
         fontSize: '14px'
       }}>
         © {new Date().getFullYear()} Oclef Professor Academy
@@ -1664,7 +1664,7 @@ const ProfessorDashboard = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <UserPlus size={24} color="white" />
                 <h3 style={{
-                  fontFamily: 'Montserrat, sans-serif',
+                  fontFamily: "'Lora', Georgia, serif",
                   fontSize: '20px',
                   fontWeight: 700,
                   color: 'white',
@@ -1709,10 +1709,10 @@ const ProfessorDashboard = () => {
                   </div>
 
                   <h4 style={{
-                    fontFamily: 'Montserrat, sans-serif',
+                    fontFamily: "'Lora', Georgia, serif",
                     fontSize: '18px',
                     fontWeight: 600,
-                    color: '#004A69',
+                    color: '#002642',
                     textAlign: 'center',
                     margin: '0 0 0.5rem 0'
                   }}>
@@ -1721,7 +1721,7 @@ const ProfessorDashboard = () => {
 
                   <p style={{
                     fontSize: '14px',
-                    color: '#6B7280',
+                    color: 'rgba(0, 38, 66, 0.6)',
                     textAlign: 'center',
                     margin: '0 0 1.5rem 0'
                   }}>
@@ -1738,7 +1738,7 @@ const ProfessorDashboard = () => {
                     <p style={{
                       fontSize: '12px',
                       fontWeight: 600,
-                      color: '#004A69',
+                      color: '#002642',
                       margin: '0 0 0.5rem 0'
                     }}>
                       Dashboard Link (optional - they can also just login):
@@ -1790,7 +1790,7 @@ const ProfessorDashboard = () => {
                   }}>
                     <p style={{
                       fontSize: '13px',
-                      color: '#004A69',
+                      color: '#002642',
                       margin: 0,
                       lineHeight: 1.5
                     }}>
@@ -1820,7 +1820,7 @@ const ProfessorDashboard = () => {
                 <div>
                   <p style={{
                     fontSize: '14px',
-                    color: '#6B7280',
+                    color: 'rgba(0, 38, 66, 0.6)',
                     margin: '0 0 1.5rem 0',
                     lineHeight: 1.5
                   }}>
@@ -1846,7 +1846,7 @@ const ProfessorDashboard = () => {
                       display: 'block',
                       fontSize: '14px',
                       fontWeight: 600,
-                      color: '#004A69',
+                      color: '#002642',
                       marginBottom: '0.5rem'
                     }}>
                       Apprentice Name
@@ -1876,7 +1876,7 @@ const ProfessorDashboard = () => {
                       display: 'block',
                       fontSize: '14px',
                       fontWeight: 600,
-                      color: '#004A69',
+                      color: '#002642',
                       marginBottom: '0.5rem'
                     }}>
                       Apprentice Email
@@ -1909,7 +1909,7 @@ const ProfessorDashboard = () => {
                         padding: '0.875rem',
                         fontSize: '15px',
                         fontWeight: 600,
-                        color: '#004A69',
+                        color: '#002642',
                         background: 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)',
                         border: '2px solid #E5E7EB',
                         borderRadius: '10px',
@@ -2051,13 +2051,13 @@ const ResourceCard = ({ href, icon, title, subtitle, description, color }: {
           <h3 style={{
             fontSize: '15px',
             fontWeight: 600,
-            color: '#1F2937',
+            color: '#002642',
             margin: 0,
             letterSpacing: '-0.01em'
           }}>
             {title}
           </h3>
-          <p style={{ fontSize: '12px', color: '#6B7280', margin: '0.15rem 0 0 0' }}>
+          <p style={{ fontSize: '12px', color: 'rgba(0, 38, 66, 0.6)', margin: '0.15rem 0 0 0' }}>
             {subtitle}
           </p>
         </div>

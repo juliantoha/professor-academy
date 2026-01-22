@@ -299,21 +299,22 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
   };
 
   const getStatusStyle = (status: string, submissionStatus?: string): { bg: string; color: string; icon: any; text: string } => {
+    // Using Oclef Design System colors
     if (submissionStatus === 'Pending') {
-      return { bg: '#FEF3C7', color: '#92400E', icon: Clock, text: 'Under Review' };
+      return { bg: '#FEF3C7', color: '#F6AE00', icon: Clock, text: 'Under Review' };
     }
     if (submissionStatus === 'Needs Work') {
-      return { bg: '#FEE2E2', color: '#991B1B', icon: AlertCircle, text: 'Needs Revision' };
+      return { bg: '#FEE2E2', color: '#B9314F', icon: AlertCircle, text: 'Needs Revision' };
     }
     if (submissionStatus === 'Approved') {
-      return { bg: '#D1FAE5', color: '#065F46', icon: CheckCircle, text: 'Approved ✓' };
+      return { bg: '#ECFDF5', color: '#00952E', icon: CheckCircle, text: 'Approved' };
     }
-    
+
     switch (status) {
-      case 'Completed': return { bg: '#D1FAE5', color: '#065F46', icon: CheckCircle, text: 'Completed' };
-      case 'In Progress': return { bg: '#FEF3C7', color: '#92400E', icon: Clock, text: 'In Progress' };
-      case 'Not Started': return { bg: '#F3F4F6', color: '#6B7280', icon: XCircle, text: 'Not Started' };
-      default: return { bg: '#F3F4F6', color: '#6B7280', icon: Clock, text: 'Not Started' };
+      case 'Completed': return { bg: '#ECFDF5', color: '#00952E', icon: CheckCircle, text: 'Completed' };
+      case 'In Progress': return { bg: '#FEF3C7', color: '#F6AE00', icon: Clock, text: 'In Progress' };
+      case 'Not Started': return { bg: '#F3F4F6', color: 'rgba(0, 38, 66, 0.5)', icon: XCircle, text: 'Not Started' };
+      default: return { bg: '#F3F4F6', color: 'rgba(0, 38, 66, 0.5)', icon: Clock, text: 'Not Started' };
     }
   };
 
@@ -325,7 +326,7 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
         alignItems: 'center',
         justifyContent: 'center',
         background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)',
-        fontFamily: 'Lato, sans-serif'
+        fontFamily: "'Inter', system-ui, sans-serif"
       }}>
         <div style={{
           display: 'flex',
@@ -350,7 +351,7 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
               inset: 0,
               borderRadius: '50%',
               border: '3px solid transparent',
-              borderTopColor: '#0066A2',
+              borderTopColor: '#004A69',
               borderRightColor: '#0066A2',
               animation: 'spin 0.8s cubic-bezier(0.5, 0, 0.5, 1) infinite'
             }} />
@@ -362,24 +363,24 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(0,102,162,0.3)'
+              boxShadow: '0 4px 12px rgba(0,74,105,0.3)'
             }}>
               <Award size={20} color="white" />
             </div>
           </div>
           <div style={{ textAlign: 'center' }}>
             <p style={{
-              fontFamily: 'Montserrat, sans-serif',
-              fontSize: '16px',
+              fontFamily: "'Lora', Georgia, serif",
+              fontSize: '18px',
               fontWeight: 600,
-              color: '#004A69',
+              color: '#002642',
               margin: '0 0 0.25rem 0'
             }}>
               Loading Dashboard
             </p>
             <p style={{
               fontSize: '13px',
-              color: '#6B7280',
+              color: 'rgba(0, 38, 66, 0.6)',
               margin: 0
             }}>
               Preparing your training modules...
@@ -404,15 +405,15 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
         alignItems: 'center',
         justifyContent: 'center',
         background: 'linear-gradient(135deg, #FFF6ED 0%, #FEF2F2 50%, #FEE2E2 100%)',
-        fontFamily: 'Lato, sans-serif'
+        fontFamily: "'Inter', system-ui, sans-serif"
       }}>
         <div style={{
           textAlign: 'center',
           maxWidth: '400px',
           padding: '3rem',
-          background: 'white',
+          background: '#FFF6ED',
           borderRadius: '24px',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.08)'
+          boxShadow: '0 8px 32px rgba(0, 38, 66, 0.08)'
         }}>
           <div style={{
             width: '64px',
@@ -424,20 +425,20 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
             justifyContent: 'center',
             margin: '0 auto 1.5rem'
           }}>
-            <XCircle size={32} color="#DC2626" />
+            <XCircle size={32} color="#B9314F" />
           </div>
           <h2 style={{
-            fontFamily: 'Montserrat, sans-serif',
-            fontSize: '20px',
+            fontFamily: "'Lora', Georgia, serif",
+            fontSize: '22px',
             fontWeight: 600,
-            color: '#991B1B',
+            color: '#B9314F',
             margin: '0 0 0.5rem 0'
           }}>
             Dashboard Not Found
           </h2>
           <p style={{
             fontSize: '14px',
-            color: '#6B7280',
+            color: 'rgba(0, 38, 66, 0.6)',
             margin: 0,
             lineHeight: 1.5
           }}>
@@ -465,7 +466,7 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
 
   return (
     <div style={{
-      fontFamily: 'system-ui, -apple-system, sans-serif',
+      fontFamily: "'Inter', system-ui, sans-serif",
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)',
       padding: '2rem'
@@ -473,11 +474,11 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* Header Card */}
         <div style={{
-          background: 'white',
+          background: '#FFF6ED',
           borderRadius: '20px',
           padding: '2.5rem',
           marginBottom: '2rem',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.06)'
+          boxShadow: '0 4px 16px rgba(0, 38, 66, 0.06)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
             <div style={{
@@ -495,24 +496,25 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
             </div>
             <div style={{ flex: 1, minWidth: '200px' }}>
               <h1 style={{
+                fontFamily: "'Lora', Georgia, serif",
                 fontSize: '28px',
                 fontWeight: 700,
-                color: '#004A69',
+                color: '#002642',
                 margin: '0 0 0.5rem 0'
               }}>
                 {apprentice.name}'s Training Dashboard
               </h1>
-              <p style={{ color: '#6B7280', fontSize: '15px', margin: 0 }}>
+              <p style={{ color: 'rgba(0, 38, 66, 0.6)', fontSize: '15px', margin: 0 }}>
                 Professor: {apprentice.professorEmail}
               </p>
             </div>
           </div>
 
           <div style={{
-            background: 'linear-gradient(135deg, #F0F9FF 0%, #DBEAFE 100%)',
+            background: 'linear-gradient(135deg, #F0F9FF 0%, #C4E5F4 100%)',
             borderRadius: '16px',
             padding: '1.75rem',
-            border: '2px solid rgba(0,102,162,0.15)'
+            border: '2px solid rgba(0,74,105,0.15)'
           }}>
             <div style={{
               display: 'flex',
@@ -523,9 +525,10 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
               gap: '1rem'
             }}>
               <span style={{
+                fontFamily: "'Lora', Georgia, serif",
                 fontSize: '17px',
                 fontWeight: 600,
-                color: '#004A69'
+                color: '#002642'
               }}>
                 Overall Progress
               </span>
@@ -560,12 +563,12 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
 
         {/* Pre-Orientation Checklist */}
         <div style={{
-          background: 'white',
+          background: '#FFF6ED',
           borderRadius: '20px',
           padding: '2.5rem',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
+          boxShadow: '0 4px 16px rgba(0, 38, 66, 0.06)',
           marginBottom: '2rem',
-          border: preOrientationComplete ? '2px solid #10B981' : '2px solid #F59E0B'
+          border: preOrientationComplete ? '2px solid #00952E' : '2px solid #F6AE00'
         }}>
           <div style={{ marginBottom: '2rem' }}>
             <div style={{
@@ -578,15 +581,15 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                 width: '48px',
                 height: '48px',
                 borderRadius: '12px',
-                background: preOrientationComplete 
-                  ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
-                  : 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+                background: preOrientationComplete
+                  ? 'linear-gradient(135deg, #00952E 0%, #C3D366 100%)'
+                  : 'linear-gradient(135deg, #F6AE00 0%, #eb6a18 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: preOrientationComplete 
-                  ? '0 4px 12px rgba(16,185,129,0.3)'
-                  : '0 4px 12px rgba(245,158,11,0.3)'
+                boxShadow: preOrientationComplete
+                  ? '0 4px 12px rgba(0,149,46,0.3)'
+                  : '0 4px 12px rgba(246,174,0,0.3)'
               }}>
                 {preOrientationComplete ? (
                   <CheckCircle size={28} color="white" />
@@ -596,16 +599,17 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
               </div>
               <div>
                 <h2 style={{
+                  fontFamily: "'Lora', Georgia, serif",
                   fontSize: '22px',
                   fontWeight: 700,
-                  color: '#004A69',
+                  color: '#002642',
                   margin: '0 0 0.25rem 0'
                 }}>
                   Pre-Orientation Setup
                 </h2>
                 <p style={{
                   fontSize: '14px',
-                  color: '#6B7280',
+                  color: 'rgba(0, 38, 66, 0.6)',
                   margin: 0
                 }}>
                   Complete these items before your orientation session
@@ -616,7 +620,7 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
             {!preOrientationComplete && (
               <div style={{
                 background: 'linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)',
-                border: '1px solid #F59E0B',
+                border: '1px solid #F6AE00',
                 borderRadius: '12px',
                 padding: '1rem 1.25rem',
                 marginBottom: '1.5rem',
@@ -624,10 +628,10 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                 alignItems: 'flex-start',
                 gap: '0.75rem'
               }}>
-                <AlertCircle size={20} color="#D97706" style={{ flexShrink: 0, marginTop: '2px' }} />
+                <AlertCircle size={20} color="#F6AE00" style={{ flexShrink: 0, marginTop: '2px' }} />
                 <p style={{
                   fontSize: '14px',
-                  color: '#92400E',
+                  color: '#002642',
                   margin: 0,
                   lineHeight: '1.5',
                   fontWeight: 500
@@ -639,8 +643,8 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
 
             {preOrientationComplete && (
               <div style={{
-                background: 'linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%)',
-                border: '1px solid #10B981',
+                background: 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)',
+                border: '1px solid #00952E',
                 borderRadius: '12px',
                 padding: '1rem 1.25rem',
                 marginBottom: '1.5rem',
@@ -648,10 +652,10 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                 alignItems: 'flex-start',
                 gap: '0.75rem'
               }}>
-                <CheckCircle size={20} color="#059669" style={{ flexShrink: 0, marginTop: '2px' }} />
+                <CheckCircle size={20} color="#00952E" style={{ flexShrink: 0, marginTop: '2px' }} />
                 <p style={{
                   fontSize: '14px',
-                  color: '#065F46',
+                  color: '#002642',
                   margin: 0,
                   lineHeight: '1.5',
                   fontWeight: 500
@@ -683,8 +687,8 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                     width: '28px',
                     height: '28px',
                     borderRadius: '8px',
-                    border: `3px solid ${preOrientationChecks.zoomDownloaded ? '#10B981' : '#D1D5DB'}`,
-                    background: preOrientationChecks.zoomDownloaded ? '#10B981' : 'white',
+                    border: `3px solid ${preOrientationChecks.zoomDownloaded ? '#00952E' : '#D1D5DB'}`,
+                    background: preOrientationChecks.zoomDownloaded ? '#00952E' : 'white',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -704,11 +708,12 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                     gap: '0.75rem',
                     marginBottom: '0.5rem'
                   }}>
-                    <Download size={20} color="#0066A2" />
+                    <Download size={20} color="#004A69" />
                     <h3 style={{
+                      fontFamily: "'Lora', Georgia, serif",
                       fontSize: '16px',
                       fontWeight: 600,
-                      color: '#1F2937',
+                      color: '#002642',
                       margin: 0
                     }}>
                       Zoom Desktop App
@@ -716,7 +721,7 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                   </div>
                   <p style={{
                     fontSize: '14px',
-                    color: '#6B7280',
+                    color: 'rgba(0, 38, 66, 0.6)',
                     margin: '0 0 1rem 0',
                     lineHeight: '1.5'
                   }}>
@@ -730,9 +735,9 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                       style={{
                         fontSize: '13px',
                         fontWeight: 600,
-                        color: '#0066A2',
+                        color: '#004A69',
                         background: 'white',
-                        border: '2px solid #0066A2',
+                        border: '2px solid #004A69',
                         borderRadius: '8px',
                         padding: '0.5rem 1rem',
                         textDecoration: 'none',
@@ -752,9 +757,9 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                       style={{
                         fontSize: '13px',
                         fontWeight: 600,
-                        color: '#0066A2',
+                        color: '#004A69',
                         background: 'white',
-                        border: '2px solid #0066A2',
+                        border: '2px solid #004A69',
                         borderRadius: '8px',
                         padding: '0.5rem 1rem',
                         textDecoration: 'none',
@@ -821,8 +826,8 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                     width: '28px',
                     height: '28px',
                     borderRadius: '8px',
-                    border: `3px solid ${preOrientationChecks.gchatBrowser ? '#10B981' : '#D1D5DB'}`,
-                    background: preOrientationChecks.gchatBrowser ? '#10B981' : 'white',
+                    border: `3px solid ${preOrientationChecks.gchatBrowser ? '#00952E' : '#D1D5DB'}`,
+                    background: preOrientationChecks.gchatBrowser ? '#00952E' : 'white',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -842,11 +847,12 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                     gap: '0.75rem',
                     marginBottom: '0.5rem'
                   }}>
-                    <MessageSquare size={20} color="#0066A2" />
+                    <MessageSquare size={20} color="#004A69" />
                     <h3 style={{
+                      fontFamily: "'Lora', Georgia, serif",
                       fontSize: '16px',
                       fontWeight: 600,
-                      color: '#1F2937',
+                      color: '#002642',
                       margin: 0
                     }}>
                       Google Chat - Desktop Browser
@@ -854,7 +860,7 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                   </div>
                   <p style={{
                     fontSize: '14px',
-                    color: '#6B7280',
+                    color: 'rgba(0, 38, 66, 0.6)',
                     margin: '0 0 1rem 0',
                     lineHeight: '1.5'
                   }}>
@@ -867,9 +873,9 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                     style={{
                       fontSize: '13px',
                       fontWeight: 600,
-                      color: '#0066A2',
+                      color: '#004A69',
                       background: 'white',
-                      border: '2px solid #0066A2',
+                      border: '2px solid #004A69',
                       borderRadius: '8px',
                       padding: '0.5rem 1rem',
                       textDecoration: 'none',
@@ -906,8 +912,8 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                     width: '28px',
                     height: '28px',
                     borderRadius: '8px',
-                    border: `3px solid ${preOrientationChecks.gchatPhone ? '#10B981' : '#D1D5DB'}`,
-                    background: preOrientationChecks.gchatPhone ? '#10B981' : 'white',
+                    border: `3px solid ${preOrientationChecks.gchatPhone ? '#00952E' : '#D1D5DB'}`,
+                    background: preOrientationChecks.gchatPhone ? '#00952E' : 'white',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -927,11 +933,12 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                     gap: '0.75rem',
                     marginBottom: '0.5rem'
                   }}>
-                    <Smartphone size={20} color="#0066A2" />
+                    <Smartphone size={20} color="#004A69" />
                     <h3 style={{
+                      fontFamily: "'Lora', Georgia, serif",
                       fontSize: '16px',
                       fontWeight: 600,
-                      color: '#1F2937',
+                      color: '#002642',
                       margin: 0
                     }}>
                       Google Chat - Mobile App
@@ -939,7 +946,7 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                   </div>
                   <p style={{
                     fontSize: '14px',
-                    color: '#6B7280',
+                    color: 'rgba(0, 38, 66, 0.6)',
                     margin: '0 0 1rem 0',
                     lineHeight: '1.5'
                   }}>
@@ -952,9 +959,9 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                     style={{
                       fontSize: '13px',
                       fontWeight: 600,
-                      color: '#0066A2',
+                      color: '#004A69',
                       background: 'white',
-                      border: '2px solid #0066A2',
+                      border: '2px solid #004A69',
                       borderRadius: '8px',
                       padding: '0.5rem 1rem',
                       textDecoration: 'none',
@@ -975,16 +982,17 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
 
         {/* Training Modules */}
         <div style={{
-          background: 'white',
+          background: '#FFF6ED',
           borderRadius: '20px',
           padding: '2.5rem',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.06)',
+          boxShadow: '0 4px 16px rgba(0, 38, 66, 0.06)',
           marginBottom: '2rem'
         }}>
           <h2 style={{
+            fontFamily: "'Lora', Georgia, serif",
             fontSize: '22px',
             fontWeight: 700,
-            color: '#004A69',
+            color: '#002642',
             margin: '0 0 2rem 0'
           }}>
             Training Modules
@@ -1052,16 +1060,17 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                   </div>
                   <div>
                     <h3 style={{
+                      fontFamily: "'Lora', Georgia, serif",
                       fontSize: '18px',
                       fontWeight: 600,
-                      color: '#004A69',
+                      color: '#002642',
                       margin: '0 0 0.25rem 0'
                     }}>
                       1.1 - Orientation
                     </h3>
                     <p style={{
                       fontSize: '14px',
-                      color: '#6B7280',
+                      color: 'rgba(0, 38, 66, 0.6)',
                       margin: 0
                     }}>
                       {MODULE_DESCRIPTIONS['Orientation']}
@@ -1072,7 +1081,7 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
               
               {orientationStatus === 'Completed' ? (
                 <div style={{
-                  background: '#D1FAE5',
+                  background: '#ECFDF5',
                   padding: '0.7rem 1.3rem',
                   borderRadius: '10px',
                   display: 'flex',
@@ -1081,13 +1090,13 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                   boxShadow: '0 2px 6px rgba(0,149,46,0.15)',
                   flexShrink: 0
                 }}>
-                  <CheckCircle size={18} color="#065F46" />
+                  <CheckCircle size={18} color="#00952E" />
                   <span style={{
                     fontWeight: 600,
-                    color: '#065F46',
+                    color: '#00952E',
                     fontSize: '14px'
                   }}>
-                    Completed ✓
+                    Completed
                   </span>
                 </div>
               ) : (
@@ -1138,36 +1147,37 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
             <div style={{
               textAlign: 'center',
               padding: '3.5rem 2rem',
-              background: 'linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 100%)',
+              background: 'linear-gradient(135deg, #F0F9FF 0%, #C4E5F4 100%)',
               borderRadius: '14px',
-              border: '2px solid rgba(0, 102, 162, 0.25)'
+              border: '2px solid rgba(0, 74, 105, 0.25)'
             }}>
               <div style={{
                 width: '64px',
                 height: '64px',
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, #0066A2 0%, #004A69 100%)',
+                background: 'linear-gradient(135deg, #004A69 0%, #0066A2 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 margin: '0 auto 1.25rem',
-                boxShadow: '0 6px 20px rgba(0, 102, 162, 0.25)'
+                boxShadow: '0 6px 20px rgba(0, 74, 105, 0.25)'
               }}>
                 <Clock size={32} color="white" />
               </div>
               <h3 style={{
+                fontFamily: "'Lora', Georgia, serif",
                 fontSize: '22px',
                 fontWeight: 700,
-                color: '#004A69',
+                color: '#002642',
                 margin: '0 0 0.75rem 0'
               }}>
                 Ready for Phase 2?
               </h3>
-              <p style={{ 
-                color: '#0369A1', 
-                marginBottom: '1.75rem', 
+              <p style={{
+                color: '#004A69',
+                marginBottom: '1.75rem',
                 fontSize: '15px',
-                fontWeight: 500 
+                fontWeight: 500
               }}>
                 Complete Phase 1 Orientation to unlock Phase 2 modules
               </p>
@@ -1228,14 +1238,15 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                           </div>
                           <div>
                             <div style={{
+                              fontFamily: "'Lora', Georgia, serif",
                               fontSize: '17px',
                               fontWeight: 600,
-                              color: '#1F2937',
+                              color: '#002642',
                               marginBottom: '0.25rem'
                             }}>
                               {MODULE_NUMBERS[item.module] || ''} - {item.module}
                             </div>
-                            <div style={{ fontSize: '13px', color: '#6B7280' }}>
+                            <div style={{ fontSize: '13px', color: 'rgba(0, 38, 66, 0.6)' }}>
                               {MODULE_DESCRIPTIONS[item.module] || 'Complete this training module'}
                             </div>
                           </div>
@@ -1365,15 +1376,16 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
 
         {/* Apps & Resources */}
         <div style={{
-          background: 'white',
+          background: '#FFF6ED',
           borderRadius: '20px',
           padding: '2.5rem',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.06)'
+          boxShadow: '0 4px 16px rgba(0, 38, 66, 0.06)'
         }}>
           <h2 style={{
+            fontFamily: "'Lora', Georgia, serif",
             fontSize: '22px',
             fontWeight: 700,
-            color: '#004A69',
+            color: '#002642',
             margin: '0 0 1.75rem 0'
           }}>
             Apps & Resources
@@ -1456,7 +1468,7 @@ const ResourceCard = ({ href, icon, title, subtitle, description, color }: {
       rel="noopener noreferrer"
       style={{
         textDecoration: 'none',
-        background: 'linear-gradient(135deg, #FFFFFF 0%, #F9FAFB 100%)',
+        background: 'linear-gradient(135deg, #FFFFFF 0%, #FFF6ED 100%)',
         border: `2px solid ${isHovered ? color : '#E5E7EB'}`,
         borderRadius: '16px',
         padding: '1.5rem',
@@ -1466,7 +1478,7 @@ const ResourceCard = ({ href, icon, title, subtitle, description, color }: {
         gap: '1rem',
         cursor: 'pointer',
         transform: isHovered ? 'translateY(-4px)' : 'translateY(0)',
-        boxShadow: isHovered ? `0 12px 24px ${color}18` : '0 2px 8px rgba(0,0,0,0.04)'
+        boxShadow: isHovered ? `0 12px 24px ${color}18` : '0 2px 8px rgba(0, 38, 66, 0.04)'
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -1489,22 +1501,23 @@ const ResourceCard = ({ href, icon, title, subtitle, description, color }: {
         </div>
         <div style={{ flex: 1 }}>
           <h3 style={{
+            fontFamily: "'Lora', Georgia, serif",
             fontSize: '15px',
             fontWeight: 600,
-            color: '#1F2937',
+            color: '#002642',
             margin: 0,
             letterSpacing: '-0.01em'
           }}>
             {title}
           </h3>
-          <p style={{ fontSize: '12px', color: '#6B7280', margin: '0.15rem 0 0 0' }}>
+          <p style={{ fontSize: '12px', color: 'rgba(0, 38, 66, 0.6)', margin: '0.15rem 0 0 0' }}>
             {subtitle}
           </p>
         </div>
       </div>
       <p style={{
         fontSize: '13px',
-        color: '#4B5563',
+        color: 'rgba(0, 38, 66, 0.7)',
         margin: 0,
         lineHeight: '1.6'
       }}>
