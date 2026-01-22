@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { LogOut, Users, Clock, CheckCircle, ExternalLink, RefreshCw, Settings, ChevronDown, Plus, X, UserPlus, Copy, Check, Shield, ClipboardList, GraduationCap, RotateCcw, Music2, Theater, Piano, PenLine, BookOpen, Target } from 'lucide-react';
+import { LogOut, Users, Clock, CheckCircle, ExternalLink, RefreshCw, Settings, ChevronDown, Plus, X, UserPlus, Copy, Check, Shield, ClipboardList, GraduationCap, RotateCcw, Music2, Theater, Piano, PenLine, BookOpen, Target, Search, UserMinus, ChevronUp } from 'lucide-react';
 import MasqueradeBanner from '../components/MasqueradeBanner';
 
 // Super admin emails
@@ -18,6 +18,12 @@ interface Apprentice {
   employmentType?: '1099' | 'part-time' | null;
   graduated?: boolean;
   graduatedAt?: string;
+  professorEmail?: string;
+}
+
+interface FollowedApprentice extends Apprentice {
+  followedAt: string;
+  primaryProfessor: string;
 }
 
 interface Progress {
@@ -61,6 +67,15 @@ const ProfessorDashboard = () => {
 
   // Graduated section state
   const [showGraduated, setShowGraduated] = useState(false);
+
+  // Follow apprentice feature state
+  const [followedApprentices, setFollowedApprentices] = useState<FollowedApprentice[]>([]);
+  const [showFollowing, setShowFollowing] = useState(true);
+  const [showFollowModal, setShowFollowModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Apprentice[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
 
   // Get display name
   const displayName = profile?.firstName || profile?.name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Professor';
@@ -144,6 +159,65 @@ const ProfessorDashboard = () => {
 
       if (submissionsError) throw submissionsError;
       setPendingSubmissions(submissionsData || []);
+
+      // Fetch followed apprentices
+      const { data: followsData, error: followsError } = await supabase
+        .from('professor_follows')
+        .select('apprentice_id, followed_at')
+        .eq('professor_email', user?.email);
+
+      if (followsError) {
+        console.error('Error fetching follows:', followsError);
+      } else if (followsData && followsData.length > 0) {
+        const followedIds = followsData.map(f => f.apprentice_id);
+        setFollowingIds(new Set(followedIds));
+
+        // Fetch the full apprentice data for followed apprentices
+        const { data: followedData, error: followedError } = await supabase
+          .from('apprentices')
+          .select('*')
+          .in('apprenticeId', followedIds);
+
+        if (followedError) {
+          console.error('Error fetching followed apprentices:', followedError);
+        } else if (followedData) {
+          // Merge with follow data
+          const followedWithMeta: FollowedApprentice[] = followedData.map(a => {
+            const followInfo = followsData.find(f => f.apprentice_id === a.apprenticeId);
+            return {
+              ...a,
+              followedAt: followInfo?.followed_at || new Date().toISOString(),
+              primaryProfessor: a.professorEmail || 'Unknown'
+            };
+          });
+          setFollowedApprentices(followedWithMeta);
+
+          // Also fetch progress for followed apprentices
+          const followedEmails = followedData.map(a => a.email);
+          const { data: followedProgressData } = await supabase
+            .from('progress')
+            .select('*')
+            .in('apprenticeEmail', followedEmails);
+
+          if (followedProgressData) {
+            const newProgressMap = { ...progress };
+            followedProgressData.forEach(p => {
+              if (!newProgressMap[p.apprenticeEmail]) {
+                newProgressMap[p.apprenticeEmail] = [];
+              }
+              if (!newProgressMap[p.apprenticeEmail].find(existing =>
+                existing.phase === p.phase && existing.module === p.module
+              )) {
+                newProgressMap[p.apprenticeEmail].push(p);
+              }
+            });
+            setProgress(newProgressMap);
+          }
+        }
+      } else {
+        setFollowedApprentices([]);
+        setFollowingIds(new Set());
+      }
 
     } catch (err: any) {
       console.error('Error fetching data:', err);
@@ -292,6 +366,105 @@ const ProfessorDashboard = () => {
   // Split apprentices into active and graduated
   const activeApprentices = apprentices.filter(a => !a.graduated);
   const graduatedApprentices = apprentices.filter(a => a.graduated);
+
+  // Search for apprentices to follow
+  const searchApprentices = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setSearching(true);
+    try {
+      const { data, error: searchError } = await supabase
+        .from('apprentices')
+        .select('*')
+        .or(`name.ilike.%${query}%,email.ilike.%${query}%`)
+        .neq('professorEmail', user?.email) // Exclude own apprentices
+        .limit(10);
+
+      if (searchError) throw searchError;
+
+      // Filter out already followed apprentices
+      const filtered = (data || []).filter(a => !followingIds.has(a.apprenticeId));
+      setSearchResults(filtered);
+    } catch (err) {
+      console.error('Error searching apprentices:', err);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  // Follow an apprentice
+  const followApprentice = async (apprentice: Apprentice) => {
+    try {
+      const { error: followError } = await supabase
+        .from('professor_follows')
+        .insert({
+          professor_email: user?.email,
+          apprentice_id: apprentice.apprenticeId
+        });
+
+      if (followError) throw followError;
+
+      // Update local state
+      setFollowingIds(prev => new Set([...prev, apprentice.apprenticeId]));
+      setFollowedApprentices(prev => [...prev, {
+        ...apprentice,
+        followedAt: new Date().toISOString(),
+        primaryProfessor: apprentice.professorEmail || 'Unknown'
+      }]);
+
+      // Remove from search results
+      setSearchResults(prev => prev.filter(a => a.apprenticeId !== apprentice.apprenticeId));
+
+      // Fetch progress for this apprentice
+      const { data: progressData } = await supabase
+        .from('progress')
+        .select('*')
+        .eq('apprenticeEmail', apprentice.email);
+
+      if (progressData) {
+        setProgress(prev => ({
+          ...prev,
+          [apprentice.email]: progressData
+        }));
+      }
+    } catch (err: any) {
+      console.error('Error following apprentice:', err);
+      setError(err.message || 'Failed to follow apprentice');
+    }
+  };
+
+  // Unfollow an apprentice
+  const unfollowApprentice = async (apprentice: FollowedApprentice) => {
+    try {
+      const { error: unfollowError } = await supabase
+        .from('professor_follows')
+        .delete()
+        .eq('professor_email', user?.email)
+        .eq('apprentice_id', apprentice.apprenticeId);
+
+      if (unfollowError) throw unfollowError;
+
+      // Update local state
+      setFollowingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(apprentice.apprenticeId);
+        return newSet;
+      });
+      setFollowedApprentices(prev => prev.filter(a => a.apprenticeId !== apprentice.apprenticeId));
+    } catch (err: any) {
+      console.error('Error unfollowing apprentice:', err);
+      setError(err.message || 'Failed to unfollow apprentice');
+    }
+  };
+
+  const resetFollowModal = () => {
+    setShowFollowModal(false);
+    setSearchQuery('');
+    setSearchResults([]);
+  };
 
   if (loading) {
     return (
@@ -892,35 +1065,65 @@ const ProfessorDashboard = () => {
               </h2>
             </div>
 
-            <button
-              onClick={() => setShowAddModal(true)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.75rem 1.25rem',
-                fontSize: '14px',
-                fontWeight: 600,
-                color: 'white',
-                background: 'linear-gradient(135deg, #eb6a18 0%, #ff8c3d 100%)',
-                border: 'none',
-                borderRadius: '10px',
-                cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(235,106,24,0.3)',
-                transition: 'all 0.3s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 6px 16px rgba(235,106,24,0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(235,106,24,0.3)';
-              }}
-            >
-              <UserPlus size={18} />
-              Add Apprentice
-            </button>
+            <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => setShowFollowModal(true)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1.25rem',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: '#004A69',
+                  background: 'white',
+                  border: '2px solid #004A69',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#F0F9FF';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'white';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                <Search size={18} />
+                Follow Apprentice
+              </button>
+              <button
+                onClick={() => setShowAddModal(true)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1.25rem',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: 'white',
+                  background: 'linear-gradient(135deg, #eb6a18 0%, #ff8c3d 100%)',
+                  border: 'none',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(235,106,24,0.3)',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(235,106,24,0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(235,106,24,0.3)';
+                }}
+              >
+                <UserPlus size={18} />
+                Add Apprentice
+              </button>
+            </div>
           </div>
 
           {activeApprentices.length === 0 ? (
@@ -1234,6 +1437,270 @@ const ProfessorDashboard = () => {
             </div>
           )}
         </section>
+
+        {/* Following Section */}
+        {followedApprentices.length > 0 && (
+          <section style={{ marginTop: '2.5rem' }}>
+            <button
+              onClick={() => setShowFollowing(!showFollowing)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '1rem 1.5rem',
+                background: '#FFF6ED',
+                border: '2px solid #C4E5F4',
+                borderRadius: '16px',
+                cursor: 'pointer',
+                width: '100%',
+                justifyContent: 'space-between',
+                transition: 'all 0.3s ease',
+                marginBottom: showFollowing ? '1.5rem' : 0
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, #0066A2 0%, #004A69 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <Users size={18} color="white" />
+                </div>
+                <span style={{
+                  fontFamily: "'Lora', Georgia, serif",
+                  fontSize: '18px',
+                  fontWeight: 600,
+                  color: '#002642'
+                }}>
+                  Following ({followedApprentices.length})
+                </span>
+                <span style={{
+                  fontSize: '13px',
+                  color: 'rgba(0, 38, 66, 0.5)',
+                  fontWeight: 500
+                }}>
+                  • Other professors' apprentices you're tracking
+                </span>
+              </div>
+              {showFollowing ? <ChevronUp size={20} color="#004A69" /> : <ChevronDown size={20} color="#004A69" />}
+            </button>
+
+            {showFollowing && (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+                gap: '1.25rem'
+              }}>
+                {followedApprentices.map((apprentice) => {
+                  const progressSummary = getProgressSummary(apprentice.email);
+                  const apprenticeProfile = apprenticeProfiles[apprentice.email.toLowerCase()];
+
+                  return (
+                    <div key={apprentice.id} style={{
+                      background: 'linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%)',
+                      borderRadius: '20px',
+                      padding: '1.75rem',
+                      boxShadow: '0 4px 16px rgba(0, 38, 66, 0.06)',
+                      border: '2px solid #C4E5F4',
+                      transition: 'all 0.3s ease',
+                      position: 'relative'
+                    }}>
+                      {/* Following Badge */}
+                      <div style={{
+                        position: 'absolute',
+                        top: '1rem',
+                        right: '1rem',
+                        background: 'linear-gradient(135deg, #0066A2 0%, #004A69 100%)',
+                        color: 'white',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        padding: '0.35rem 0.75rem',
+                        borderRadius: '20px',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px'
+                      }}>
+                        Following
+                      </div>
+
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '1rem',
+                        marginBottom: '1.25rem'
+                      }}>
+                        <div style={{
+                          width: '56px',
+                          height: '56px',
+                          borderRadius: '50%',
+                          background: apprenticeProfile?.avatarUrl
+                            ? `url(${apprenticeProfile.avatarUrl}) center/cover no-repeat`
+                            : 'linear-gradient(135deg, #0066A2 0%, #004A69 100%)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: '0 4px 12px rgba(0,102,162,0.2)',
+                          flexShrink: 0
+                        }}>
+                          {!apprenticeProfile?.avatarUrl && (
+                            <span style={{
+                              color: 'white',
+                              fontSize: '20px',
+                              fontWeight: 700
+                            }}>
+                              {apprentice.name.charAt(0).toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <h3 style={{
+                            fontFamily: "'Lora', Georgia, serif",
+                            fontSize: '18px',
+                            fontWeight: 600,
+                            color: '#002642',
+                            margin: '0 0 0.25rem 0',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}>
+                            {apprentice.name}
+                          </h3>
+                          <p style={{
+                            fontSize: '13px',
+                            color: 'rgba(0, 38, 66, 0.6)',
+                            margin: 0,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}>
+                            Primary: {apprentice.primaryProfessor}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Progress */}
+                      <div style={{
+                        background: 'rgba(255,255,255,0.7)',
+                        borderRadius: '12px',
+                        padding: '1rem',
+                        marginBottom: '1rem'
+                      }}>
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          marginBottom: '0.5rem'
+                        }}>
+                          <span style={{ fontSize: '13px', color: 'rgba(0, 38, 66, 0.6)' }}>Progress</span>
+                          <span style={{
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            color: '#002642'
+                          }}>
+                            {progressSummary.completed}/{progressSummary.total || 5} modules
+                          </span>
+                        </div>
+                        <div style={{
+                          width: '100%',
+                          height: '8px',
+                          background: '#E5E7EB',
+                          borderRadius: '50px',
+                          overflow: 'hidden'
+                        }}>
+                          <div style={{
+                            width: `${progressSummary.total ? (progressSummary.completed / progressSummary.total) * 100 : 0}%`,
+                            height: '100%',
+                            background: 'linear-gradient(90deg, #0066A2 0%, #004A69 100%)',
+                            borderRadius: '50px',
+                            transition: 'width 0.3s ease'
+                          }} />
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div style={{
+                        display: 'flex',
+                        gap: '0.75rem',
+                        flexWrap: 'wrap'
+                      }}>
+                        <a
+                          href={`/dashboard/${apprentice.dashboardToken}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            flex: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.5rem',
+                            padding: '0.65rem 1rem',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            color: 'white',
+                            background: 'linear-gradient(135deg, #004A69 0%, #0066A2 100%)',
+                            border: 'none',
+                            borderRadius: '10px',
+                            textDecoration: 'none',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease'
+                          }}
+                        >
+                          <ExternalLink size={14} />
+                          Dashboard
+                        </a>
+                        <a
+                          href={`/skills/${apprentice.dashboardToken}`}
+                          style={{
+                            flex: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.5rem',
+                            padding: '0.65rem 1rem',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            color: '#004A69',
+                            background: 'white',
+                            border: '2px solid #004A69',
+                            borderRadius: '10px',
+                            textDecoration: 'none',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease'
+                          }}
+                        >
+                          <ClipboardList size={14} />
+                          Skills
+                        </a>
+                        <button
+                          onClick={() => unfollowApprentice(apprentice)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: '0.65rem',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            color: '#B9314F',
+                            background: '#FEE2E2',
+                            border: '2px solid #FECACA',
+                            borderRadius: '10px',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease'
+                          }}
+                          title="Unfollow"
+                        >
+                          <UserMinus size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        )}
 
         {/* Graduated Apprentices Section */}
         {graduatedApprentices.length > 0 && (
@@ -1961,6 +2428,248 @@ const ProfessorDashboard = () => {
                       )}
                     </button>
                   </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Follow Apprentice Search Modal */}
+      {showFollowModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.4)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '1rem',
+            animation: 'fadeIn 0.2s ease-out'
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) resetFollowModal();
+          }}
+        >
+          <div style={{
+            background: 'white',
+            borderRadius: '24px',
+            width: '100%',
+            maxWidth: '560px',
+            maxHeight: '80vh',
+            overflow: 'hidden',
+            boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
+            animation: 'modalSlideIn 0.3s ease-out',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              background: 'linear-gradient(135deg, #004A69 0%, #0066A2 100%)',
+              padding: '1.5rem 2rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <Search size={24} color="white" />
+                <h2 style={{
+                  fontFamily: "'Lora', Georgia, serif",
+                  fontSize: '20px',
+                  fontWeight: 700,
+                  color: 'white',
+                  margin: 0
+                }}>
+                  Follow an Apprentice
+                </h2>
+              </div>
+              <button
+                onClick={resetFollowModal}
+                style={{
+                  background: 'rgba(255,255,255,0.2)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '36px',
+                  height: '36px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <X size={20} color="white" />
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid #E5E7EB' }}>
+              <p style={{
+                fontSize: '14px',
+                color: 'rgba(0, 38, 66, 0.6)',
+                margin: '0 0 1rem 0'
+              }}>
+                Search for apprentices from other professors to follow and track their progress.
+              </p>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                background: '#F9FAFB',
+                border: '2px solid #E5E7EB',
+                borderRadius: '12px',
+                padding: '0.75rem 1rem',
+                transition: 'all 0.2s ease'
+              }}>
+                <Search size={20} color="#9CA3AF" />
+                <input
+                  type="text"
+                  placeholder="Search by name or email..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    searchApprentices(e.target.value);
+                  }}
+                  style={{
+                    flex: 1,
+                    border: 'none',
+                    background: 'transparent',
+                    fontSize: '15px',
+                    color: '#002642',
+                    outline: 'none'
+                  }}
+                />
+                {searching && (
+                  <div style={{
+                    width: '20px',
+                    height: '20px',
+                    border: '2px solid #E5E7EB',
+                    borderTopColor: '#004A69',
+                    borderRadius: '50%',
+                    animation: 'spin 0.8s linear infinite'
+                  }} />
+                )}
+              </div>
+            </div>
+
+            {/* Search Results */}
+            <div style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '1rem 2rem 2rem'
+            }}>
+              {searchQuery && searchResults.length === 0 && !searching && (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '3rem 1rem',
+                  color: 'rgba(0, 38, 66, 0.5)'
+                }}>
+                  <Users size={48} color="rgba(0, 38, 66, 0.2)" style={{ marginBottom: '1rem' }} />
+                  <p style={{ margin: 0, fontSize: '15px' }}>
+                    No apprentices found matching "{searchQuery}"
+                  </p>
+                  <p style={{ margin: '0.5rem 0 0 0', fontSize: '13px' }}>
+                    Try a different search term
+                  </p>
+                </div>
+              )}
+
+              {!searchQuery && (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '3rem 1rem',
+                  color: 'rgba(0, 38, 66, 0.5)'
+                }}>
+                  <Search size={48} color="rgba(0, 38, 66, 0.2)" style={{ marginBottom: '1rem' }} />
+                  <p style={{ margin: 0, fontSize: '15px' }}>
+                    Start typing to search for apprentices
+                  </p>
+                </div>
+              )}
+
+              {searchResults.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {searchResults.map((apprentice) => (
+                    <div
+                      key={apprentice.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '1rem 1.25rem',
+                        background: '#F9FAFB',
+                        borderRadius: '14px',
+                        border: '2px solid #E5E7EB',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{
+                          width: '44px',
+                          height: '44px',
+                          borderRadius: '50%',
+                          background: 'linear-gradient(135deg, #0066A2 0%, #004A69 100%)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}>
+                          <span style={{
+                            color: 'white',
+                            fontSize: '16px',
+                            fontWeight: 700
+                          }}>
+                            {apprentice.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                        <div>
+                          <h4 style={{
+                            fontFamily: "'Lora', Georgia, serif",
+                            fontSize: '15px',
+                            fontWeight: 600,
+                            color: '#002642',
+                            margin: '0 0 0.25rem 0'
+                          }}>
+                            {apprentice.name}
+                          </h4>
+                          <p style={{
+                            fontSize: '12px',
+                            color: 'rgba(0, 38, 66, 0.5)',
+                            margin: 0
+                          }}>
+                            Professor: {apprentice.professorEmail || 'Unknown'}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => followApprentice(apprentice)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.4rem',
+                          padding: '0.5rem 1rem',
+                          fontSize: '13px',
+                          fontWeight: 600,
+                          color: 'white',
+                          background: 'linear-gradient(135deg, #004A69 0%, #0066A2 100%)',
+                          border: 'none',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <Plus size={16} />
+                        Follow
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
