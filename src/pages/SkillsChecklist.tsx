@@ -555,86 +555,228 @@ const SkillsChecklist = () => {
       <div style={{
         fontFamily: "'Inter', system-ui, sans-serif",
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
+        background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)'
       }}>
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '1.5rem'
+        {/* Skeleton Header */}
+        <header style={{
+          background: 'linear-gradient(135deg, #003250 0%, #004A69 50%, #0066A2 100%)',
+          boxShadow: '0 4px 30px rgba(0,0,0,0.2)',
+          position: 'sticky',
+          top: 0,
+          zIndex: 50
         }}>
           <div style={{
-            position: 'relative',
-            width: '80px',
-            height: '80px'
+            maxWidth: '1000px',
+            margin: '0 auto',
+            padding: '1.5rem 2rem'
           }}>
-            {/* Outer spinning ring */}
             <div style={{
-              position: 'absolute',
-              inset: 0,
-              borderRadius: '50%',
-              border: '4px solid transparent',
-              borderTopColor: '#004A69',
-              borderRightColor: '#0066A2',
-              animation: 'spin 1s linear infinite'
-            }} />
-            {/* Inner pulsing orb */}
-            <div style={{
-              position: 'absolute',
-              inset: '12px',
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, #004A69 0%, #0066A2 100%)',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              animation: 'pulse 2s ease-in-out infinite',
-              boxShadow: '0 0 30px rgba(0, 102, 162, 0.4)'
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '1rem'
             }}>
-              <Star size={28} color="white" fill="white" />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '10px',
+                  background: 'rgba(255,255,255,0.15)',
+                  animation: 'skeleton-pulse 1.5s ease-in-out infinite'
+                }} />
+                <div>
+                  <div style={{
+                    width: '120px',
+                    height: '24px',
+                    borderRadius: '6px',
+                    background: 'rgba(255,255,255,0.2)',
+                    marginBottom: '0.5rem',
+                    animation: 'skeleton-pulse 1.5s ease-in-out infinite'
+                  }} />
+                  <div style={{
+                    width: '180px',
+                    height: '14px',
+                    borderRadius: '4px',
+                    background: 'rgba(255,255,255,0.15)',
+                    animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.1s'
+                  }} />
+                </div>
+              </div>
+              <div style={{
+                width: '130px',
+                height: '44px',
+                borderRadius: '12px',
+                background: 'rgba(255,255,255,0.15)',
+                animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.2s'
+              }} />
             </div>
           </div>
+        </header>
+
+        <main style={{
+          maxWidth: '1000px',
+          margin: '0 auto',
+          padding: '2rem'
+        }}>
+          {/* Skeleton Progress Hero */}
           <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '0.75rem'
+            background: 'linear-gradient(135deg, #003250 0%, #004A69 50%, #0066A2 100%)',
+            borderRadius: '24px',
+            padding: '2rem',
+            marginBottom: '2rem',
+            boxShadow: '0 20px 60px rgba(0, 50, 80, 0.25)'
           }}>
-            <span style={{
-              fontFamily: "'Montserrat', sans-serif",
-              fontSize: '18px',
-              fontWeight: 600,
-              color: '#002642'
-            }}>
-              Loading Skill Tree
-            </span>
             <div style={{
               display: 'flex',
-              gap: '4px'
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '2rem'
             }}>
-              {[0, 1, 2].map(i => (
-                <div
-                  key={i}
-                  style={{
-                    width: '8px',
-                    height: '8px',
-                    borderRadius: '50%',
-                    background: '#004A69',
-                    animation: `bounce 1.4s ease-in-out ${i * 0.2}s infinite`
-                  }}
-                />
-              ))}
+              <div style={{ flex: 1, minWidth: '200px' }}>
+                <div style={{
+                  width: '150px',
+                  height: '20px',
+                  borderRadius: '6px',
+                  background: 'rgba(255,255,255,0.2)',
+                  marginBottom: '0.75rem',
+                  animation: 'skeleton-pulse 1.5s ease-in-out infinite'
+                }} />
+                <div style={{
+                  width: '200px',
+                  height: '14px',
+                  borderRadius: '4px',
+                  background: 'rgba(255,255,255,0.15)',
+                  marginBottom: '1.5rem',
+                  animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.1s'
+                }} />
+                <div style={{
+                  width: '100%',
+                  height: '12px',
+                  background: 'rgba(255,255,255,0.15)',
+                  borderRadius: '50px',
+                  animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.2s'
+                }} />
+              </div>
+              <div style={{
+                width: '100px',
+                height: '100px',
+                borderRadius: '50%',
+                background: 'rgba(255,255,255,0.15)',
+                animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.3s'
+              }} />
             </div>
           </div>
-        </div>
+
+          {/* Skeleton Category Cards */}
+          {[0, 1, 2].map((categoryIndex) => (
+            <div
+              key={categoryIndex}
+              style={{
+                background: 'white',
+                borderRadius: '24px',
+                marginBottom: '1.5rem',
+                boxShadow: '0 10px 40px rgba(0,0,0,0.08)',
+                overflow: 'hidden'
+              }}
+            >
+              {/* Skeleton Category Header */}
+              <div style={{
+                background: categoryIndex === 0
+                  ? 'linear-gradient(135deg, #002642 0%, #004A69 100%)'
+                  : categoryIndex === 1
+                    ? 'linear-gradient(135deg, #eb6a18 0%, #ff8c3d 100%)'
+                    : 'linear-gradient(135deg, #471657 0%, #6B2C7B 100%)',
+                padding: '1.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <div style={{
+                    width: '52px',
+                    height: '52px',
+                    borderRadius: '14px',
+                    background: 'rgba(255,255,255,0.2)',
+                    animation: 'skeleton-pulse 1.5s ease-in-out infinite'
+                  }} />
+                  <div>
+                    <div style={{
+                      width: '180px',
+                      height: '17px',
+                      borderRadius: '4px',
+                      background: 'rgba(255,255,255,0.25)',
+                      marginBottom: '0.5rem',
+                      animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.1s'
+                    }} />
+                    <div style={{
+                      width: '120px',
+                      height: '13px',
+                      borderRadius: '4px',
+                      background: 'rgba(255,255,255,0.15)',
+                      animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.2s'
+                    }} />
+                  </div>
+                </div>
+                <div style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.2)',
+                  animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.3s'
+                }} />
+              </div>
+
+              {/* Skeleton Skills */}
+              <div style={{ padding: '1rem' }}>
+                {[0, 1, 2, 3, 4].slice(0, categoryIndex === 2 ? 4 : 5).map((skillIndex) => (
+                  <div
+                    key={skillIndex}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '1rem',
+                      padding: '1.25rem',
+                      borderRadius: '16px'
+                    }}
+                  >
+                    <div style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '50%',
+                      background: '#E5E7EB',
+                      flexShrink: 0,
+                      animation: `skeleton-pulse 1.5s ease-in-out infinite ${skillIndex * 0.1}s`
+                    }} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{
+                        width: `${60 + Math.random() * 30}%`,
+                        height: '15px',
+                        borderRadius: '4px',
+                        background: '#E5E7EB',
+                        marginBottom: '0.5rem',
+                        animation: `skeleton-pulse 1.5s ease-in-out infinite ${skillIndex * 0.1 + 0.05}s`
+                      }} />
+                      <div style={{
+                        width: `${70 + Math.random() * 25}%`,
+                        height: '13px',
+                        borderRadius: '4px',
+                        background: '#F3F4F6',
+                        animation: `skeleton-pulse 1.5s ease-in-out infinite ${skillIndex * 0.1 + 0.1}s`
+                      }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </main>
+
         <style>{`
-          @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-          @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.9); } }
-          @keyframes bounce {
-            0%, 80%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-8px); }
+          @keyframes skeleton-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
           }
         `}</style>
       </div>

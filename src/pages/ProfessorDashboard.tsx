@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { LogOut, Users, Clock, CheckCircle, ExternalLink, Settings, ChevronDown, Plus, X, UserPlus, Copy, Check, Shield, ClipboardList, GraduationCap, RotateCcw, Music2, Theater, Piano, PenLine, BookOpen, Target, Search, UserMinus, ChevronUp, Moon, Sun } from 'lucide-react';
+import { LogOut, Users, Clock, CheckCircle, ExternalLink, Settings, ChevronDown, Plus, X, UserPlus, Copy, Check, Shield, ClipboardList, GraduationCap, RotateCcw, Music2, Theater, Piano, PenLine, BookOpen, Target, Search, UserMinus, ChevronUp, Moon, Sun, Star } from 'lucide-react';
 import MasqueradeBanner from '../components/MasqueradeBanner';
 import DarkModeToggle from '../components/DarkModeToggle';
 import { useDarkMode } from '../contexts/DarkModeContext';
@@ -985,40 +985,179 @@ const ProfessorDashboard = () => {
 
           {pendingSubmissions.length === 0 ? (
             <div style={{
-              background: isDarkMode ? '#1E293B' : 'white',
-              borderRadius: '20px',
-              padding: '4rem 2rem',
+              background: isDarkMode
+                ? 'linear-gradient(135deg, #1E293B 0%, #1a2332 100%)'
+                : 'linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%)',
+              borderRadius: '24px',
+              padding: '3rem 2rem',
               textAlign: 'center',
-              boxShadow: isDarkMode ? '0 4px 16px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)'
+              boxShadow: isDarkMode ? '0 8px 32px rgba(0,0,0,0.3)' : '0 8px 32px rgba(0,0,0,0.08)',
+              position: 'relative',
+              overflow: 'hidden',
+              border: isDarkMode ? '1px solid rgba(255,255,255,0.05)' : '1px solid rgba(235, 106, 24, 0.1)'
             }}>
+              {/* Decorative background elements */}
               <div style={{
-                width: '80px',
-                height: '80px',
+                position: 'absolute',
+                top: '10%',
+                left: '8%',
+                width: '60px',
+                height: '60px',
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, #FFF6ED 0%, #FFE0BA 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 1.5rem'
+                background: isDarkMode
+                  ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.08) 100%)'
+                  : 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.1) 100%)',
+                animation: 'float-caught-up 4s ease-in-out infinite',
+                pointerEvents: 'none'
+              }} />
+              <div style={{
+                position: 'absolute',
+                bottom: '15%',
+                right: '10%',
+                width: '45px',
+                height: '45px',
+                borderRadius: '12px',
+                background: isDarkMode
+                  ? 'linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(245, 158, 11, 0.08) 100%)'
+                  : 'linear-gradient(135deg, rgba(251, 191, 36, 0.25) 0%, rgba(245, 158, 11, 0.15) 100%)',
+                animation: 'float-caught-up 3.5s ease-in-out infinite 0.5s',
+                transform: 'rotate(15deg)',
+                pointerEvents: 'none'
+              }} />
+              <div style={{
+                position: 'absolute',
+                top: '25%',
+                right: '15%',
+                width: '30px',
+                height: '30px',
+                borderRadius: '8px',
+                background: isDarkMode
+                  ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.08) 100%)'
+                  : 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.1) 100%)',
+                animation: 'float-caught-up 3s ease-in-out infinite 1s',
+                transform: 'rotate(-10deg)',
+                pointerEvents: 'none'
+              }} />
+
+              {/* Main illustration */}
+              <div style={{
+                position: 'relative',
+                width: '140px',
+                height: '140px',
+                margin: '0 auto 1.5rem',
+                zIndex: 1
               }}>
-                <CheckCircle size={36} color="#eb6a18" />
+                {/* Success rings */}
+                <div style={{
+                  position: 'absolute',
+                  inset: '-15px',
+                  borderRadius: '50%',
+                  border: isDarkMode
+                    ? '2px solid rgba(16, 185, 129, 0.15)'
+                    : '2px solid rgba(16, 185, 129, 0.2)',
+                  animation: 'pulse-ring-caught-up 2.5s ease-out infinite'
+                }} />
+                <div style={{
+                  position: 'absolute',
+                  inset: '-30px',
+                  borderRadius: '50%',
+                  border: isDarkMode
+                    ? '2px solid rgba(16, 185, 129, 0.08)'
+                    : '2px solid rgba(16, 185, 129, 0.1)',
+                  animation: 'pulse-ring-caught-up 2.5s ease-out infinite 0.5s'
+                }} />
+
+                {/* Main circle with checkmark */}
+                <div style={{
+                  width: '100%',
+                  height: '100%',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 12px 40px rgba(16, 185, 129, 0.35)',
+                  animation: 'bounce-caught-up 3s ease-in-out infinite',
+                  position: 'relative'
+                }}>
+                  <CheckCircle size={60} color="white" strokeWidth={2.5} />
+
+                  {/* Sparkle decorations */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '5px',
+                    right: '10px',
+                    animation: 'sparkle-caught-up 2s ease-in-out infinite'
+                  }}>
+                    <Star size={18} color="#FBBF24" fill="#FBBF24" />
+                  </div>
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '15px',
+                    left: '5px',
+                    animation: 'sparkle-caught-up 2s ease-in-out infinite 0.7s'
+                  }}>
+                    <Star size={14} color="#FBBF24" fill="#FBBF24" />
+                  </div>
+                </div>
               </div>
+
               <h3 style={{
                 fontFamily: "'Lora', Georgia, serif",
-                fontSize: '20px',
-                fontWeight: 600,
+                fontSize: '24px',
+                fontWeight: 700,
                 color: isDarkMode ? '#F9FAFB' : '#002642',
-                margin: '0 0 0.75rem 0'
+                margin: '0 0 0.75rem 0',
+                position: 'relative',
+                zIndex: 1
               }}>
                 All caught up!
               </h3>
               <p style={{
                 fontSize: '15px',
                 color: isDarkMode ? '#9CA3AF' : 'rgba(0, 38, 66, 0.6)',
-                margin: 0
+                margin: '0 0 1.5rem 0',
+                maxWidth: '320px',
+                marginLeft: 'auto',
+                marginRight: 'auto',
+                lineHeight: 1.6,
+                position: 'relative',
+                zIndex: 1
               }}>
-                No pending submissions to review. New submissions will appear here.
+                No pending submissions to review. New submissions will appear here when your apprentices complete their work.
               </p>
+
+              {/* Status badge */}
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.625rem 1.25rem',
+                background: isDarkMode
+                  ? 'rgba(16, 185, 129, 0.15)'
+                  : 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.15) 100%)',
+                borderRadius: '50px',
+                border: isDarkMode
+                  ? '1px solid rgba(16, 185, 129, 0.2)'
+                  : '1px solid rgba(16, 185, 129, 0.25)',
+                position: 'relative',
+                zIndex: 1
+              }}>
+                <div style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  background: '#10B981',
+                  animation: 'pulse-dot-caught-up 2s ease-in-out infinite'
+                }} />
+                <span style={{
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: isDarkMode ? '#34D399' : '#059669'
+                }}>
+                  Inbox Clear
+                </span>
+              </div>
             </div>
           ) : (
             <div style={{
@@ -2944,6 +3083,26 @@ const ProfessorDashboard = () => {
         @keyframes sparkle-empty {
           0%, 100% { transform: scale(1); opacity: 1; }
           50% { transform: scale(1.3); opacity: 0.6; }
+        }
+        @keyframes float-caught-up {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          50% { transform: translateY(-12px) rotate(5deg); }
+        }
+        @keyframes pulse-ring-caught-up {
+          0% { transform: scale(1); opacity: 0.6; }
+          100% { transform: scale(1.3); opacity: 0; }
+        }
+        @keyframes bounce-caught-up {
+          0%, 100% { transform: translateY(0) scale(1); }
+          50% { transform: translateY(-8px) scale(1.02); }
+        }
+        @keyframes sparkle-caught-up {
+          0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+          50% { transform: scale(1.3) rotate(15deg); opacity: 0.7; }
+        }
+        @keyframes pulse-dot-caught-up {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.5); opacity: 0.6; }
         }
         @media (max-width: 480px) {
           .profile-name-text {
