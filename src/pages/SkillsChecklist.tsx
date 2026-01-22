@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, CheckCircle, Circle, BookOpen, Users, Music, Save } from 'lucide-react';
+import { ArrowLeft, CheckCircle, BookOpen, Users, Music, Save, Star, Sparkles, Trophy, Zap } from 'lucide-react';
 
 interface Apprentice {
   id: string;
@@ -20,8 +20,11 @@ interface Skill {
 interface Category {
   id: string;
   name: string;
+  shortName: string;
   icon: React.ReactNode;
   color: string;
+  gradient: string;
+  glowColor: string;
   skills: Skill[];
 }
 
@@ -29,8 +32,11 @@ const SKILLS_DATA: Category[] = [
   {
     id: 'student-checkin',
     name: '1. Student Check-In & Workflow',
+    shortName: 'Workflow',
     icon: <Users size={22} color="white" />,
     color: '#002642',
+    gradient: 'linear-gradient(135deg, #002642 0%, #004A69 100%)',
+    glowColor: 'rgba(0, 74, 105, 0.5)',
     skills: [
       {
         id: 'system-navigation',
@@ -62,8 +68,11 @@ const SKILLS_DATA: Category[] = [
   {
     id: 'lesson-evaluation',
     name: '2. Lesson Evaluation',
+    shortName: 'Teaching',
     icon: <BookOpen size={22} color="white" />,
     color: '#eb6a18',
+    gradient: 'linear-gradient(135deg, #eb6a18 0%, #ff8c3d 100%)',
+    glowColor: 'rgba(235, 106, 24, 0.5)',
     skills: [
       {
         id: 'issue-diagnosis',
@@ -95,8 +104,11 @@ const SKILLS_DATA: Category[] = [
   {
     id: 'notation-mastery',
     name: '3. Oclef Notation Mastery',
+    shortName: 'Notation',
     icon: <Music size={22} color="white" />,
     color: '#471657',
+    gradient: 'linear-gradient(135deg, #471657 0%, #6B2C7B 100%)',
+    glowColor: 'rgba(71, 22, 87, 0.5)',
     skills: [
       {
         id: 'symbol-knowledge',
@@ -122,6 +134,306 @@ const SKILLS_DATA: Category[] = [
   }
 ];
 
+// Particle burst component for celebrations
+const ParticleBurst = ({ active, color }: { active: boolean; color: string }) => {
+  if (!active) return null;
+
+  return (
+    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'visible' }}>
+      {[...Array(12)].map((_, i) => (
+        <div
+          key={i}
+          style={{
+            position: 'absolute',
+            left: '50%',
+            top: '50%',
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            background: color,
+            animation: `particle-burst-${i % 4} 0.6s ease-out forwards`,
+            opacity: 0
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+// Skill Node Component
+const SkillNode = ({
+  skill,
+  isCompleted,
+  onClick,
+  color,
+  gradient,
+  glowColor,
+  index,
+  totalInCategory
+}: {
+  skill: Skill;
+  isCompleted: boolean;
+  onClick: () => void;
+  color: string;
+  gradient: string;
+  glowColor: string;
+  index: number;
+  totalInCategory: number;
+}) => {
+  const [showBurst, setShowBurst] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [justCompleted, setJustCompleted] = useState(false);
+
+  const handleClick = () => {
+    if (!isCompleted) {
+      setShowBurst(true);
+      setJustCompleted(true);
+      setTimeout(() => {
+        setShowBurst(false);
+        setJustCompleted(false);
+      }, 700);
+    }
+    onClick();
+  };
+
+  return (
+    <div
+      onClick={handleClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '1rem',
+        padding: '1.25rem',
+        cursor: 'pointer',
+        borderRadius: '16px',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        background: isCompleted
+          ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.15) 100%)'
+          : isHovered
+            ? 'rgba(0, 0, 0, 0.03)'
+            : 'transparent',
+        transform: isHovered ? 'translateX(8px)' : 'translateX(0)',
+        boxShadow: isCompleted
+          ? '0 4px 20px rgba(16, 185, 129, 0.15)'
+          : isHovered
+            ? '0 4px 20px rgba(0, 0, 0, 0.08)'
+            : 'none'
+      }}
+    >
+      {/* Connection line to next skill */}
+      {index < totalInCategory - 1 && (
+        <div
+          style={{
+            position: 'absolute',
+            left: '2.25rem',
+            top: '100%',
+            width: '2px',
+            height: '0.5rem',
+            background: isCompleted
+              ? 'linear-gradient(180deg, #10B981 0%, rgba(16, 185, 129, 0.3) 100%)'
+              : '#E5E7EB',
+            transition: 'background 0.3s ease'
+          }}
+        />
+      )}
+
+      {/* Skill Node Circle */}
+      <div style={{ position: 'relative', flexShrink: 0 }}>
+        <ParticleBurst active={showBurst} color={color} />
+        <div
+          style={{
+            width: '48px',
+            height: '48px',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: isCompleted
+              ? 'linear-gradient(135deg, #059669 0%, #10B981 100%)'
+              : gradient,
+            boxShadow: isCompleted
+              ? '0 0 20px rgba(16, 185, 129, 0.4), 0 4px 12px rgba(16, 185, 129, 0.3)'
+              : isHovered
+                ? `0 0 25px ${glowColor}, 0 4px 12px rgba(0, 0, 0, 0.15)`
+                : '0 4px 12px rgba(0, 0, 0, 0.1)',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            transform: justCompleted
+              ? 'scale(1.2)'
+              : isHovered
+                ? 'scale(1.1)'
+                : 'scale(1)',
+            border: isCompleted
+              ? '3px solid rgba(255, 255, 255, 0.9)'
+              : '3px solid rgba(255, 255, 255, 0.3)'
+          }}
+        >
+          {isCompleted ? (
+            <CheckCircle size={24} color="white" strokeWidth={2.5} />
+          ) : (
+            <span style={{
+              color: 'white',
+              fontSize: '16px',
+              fontWeight: 700,
+              fontFamily: "'Montserrat', sans-serif"
+            }}>
+              {index + 1}
+            </span>
+          )}
+        </div>
+
+        {/* Completion sparkle */}
+        {isCompleted && (
+          <div style={{
+            position: 'absolute',
+            top: '-4px',
+            right: '-4px',
+            animation: 'sparkle 2s ease-in-out infinite'
+          }}>
+            <Sparkles size={16} color="#FBBF24" fill="#FBBF24" />
+          </div>
+        )}
+      </div>
+
+      {/* Skill Content */}
+      <div style={{ flex: 1 }}>
+        <h4 style={{
+          fontSize: '15px',
+          fontWeight: 600,
+          color: isCompleted ? '#059669' : '#1F2937',
+          margin: '0 0 0.35rem 0',
+          transition: 'color 0.3s ease',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem'
+        }}>
+          {skill.name}
+          {isCompleted && (
+            <span style={{
+              background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
+              color: 'white',
+              fontSize: '10px',
+              fontWeight: 700,
+              padding: '2px 8px',
+              borderRadius: '20px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px'
+            }}>
+              Mastered
+            </span>
+          )}
+        </h4>
+        <p style={{
+          fontSize: '13px',
+          color: '#6B7280',
+          margin: 0,
+          lineHeight: 1.5
+        }}>
+          {skill.aim}
+        </p>
+      </div>
+
+      {/* Hover indicator */}
+      {!isCompleted && isHovered && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          color: color,
+          fontSize: '13px',
+          fontWeight: 600,
+          animation: 'pulse-opacity 1.5s ease-in-out infinite'
+        }}>
+          <Zap size={16} />
+          Click to complete
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Category Progress Ring
+const ProgressRing = ({ progress, color, size = 80 }: { progress: number; color: string; size?: number }) => {
+  const strokeWidth = 6;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
+
+  return (
+    <div style={{ position: 'relative', width: size, height: size }}>
+      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+        {/* Background circle */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="rgba(255,255,255,0.2)"
+          strokeWidth={strokeWidth}
+        />
+        {/* Progress circle */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="white"
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
+          style={{
+            transition: 'stroke-dashoffset 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+            filter: 'drop-shadow(0 0 6px rgba(255,255,255,0.5))'
+          }}
+        />
+      </svg>
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column'
+      }}>
+        <span style={{
+          fontSize: size > 60 ? '20px' : '16px',
+          fontWeight: 700,
+          color: 'white',
+          fontFamily: "'Montserrat', sans-serif"
+        }}>
+          {Math.round(progress)}%
+        </span>
+      </div>
+    </div>
+  );
+};
+
+// Achievement Badge for completed category
+const AchievementBadge = ({ category }: { category: Category }) => (
+  <div style={{
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    padding: '0.75rem 1rem',
+    background: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%)',
+    borderRadius: '12px',
+    border: '1px solid rgba(255,255,255,0.3)',
+    animation: 'badge-appear 0.5s ease-out'
+  }}>
+    <Trophy size={20} color="#FBBF24" fill="#FBBF24" />
+    <span style={{
+      color: 'white',
+      fontSize: '13px',
+      fontWeight: 600
+    }}>
+      {category.shortName} Mastery Achieved!
+    </span>
+  </div>
+);
+
 const SkillsChecklist = () => {
   const { dashboardToken } = useParams<{ dashboardToken: string }>();
   const navigate = useNavigate();
@@ -132,15 +444,9 @@ const SkillsChecklist = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
 
-  useEffect(() => {
-    if (dashboardToken) {
-      fetchApprentice();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dashboardToken]);
-
-  const fetchApprentice = async () => {
+  const fetchApprentice = useCallback(async () => {
     try {
       setLoading(true);
       const { data, error: fetchError } = await supabase
@@ -153,24 +459,42 @@ const SkillsChecklist = () => {
 
       setApprentice(data);
 
-      // Load existing skills checklist if available
       if (data?.skillsChecklist) {
         setCheckedSkills(data.skillsChecklist);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load apprentice data';
       console.error('Error fetching apprentice:', err);
-      setError(err.message || 'Failed to load apprentice data');
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
-  };
+  }, [dashboardToken]);
+
+  useEffect(() => {
+    if (dashboardToken) {
+      fetchApprentice();
+    }
+  }, [dashboardToken, fetchApprentice]);
 
   const handleToggleSkill = (skillId: string) => {
-    setCheckedSkills(prev => ({
-      ...prev,
-      [skillId]: !prev[skillId]
-    }));
+    const wasCompleted = checkedSkills[skillId];
+    const newCheckedSkills = {
+      ...checkedSkills,
+      [skillId]: !wasCompleted
+    };
+
+    setCheckedSkills(newCheckedSkills);
     setSaveSuccess(false);
+
+    // Check if all skills just got completed
+    const totalSkills = SKILLS_DATA.reduce((acc, cat) => acc + cat.skills.length, 0);
+    const newCompletedCount = Object.values(newCheckedSkills).filter(Boolean).length;
+
+    if (newCompletedCount === totalSkills && !wasCompleted) {
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 4000);
+    }
   };
 
   const handleSave = async () => {
@@ -189,9 +513,10 @@ const SkillsChecklist = () => {
 
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save skills';
       console.error('Error saving skills:', err);
-      setError(err.message || 'Failed to save skills');
+      setError(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -219,79 +544,73 @@ const SkillsChecklist = () => {
         }}>
           <div style={{
             position: 'relative',
-            width: '64px',
-            height: '64px'
+            width: '80px',
+            height: '80px'
           }}>
+            {/* Outer spinning ring */}
             <div style={{
               position: 'absolute',
               inset: 0,
               borderRadius: '50%',
-              border: '3px solid #E5E7EB',
-            }} />
-            <div style={{
-              position: 'absolute',
-              inset: 0,
-              borderRadius: '50%',
-              border: '3px solid transparent',
+              border: '4px solid transparent',
               borderTopColor: '#004A69',
               borderRightColor: '#0066A2',
               animation: 'spin 1s linear infinite'
             }} />
+            {/* Inner pulsing orb */}
             <div style={{
               position: 'absolute',
-              inset: '8px',
+              inset: '12px',
               borderRadius: '50%',
               background: 'linear-gradient(135deg, #004A69 0%, #0066A2 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              animation: 'pulse 2s ease-in-out infinite'
+              animation: 'pulse 2s ease-in-out infinite',
+              boxShadow: '0 0 30px rgba(0, 102, 162, 0.4)'
             }}>
-              <BookOpen size={24} color="white" />
+              <Star size={28} color="white" fill="white" />
             </div>
           </div>
           <div style={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: '0.5rem'
+            gap: '0.75rem'
           }}>
             <span style={{
-              fontFamily: "'Lora', Georgia, serif",
-              fontSize: '16px',
+              fontFamily: "'Montserrat', sans-serif",
+              fontSize: '18px',
               fontWeight: 600,
               color: '#002642'
             }}>
-              Loading Skills Checklist
+              Loading Skill Tree
             </span>
             <div style={{
-              width: '120px',
-              height: '4px',
-              borderRadius: '4px',
-              background: '#E5E7EB',
-              overflow: 'hidden'
+              display: 'flex',
+              gap: '4px'
             }}>
-              <div style={{
-                width: '100%',
-                height: '100%',
-                background: 'linear-gradient(90deg, transparent 0%, #004A69 50%, transparent 100%)',
-                animation: 'shimmer 1.5s ease-in-out infinite'
-              }} />
+              {[0, 1, 2].map(i => (
+                <div
+                  key={i}
+                  style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: '#004A69',
+                    animation: `bounce 1.4s ease-in-out ${i * 0.2}s infinite`
+                  }}
+                />
+              ))}
             </div>
           </div>
         </div>
         <style>{`
-          @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-          @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(0.95); opacity: 0.8; }
-          }
-          @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
+          @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+          @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.9); } }
+          @keyframes bounce {
+            0%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-8px); }
           }
         `}</style>
       </div>
@@ -311,14 +630,26 @@ const SkillsChecklist = () => {
       }}>
         <div style={{
           background: 'white',
-          borderRadius: '20px',
+          borderRadius: '24px',
           padding: '3rem',
           textAlign: 'center',
           maxWidth: '400px',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.06)'
+          boxShadow: '0 20px 60px rgba(0,0,0,0.1)'
         }}>
+          <div style={{
+            width: '80px',
+            height: '80px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 1.5rem'
+          }}>
+            <span style={{ fontSize: '40px' }}>!</span>
+          </div>
           <h2 style={{
-            fontFamily: "'Lora', Georgia, serif",
+            fontFamily: "'Montserrat', sans-serif",
             fontSize: '20px',
             fontWeight: 600,
             color: '#B9314F',
@@ -329,14 +660,16 @@ const SkillsChecklist = () => {
           <button
             onClick={() => navigate('/professor')}
             style={{
-              padding: '0.75rem 1.5rem',
+              padding: '0.875rem 2rem',
               fontSize: '14px',
               fontWeight: 600,
               color: 'white',
               background: 'linear-gradient(135deg, #004A69 0%, #0066A2 100%)',
               border: 'none',
-              borderRadius: '10px',
-              cursor: 'pointer'
+              borderRadius: '12px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 15px rgba(0, 74, 105, 0.3)',
+              transition: 'all 0.3s ease'
             }}
           >
             Back to Dashboard
@@ -352,10 +685,38 @@ const SkillsChecklist = () => {
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)'
     }}>
+      {/* Confetti overlay for full completion */}
+      {showConfetti && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          pointerEvents: 'none',
+          zIndex: 100,
+          overflow: 'hidden'
+        }}>
+          {[...Array(50)].map((_, i) => (
+            <div
+              key={i}
+              style={{
+                position: 'absolute',
+                left: `${Math.random() * 100}%`,
+                top: '-20px',
+                width: `${8 + Math.random() * 8}px`,
+                height: `${8 + Math.random() * 8}px`,
+                borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+                background: ['#10B981', '#FBBF24', '#3B82F6', '#EC4899', '#8B5CF6'][Math.floor(Math.random() * 5)],
+                animation: `confetti-fall ${2 + Math.random() * 2}s linear forwards`,
+                animationDelay: `${Math.random() * 0.5}s`
+              }}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Header - Sticky */}
       <header style={{
         background: 'linear-gradient(135deg, #003250 0%, #004A69 50%, #0066A2 100%)',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+        boxShadow: '0 4px 30px rgba(0,0,0,0.2)',
         position: 'sticky',
         top: 0,
         zIndex: 50
@@ -372,7 +733,7 @@ const SkillsChecklist = () => {
         }} />
 
         <div style={{
-          maxWidth: '900px',
+          maxWidth: '1000px',
           margin: '0 auto',
           padding: '1.5rem 2rem',
           position: 'relative',
@@ -392,40 +753,46 @@ const SkillsChecklist = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  padding: '0.5rem',
+                  padding: '0.625rem',
                   background: 'rgba(255,255,255,0.1)',
                   border: '2px solid rgba(255,255,255,0.3)',
-                  borderRadius: '8px',
+                  borderRadius: '10px',
                   color: 'white',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease'
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+                  e.currentTarget.style.transform = 'translateX(-2px)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                  e.currentTarget.style.transform = 'translateX(0)';
                 }}
               >
                 <ArrowLeft size={20} />
               </button>
               <div>
                 <h1 style={{
-                  fontFamily: "'Lora', Georgia, serif",
-                  fontSize: '22px',
+                  fontFamily: "'Montserrat', sans-serif",
+                  fontSize: '24px',
                   fontWeight: 700,
                   color: 'white',
                   margin: '0 0 0.25rem 0',
-                  letterSpacing: '-0.5px'
+                  letterSpacing: '-0.5px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem'
                 }}>
-                  Skills Checklist
+                  <Star size={24} color="#FBBF24" fill="#FBBF24" />
+                  Skill Tree
                 </h1>
                 <p style={{
                   fontSize: '14px',
                   color: 'rgba(255,255,255,0.8)',
                   margin: 0
                 }}>
-                  {apprentice.name}
+                  {apprentice.name}'s Journey to Mastery
                 </p>
               </div>
             </div>
@@ -437,26 +804,29 @@ const SkillsChecklist = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
-                padding: '0.75rem 1.25rem',
+                padding: '0.875rem 1.5rem',
                 background: saveSuccess
                   ? 'linear-gradient(135deg, #059669 0%, #10B981 100%)'
                   : 'linear-gradient(135deg, #eb6a18 0%, #ff8c3d 100%)',
                 border: 'none',
-                borderRadius: '10px',
+                borderRadius: '12px',
                 color: 'white',
                 fontSize: '14px',
                 fontWeight: 600,
                 cursor: saving ? 'not-allowed' : 'pointer',
-                boxShadow: '0 4px 12px rgba(235,106,24,0.3)',
+                boxShadow: saveSuccess
+                  ? '0 4px 20px rgba(16, 185, 129, 0.4)'
+                  : '0 4px 20px rgba(235,106,24,0.4)',
                 transition: 'all 0.3s ease',
-                opacity: saving ? 0.7 : 1
+                opacity: saving ? 0.7 : 1,
+                transform: saveSuccess ? 'scale(1.02)' : 'scale(1)'
               }}
             >
               {saving ? (
                 <>
                   <div style={{
-                    width: '16px',
-                    height: '16px',
+                    width: '18px',
+                    height: '18px',
                     border: '2px solid rgba(255,255,255,0.3)',
                     borderTopColor: 'white',
                     borderRadius: '50%',
@@ -466,12 +836,12 @@ const SkillsChecklist = () => {
                 </>
               ) : saveSuccess ? (
                 <>
-                  <CheckCircle size={16} />
+                  <CheckCircle size={18} />
                   Saved!
                 </>
               ) : (
                 <>
-                  <Save size={16} />
+                  <Save size={18} />
                   Save Progress
                 </>
               )}
@@ -481,257 +851,338 @@ const SkillsChecklist = () => {
       </header>
 
       <main style={{
-        maxWidth: '900px',
+        maxWidth: '1000px',
         margin: '0 auto',
         padding: '2rem'
       }}>
-        {/* Progress Summary */}
+        {/* Overall Progress Hero */}
         <div style={{
-          background: 'white',
-          borderRadius: '20px',
-          padding: '1.5rem 2rem',
+          background: 'linear-gradient(135deg, #003250 0%, #004A69 50%, #0066A2 100%)',
+          borderRadius: '24px',
+          padding: '2rem',
           marginBottom: '2rem',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.06)'
+          boxShadow: '0 20px 60px rgba(0, 50, 80, 0.25)',
+          position: 'relative',
+          overflow: 'hidden'
         }}>
+          {/* Background decoration */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            width: '40%',
+            background: 'radial-gradient(circle at 70% 50%, rgba(255,255,255,0.1) 0%, transparent 60%)',
+            pointerEvents: 'none'
+          }} />
+
           <div style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            marginBottom: '1rem',
             flexWrap: 'wrap',
-            gap: '1rem'
+            gap: '2rem',
+            position: 'relative',
+            zIndex: 1
           }}>
-            <div>
+            <div style={{ flex: 1, minWidth: '200px' }}>
               <h2 style={{
-                fontFamily: "'Lora', Georgia, serif",
-                fontSize: '18px',
+                fontFamily: "'Montserrat', sans-serif",
+                fontSize: '20px',
                 fontWeight: 600,
-                color: '#002642',
-                margin: '0 0 0.25rem 0'
+                color: 'white',
+                margin: '0 0 0.5rem 0'
               }}>
                 Training Progress
               </h2>
               <p style={{
                 fontSize: '14px',
-                color: '#6B7280',
-                margin: 0
+                color: 'rgba(255,255,255,0.7)',
+                margin: '0 0 1.5rem 0'
               }}>
                 Initial 10-hour shadowing period
               </p>
+
+              {/* Progress bar with glow */}
+              <div style={{
+                width: '100%',
+                height: '12px',
+                background: 'rgba(255,255,255,0.15)',
+                borderRadius: '50px',
+                overflow: 'hidden',
+                position: 'relative'
+              }}>
+                <div style={{
+                  width: `${progressPercent}%`,
+                  height: '100%',
+                  background: completedSkills === totalSkills
+                    ? 'linear-gradient(90deg, #059669 0%, #10B981 50%, #34D399 100%)'
+                    : 'linear-gradient(90deg, #FBBF24 0%, #F59E0B 50%, #D97706 100%)',
+                  borderRadius: '50px',
+                  transition: 'width 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                  boxShadow: completedSkills === totalSkills
+                    ? '0 0 20px rgba(16, 185, 129, 0.6)'
+                    : '0 0 20px rgba(251, 191, 36, 0.6)'
+                }} />
+              </div>
+
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginTop: '0.75rem'
+              }}>
+                <span style={{
+                  fontSize: '13px',
+                  color: 'rgba(255,255,255,0.7)'
+                }}>
+                  {completedSkills} of {totalSkills} skills mastered
+                </span>
+                <span style={{
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: completedSkills === totalSkills ? '#34D399' : '#FBBF24'
+                }}>
+                  {progressPercent}%
+                </span>
+              </div>
             </div>
+
+            {/* Large progress ring */}
             <div style={{
               display: 'flex',
-              alignItems: 'baseline',
-              gap: '0.5rem'
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '1rem'
             }}>
-              <span style={{
-                fontFamily: "'Lora', Georgia, serif",
-                fontSize: '32px',
-                fontWeight: 700,
-                color: completedSkills === totalSkills ? '#059669' : '#004A69'
+              <div style={{
+                position: 'relative'
               }}>
-                {completedSkills}
-              </span>
+                <ProgressRing progress={progressPercent} color="#FBBF24" size={100} />
+                {completedSkills === totalSkills && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '-8px',
+                    right: '-8px',
+                    animation: 'bounce 1s ease-in-out infinite'
+                  }}>
+                    <Trophy size={28} color="#FBBF24" fill="#FBBF24" />
+                  </div>
+                )}
+              </div>
               <span style={{
-                fontSize: '16px',
-                color: '#6B7280'
+                fontSize: '12px',
+                fontWeight: 600,
+                color: 'rgba(255,255,255,0.7)',
+                textTransform: 'uppercase',
+                letterSpacing: '1px'
               }}>
-                / {totalSkills} skills
+                Overall
               </span>
             </div>
           </div>
-
-          <div style={{
-            width: '100%',
-            height: '12px',
-            background: '#E5E7EB',
-            borderRadius: '50px',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              width: `${progressPercent}%`,
-              height: '100%',
-              background: completedSkills === totalSkills
-                ? 'linear-gradient(90deg, #059669 0%, #10B981 100%)'
-                : 'linear-gradient(90deg, #004A69 0%, #0066A2 100%)',
-              borderRadius: '50px',
-              transition: 'width 0.5s ease'
-            }} />
-          </div>
-          <p style={{
-            fontSize: '13px',
-            color: '#6B7280',
-            margin: '0.75rem 0 0 0',
-            textAlign: 'right'
-          }}>
-            {progressPercent}% complete
-          </p>
         </div>
 
         {/* Skills Categories */}
         {SKILLS_DATA.map((category) => {
           const categoryCompleted = category.skills.filter(s => checkedSkills[s.id]).length;
+          const categoryProgress = (categoryCompleted / category.skills.length) * 100;
+          const isCategoryComplete = categoryCompleted === category.skills.length;
 
           return (
             <div
               key={category.id}
               style={{
                 background: 'white',
-                borderRadius: '20px',
+                borderRadius: '24px',
                 marginBottom: '1.5rem',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
-                overflow: 'hidden'
+                boxShadow: isCategoryComplete
+                  ? '0 20px 60px rgba(16, 185, 129, 0.2)'
+                  : '0 10px 40px rgba(0,0,0,0.08)',
+                overflow: 'hidden',
+                transition: 'all 0.3s ease',
+                border: isCategoryComplete
+                  ? '2px solid rgba(16, 185, 129, 0.3)'
+                  : '2px solid transparent'
               }}
             >
               {/* Category Header */}
               <div style={{
-                background: `linear-gradient(135deg, ${category.color} 0%, ${category.color}dd 100%)`,
-                padding: '1.25rem 1.5rem',
+                background: category.gradient,
+                padding: '1.5rem',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between'
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '1rem',
+                position: 'relative',
+                overflow: 'hidden'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                {/* Background glow for completed categories */}
+                {isCategoryComplete && (
                   <div style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '10px',
+                    position: 'absolute',
+                    inset: 0,
+                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.3) 0%, transparent 60%)',
+                    animation: 'pulse-opacity 2s ease-in-out infinite'
+                  }} />
+                )}
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', position: 'relative', zIndex: 1 }}>
+                  <div style={{
+                    width: '52px',
+                    height: '52px',
+                    borderRadius: '14px',
                     background: 'rgba(255,255,255,0.2)',
+                    backdropFilter: 'blur(10px)',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
                   }}>
-                    {category.icon}
+                    {isCategoryComplete ? (
+                      <Trophy size={26} color="#FBBF24" fill="#FBBF24" />
+                    ) : (
+                      category.icon
+                    )}
                   </div>
-                  <h3 style={{
-                    fontFamily: "'Lora', Georgia, serif",
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    color: 'white',
-                    margin: 0
-                  }}>
-                    {category.name}
-                  </h3>
+                  <div>
+                    <h3 style={{
+                      fontFamily: "'Montserrat', sans-serif",
+                      fontSize: '17px',
+                      fontWeight: 600,
+                      color: 'white',
+                      margin: '0 0 0.25rem 0'
+                    }}>
+                      {category.name}
+                    </h3>
+                    <p style={{
+                      fontSize: '13px',
+                      color: 'rgba(255,255,255,0.8)',
+                      margin: 0
+                    }}>
+                      {categoryCompleted} of {category.skills.length} skills completed
+                    </p>
+                  </div>
                 </div>
-                <span style={{
-                  background: 'rgba(255,255,255,0.2)',
-                  padding: '0.35rem 0.75rem',
-                  borderRadius: '20px',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  color: 'white'
+
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  position: 'relative',
+                  zIndex: 1
                 }}>
-                  {categoryCompleted} / {category.skills.length}
-                </span>
+                  {isCategoryComplete && (
+                    <AchievementBadge category={category} />
+                  )}
+                  <ProgressRing progress={categoryProgress} color="white" size={56} />
+                </div>
               </div>
 
               {/* Skills List */}
-              <div style={{ padding: '0.5rem' }}>
+              <div style={{ padding: '1rem' }}>
                 {category.skills.map((skill, index) => (
-                  <div
+                  <SkillNode
                     key={skill.id}
+                    skill={skill}
+                    isCompleted={!!checkedSkills[skill.id]}
                     onClick={() => handleToggleSkill(skill.id)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      gap: '1rem',
-                      padding: '1rem 1.25rem',
-                      cursor: 'pointer',
-                      borderRadius: '12px',
-                      transition: 'all 0.2s ease',
-                      background: checkedSkills[skill.id]
-                        ? 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)'
-                        : 'transparent',
-                      borderBottom: index < category.skills.length - 1
-                        ? '1px solid #F3F4F6'
-                        : 'none'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!checkedSkills[skill.id]) {
-                        e.currentTarget.style.background = '#F9FAFB';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!checkedSkills[skill.id]) {
-                        e.currentTarget.style.background = 'transparent';
-                      }
-                    }}
-                  >
-                    <div style={{
-                      flexShrink: 0,
-                      marginTop: '2px'
-                    }}>
-                      {checkedSkills[skill.id] ? (
-                        <CheckCircle size={24} color="#059669" />
-                      ) : (
-                        <Circle size={24} color="#D1D5DB" />
-                      )}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <h4 style={{
-                        fontSize: '15px',
-                        fontWeight: 600,
-                        color: checkedSkills[skill.id] ? '#059669' : '#1F2937',
-                        margin: '0 0 0.35rem 0',
-                        textDecoration: checkedSkills[skill.id] ? 'line-through' : 'none'
-                      }}>
-                        {skill.name}
-                      </h4>
-                      <p style={{
-                        fontSize: '13px',
-                        color: '#6B7280',
-                        margin: 0,
-                        lineHeight: 1.5
-                      }}>
-                        {skill.aim}
-                      </p>
-                    </div>
-                  </div>
+                    color={category.color}
+                    gradient={category.gradient}
+                    glowColor={category.glowColor}
+                    index={index}
+                    totalInCategory={category.skills.length}
+                  />
                 ))}
               </div>
             </div>
           );
         })}
 
-        {/* Completion Message */}
+        {/* Completion Celebration */}
         {completedSkills === totalSkills && (
           <div style={{
-            background: 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)',
-            border: '2px solid #10B981',
-            borderRadius: '20px',
-            padding: '2rem',
+            background: 'linear-gradient(135deg, #059669 0%, #10B981 50%, #34D399 100%)',
+            borderRadius: '24px',
+            padding: '3rem 2rem',
             textAlign: 'center',
-            marginTop: '1rem'
+            marginTop: '1rem',
+            boxShadow: '0 20px 60px rgba(16, 185, 129, 0.3)',
+            position: 'relative',
+            overflow: 'hidden',
+            animation: 'slide-up 0.5s ease-out'
           }}>
+            {/* Decorative stars */}
             <div style={{
-              width: '64px',
-              height: '64px',
+              position: 'absolute',
+              top: '20%',
+              left: '10%',
+              animation: 'float 3s ease-in-out infinite'
+            }}>
+              <Sparkles size={24} color="rgba(255,255,255,0.4)" />
+            </div>
+            <div style={{
+              position: 'absolute',
+              bottom: '25%',
+              right: '15%',
+              animation: 'float 3s ease-in-out infinite 1s'
+            }}>
+              <Star size={20} color="rgba(255,255,255,0.3)" />
+            </div>
+
+            <div style={{
+              width: '100px',
+              height: '100px',
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, #059669 0%, #10B981 100%)',
+              background: 'rgba(255,255,255,0.2)',
+              backdropFilter: 'blur(10px)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              margin: '0 auto 1rem',
-              boxShadow: '0 4px 12px rgba(16,185,129,0.3)'
+              margin: '0 auto 1.5rem',
+              boxShadow: '0 0 40px rgba(255,255,255,0.3)',
+              animation: 'pulse 2s ease-in-out infinite'
             }}>
-              <CheckCircle size={32} color="white" />
+              <Trophy size={50} color="white" />
             </div>
             <h3 style={{
-              fontFamily: "'Lora', Georgia, serif",
-              fontSize: '20px',
+              fontFamily: "'Montserrat', sans-serif",
+              fontSize: '28px',
               fontWeight: 700,
-              color: '#059669',
-              margin: '0 0 0.5rem 0'
+              color: 'white',
+              margin: '0 0 0.75rem 0'
             }}>
-              All Skills Completed!
+              Mastery Achieved!
             </h3>
             <p style={{
-              fontSize: '14px',
-              color: '#047857',
-              margin: 0
+              fontSize: '16px',
+              color: 'rgba(255,255,255,0.9)',
+              margin: '0 0 1.5rem 0',
+              maxWidth: '400px',
+              marginLeft: 'auto',
+              marginRight: 'auto'
             }}>
-              {apprentice.name} has demonstrated proficiency in all instructor skills.
+              {apprentice.name} has demonstrated proficiency in all {totalSkills} instructor skills.
             </p>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              background: 'rgba(255,255,255,0.2)',
+              padding: '0.75rem 1.5rem',
+              borderRadius: '50px',
+              backdropFilter: 'blur(10px)'
+            }}>
+              <CheckCircle size={20} color="white" />
+              <span style={{
+                color: 'white',
+                fontSize: '14px',
+                fontWeight: 600
+              }}>
+                Ready for Independent Teaching
+              </span>
+            </div>
           </div>
         )}
       </main>
@@ -750,6 +1201,54 @@ const SkillsChecklist = () => {
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(0.95); opacity: 0.8; }
+        }
+        @keyframes pulse-opacity {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.6; }
+        }
+        @keyframes sparkle {
+          0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+          50% { transform: scale(1.2) rotate(180deg); opacity: 0.8; }
+        }
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-6px); }
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          50% { transform: translateY(-10px) rotate(5deg); }
+        }
+        @keyframes slide-up {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes badge-appear {
+          from { opacity: 0; transform: scale(0.8); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes confetti-fall {
+          0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        @keyframes particle-burst-0 {
+          0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+          100% { transform: translate(calc(-50% + 30px), calc(-50% - 30px)) scale(1); opacity: 0; }
+        }
+        @keyframes particle-burst-1 {
+          0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+          100% { transform: translate(calc(-50% - 30px), calc(-50% - 20px)) scale(1); opacity: 0; }
+        }
+        @keyframes particle-burst-2 {
+          0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+          100% { transform: translate(calc(-50% + 25px), calc(-50% + 25px)) scale(1); opacity: 0; }
+        }
+        @keyframes particle-burst-3 {
+          0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+          100% { transform: translate(calc(-50% - 25px), calc(-50% + 30px)) scale(1); opacity: 0; }
         }
       `}</style>
     </div>

@@ -1216,40 +1216,159 @@ const ProfessorDashboard = () => {
 
           {activeApprentices.length === 0 ? (
             <div style={{
-              background: isDarkMode ? '#1E293B' : 'white',
-              borderRadius: '20px',
+              background: isDarkMode
+                ? 'linear-gradient(135deg, #1E293B 0%, #0F172A 100%)'
+                : 'linear-gradient(135deg, #FFFFFF 0%, #F0F9FF 100%)',
+              borderRadius: '24px',
               padding: '4rem 2rem',
               textAlign: 'center',
-              boxShadow: isDarkMode ? '0 4px 16px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)'
+              boxShadow: isDarkMode ? '0 8px 32px rgba(0,0,0,0.4)' : '0 8px 32px rgba(0,74,105,0.1)',
+              position: 'relative',
+              overflow: 'hidden',
+              border: isDarkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,74,105,0.1)'
             }}>
+              {/* Decorative background elements */}
               <div style={{
-                width: '80px',
-                height: '80px',
+                position: 'absolute',
+                top: '10%',
+                left: '10%',
+                width: '60px',
+                height: '60px',
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 1.5rem'
+                background: isDarkMode ? 'rgba(235,106,24,0.1)' : 'rgba(235,106,24,0.08)',
+                animation: 'float-empty 4s ease-in-out infinite'
+              }} />
+              <div style={{
+                position: 'absolute',
+                bottom: '15%',
+                right: '15%',
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                background: isDarkMode ? 'rgba(0,102,162,0.15)' : 'rgba(0,102,162,0.1)',
+                animation: 'float-empty 4s ease-in-out infinite 1s'
+              }} />
+              <div style={{
+                position: 'absolute',
+                top: '40%',
+                right: '8%',
+                width: '24px',
+                height: '24px',
+                borderRadius: '50%',
+                background: isDarkMode ? 'rgba(251,191,36,0.1)' : 'rgba(251,191,36,0.15)',
+                animation: 'float-empty 4s ease-in-out infinite 0.5s'
+              }} />
+
+              {/* Illustrated icon */}
+              <div style={{
+                position: 'relative',
+                width: '140px',
+                height: '140px',
+                margin: '0 auto 2rem',
+                zIndex: 1
               }}>
-                <Users size={36} color="#9CA3AF" />
+                {/* Background circle */}
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  borderRadius: '50%',
+                  background: isDarkMode
+                    ? 'linear-gradient(135deg, rgba(235,106,24,0.2) 0%, rgba(255,140,61,0.1) 100%)'
+                    : 'linear-gradient(135deg, rgba(235,106,24,0.15) 0%, rgba(255,140,61,0.05) 100%)',
+                  animation: 'pulse-empty 3s ease-in-out infinite'
+                }} />
+                {/* Inner circle */}
+                <div style={{
+                  position: 'absolute',
+                  inset: '20px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #eb6a18 0%, #ff8c3d 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 10px 40px rgba(235,106,24,0.4)',
+                  animation: 'bounce-empty 2s ease-in-out infinite'
+                }}>
+                  <Users size={48} color="white" strokeWidth={1.5} />
+                </div>
+                {/* Decorative dots */}
+                <div style={{
+                  position: 'absolute',
+                  top: '5px',
+                  right: '20px',
+                  width: '12px',
+                  height: '12px',
+                  borderRadius: '50%',
+                  background: '#FBBF24',
+                  animation: 'sparkle-empty 2s ease-in-out infinite'
+                }} />
+                <div style={{
+                  position: 'absolute',
+                  bottom: '15px',
+                  left: '10px',
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  background: '#10B981',
+                  animation: 'sparkle-empty 2s ease-in-out infinite 0.5s'
+                }} />
               </div>
+
               <h3 style={{
-                fontFamily: "'Lora', Georgia, serif",
-                fontSize: '20px',
-                fontWeight: 600,
+                fontFamily: "'Montserrat', sans-serif",
+                fontSize: '24px',
+                fontWeight: 700,
                 color: isDarkMode ? '#F9FAFB' : '#002642',
-                margin: '0 0 0.75rem 0'
+                margin: '0 0 0.75rem 0',
+                position: 'relative',
+                zIndex: 1
               }}>
-                No apprentices yet
+                Ready for Your First Apprentice!
               </h3>
               <p style={{
-                fontSize: '15px',
+                fontSize: '16px',
                 color: isDarkMode ? '#9CA3AF' : 'rgba(0, 38, 66, 0.6)',
-                margin: 0
+                margin: '0 0 2rem 0',
+                maxWidth: '400px',
+                marginLeft: 'auto',
+                marginRight: 'auto',
+                lineHeight: 1.6,
+                position: 'relative',
+                zIndex: 1
               }}>
-                Apprentices assigned to you will appear here.
+                Start building your teaching studio by adding your first apprentice. They'll appear here ready for training.
               </p>
+              <button
+                onClick={() => setShowAddModal(true)}
+                style={{
+                  padding: '1rem 2rem',
+                  fontSize: '15px',
+                  fontWeight: 600,
+                  color: 'white',
+                  background: 'linear-gradient(135deg, #eb6a18 0%, #ff8c3d 100%)',
+                  border: 'none',
+                  borderRadius: '14px',
+                  cursor: 'pointer',
+                  boxShadow: '0 8px 25px rgba(235,106,24,0.35)',
+                  transition: 'all 0.3s ease',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  position: 'relative',
+                  zIndex: 1
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
+                  e.currentTarget.style.boxShadow = '0 12px 35px rgba(235,106,24,0.45)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(235,106,24,0.35)';
+                }}
+              >
+                <UserPlus size={20} />
+                Add Your First Apprentice
+              </button>
             </div>
           ) : (
             <div style={{
@@ -2807,6 +2926,22 @@ const ProfessorDashboard = () => {
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.5; }
+        }
+        @keyframes float-empty {
+          0%, 100% { transform: translateY(0) scale(1); }
+          50% { transform: translateY(-15px) scale(1.05); }
+        }
+        @keyframes pulse-empty {
+          0%, 100% { transform: scale(1); opacity: 0.6; }
+          50% { transform: scale(1.08); opacity: 0.4; }
+        }
+        @keyframes bounce-empty {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-8px); }
+        }
+        @keyframes sparkle-empty {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.3); opacity: 0.6; }
         }
       `}</style>
     </div>
