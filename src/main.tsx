@@ -24,6 +24,7 @@ import SkillsChecklist from './pages/SkillsChecklist.tsx'
 import { AuthProvider } from './contexts/AuthContext.tsx'
 import { ProtectedRoute } from './components/ProtectedRoute.tsx'
 import { ToastProvider } from './contexts/ToastContext.tsx'
+import { DarkModeProvider } from './contexts/DarkModeContext.tsx'
 
 // Import the modules
 import Module1ComputerEssentials from './components/modules/Module1.tsx'
@@ -151,10 +152,12 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <ToastProvider>
-      <AuthProvider>
-        <RouterProvider router={router} />
-      </AuthProvider>
-    </ToastProvider>
+    <DarkModeProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
+      </ToastProvider>
+    </DarkModeProvider>
   </React.StrictMode>,
 )
