@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { LogOut, Users, Clock, CheckCircle, ExternalLink, RefreshCw, Settings, ChevronDown, Plus, X, UserPlus, Copy, Check, Shield, ClipboardList, GraduationCap, RotateCcw } from 'lucide-react';
+import { LogOut, Users, Clock, CheckCircle, ExternalLink, RefreshCw, Settings, ChevronDown, Plus, X, UserPlus, Copy, Check, Shield, ClipboardList, GraduationCap, RotateCcw, Music2, Theater, Piano, PenLine, BookOpen, Target } from 'lucide-react';
 import MasqueradeBanner from '../components/MasqueradeBanner';
 
 // Super admin emails
@@ -307,17 +307,63 @@ const ProfessorDashboard = () => {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: '1rem'
+          gap: '1.5rem'
         }}>
+          {/* Premium Loading Spinner */}
           <div style={{
-            width: '48px',
-            height: '48px',
-            border: '4px solid #E5E7EB',
-            borderTopColor: '#0066A2',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite'
-          }} />
-          <span style={{ color: '#004A69', fontWeight: 500 }}>Loading dashboard...</span>
+            position: 'relative',
+            width: '56px',
+            height: '56px'
+          }}>
+            {/* Outer ring */}
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '50%',
+              border: '3px solid #E5E7EB'
+            }} />
+            {/* Spinning gradient ring */}
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '50%',
+              border: '3px solid transparent',
+              borderTopColor: '#0066A2',
+              borderRightColor: '#0066A2',
+              animation: 'spin 0.8s cubic-bezier(0.5, 0, 0.5, 1) infinite'
+            }} />
+            {/* Center icon */}
+            <div style={{
+              position: 'absolute',
+              inset: '8px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #004A69 0%, #0066A2 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(0,102,162,0.3)'
+            }}>
+              <Users size={20} color="white" />
+            </div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <p style={{
+              fontFamily: 'Montserrat, sans-serif',
+              fontSize: '16px',
+              fontWeight: 600,
+              color: '#004A69',
+              margin: '0 0 0.25rem 0'
+            }}>
+              Loading Dashboard
+            </p>
+            <p style={{
+              fontSize: '13px',
+              color: '#6B7280',
+              margin: 0
+            }}>
+              Fetching your apprentices...
+            </p>
+          </div>
         </div>
         <style>{`
           @keyframes spin {
@@ -1514,7 +1560,7 @@ const ProfessorDashboard = () => {
             }}>
               <ResourceCard
                 href="https://studio.oclef.com/notation"
-                icon="🎼"
+                icon={<Music2 size={24} color="white" strokeWidth={2} />}
                 title="Oclef Notation App"
                 subtitle="PDF Annotation Tool"
                 description="Annotate lesson scores with practice icons, shapes, and notes"
@@ -1522,7 +1568,7 @@ const ProfessorDashboard = () => {
               />
               <ResourceCard
                 href="https://events.oclef.com"
-                icon="🎭"
+                icon={<Theater size={24} color="white" strokeWidth={2} />}
                 title="Oclef Events"
                 subtitle="Community Calendar"
                 description="Browse upcoming recitals, masterclasses, and performances"
@@ -1530,7 +1576,7 @@ const ProfessorDashboard = () => {
               />
               <ResourceCard
                 href="https://studio.oclef.com/virtuoso-piano"
-                icon="🎹"
+                icon={<Piano size={24} color="white" strokeWidth={2} />}
                 title="Virtuoso Piano"
                 subtitle="MIDI Instrument"
                 description="Browser-based MIDI piano with velocity-sensitive playback"
@@ -1538,15 +1584,15 @@ const ProfessorDashboard = () => {
               />
               <ResourceCard
                 href="https://blog.oclef.com"
-                icon="✍️"
+                icon={<PenLine size={24} color="white" strokeWidth={2} />}
                 title="Oclef Blog"
                 subtitle="Articles & Insights"
                 description="Teaching strategies, pedagogy insights, and faculty reflections"
-                color="#FFA6B4"
+                color="#B9314F"
               />
               <ResourceCard
                 href="https://www.thevivekproject.com"
-                icon="📚"
+                icon={<BookOpen size={24} color="white" strokeWidth={2} />}
                 title="The Vivek Project"
                 subtitle="Pedagogical Study"
                 description="Longitudinal study with teaching videos and expert commentary"
@@ -1554,7 +1600,7 @@ const ProfessorDashboard = () => {
               />
               <ResourceCard
                 href="https://studio.oclef.com/instructor.html"
-                icon="🎯"
+                icon={<Target size={24} color="white" strokeWidth={2} />}
                 title="Instructor Assessment"
                 subtitle="Evaluation Rubric"
                 description="Official rubric for instructor promotion evaluations"
@@ -1577,28 +1623,36 @@ const ProfessorDashboard = () => {
 
       {/* Add Apprentice Modal */}
       {showAddModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '1rem'
-        }}>
-          <div style={{
-            background: 'white',
-            borderRadius: '24px',
-            width: '100%',
-            maxWidth: '480px',
-            maxHeight: '90vh',
-            overflow: 'auto',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+        <div
+          className="modal-backdrop"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.4)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '1rem',
+            animation: 'fadeIn 0.2s ease-out'
           }}>
+          <div
+            className="modal-content"
+            style={{
+              background: 'white',
+              borderRadius: '24px',
+              width: '100%',
+              maxWidth: '480px',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
+              animation: 'modalSlideIn 0.3s ease-out'
+            }}>
             {/* Modal Header */}
             <div style={{
               background: 'linear-gradient(135deg, #003250 0%, #004A69 50%, #0066A2 100%)',
@@ -1918,6 +1972,28 @@ const ProfessorDashboard = () => {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes modalSlideIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95) translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
       `}</style>
     </div>
   );
@@ -1925,7 +2001,7 @@ const ProfessorDashboard = () => {
 
 const ResourceCard = ({ href, icon, title, subtitle, description, color }: {
   href: string;
-  icon: string;
+  icon: React.ReactNode;
   title: string;
   subtitle: string;
   description: string;
@@ -1940,33 +2016,34 @@ const ResourceCard = ({ href, icon, title, subtitle, description, color }: {
       rel="noopener noreferrer"
       style={{
         textDecoration: 'none',
-        background: 'linear-gradient(135deg, #F9FAFB 0%, #FFFFFF 100%)',
+        background: 'linear-gradient(135deg, #FFFFFF 0%, #F9FAFB 100%)',
         border: `2px solid ${isHovered ? color : '#E5E7EB'}`,
-        borderRadius: '14px',
+        borderRadius: '16px',
         padding: '1.5rem',
-        transition: 'all 0.3s ease',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         display: 'flex',
         flexDirection: 'column',
         gap: '1rem',
         cursor: 'pointer',
         transform: isHovered ? 'translateY(-4px)' : 'translateY(0)',
-        boxShadow: isHovered ? `0 8px 20px ${color}20` : 'none'
+        boxShadow: isHovered ? `0 12px 24px ${color}18` : '0 2px 8px rgba(0,0,0,0.04)'
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <div style={{
-          width: '44px',
-          height: '44px',
-          borderRadius: '10px',
-          background: `linear-gradient(135deg, ${color} 0%, ${color}dd 100%)`,
+          width: '48px',
+          height: '48px',
+          borderRadius: '12px',
+          background: `linear-gradient(135deg, ${color} 0%, ${color}cc 100%)`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: '22px',
-          boxShadow: `0 4px 10px ${color}30`,
-          flexShrink: 0
+          boxShadow: `0 4px 12px ${color}25`,
+          flexShrink: 0,
+          transition: 'transform 0.3s ease',
+          transform: isHovered ? 'scale(1.05)' : 'scale(1)'
         }}>
           {icon}
         </div>
@@ -1975,11 +2052,12 @@ const ResourceCard = ({ href, icon, title, subtitle, description, color }: {
             fontSize: '15px',
             fontWeight: 600,
             color: '#1F2937',
-            margin: 0
+            margin: 0,
+            letterSpacing: '-0.01em'
           }}>
             {title}
           </h3>
-          <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>
+          <p style={{ fontSize: '12px', color: '#6B7280', margin: '0.15rem 0 0 0' }}>
             {subtitle}
           </p>
         </div>
@@ -1988,7 +2066,7 @@ const ResourceCard = ({ href, icon, title, subtitle, description, color }: {
         fontSize: '13px',
         color: '#4B5563',
         margin: 0,
-        lineHeight: '1.5'
+        lineHeight: '1.6'
       }}>
         {description}
       </p>

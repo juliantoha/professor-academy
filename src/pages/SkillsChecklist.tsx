@@ -214,22 +214,83 @@ const SkillsChecklist = () => {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: '1rem'
+          gap: '1.5rem'
         }}>
           <div style={{
-            width: '48px',
-            height: '48px',
-            border: '4px solid #E5E7EB',
-            borderTopColor: '#0066A2',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite'
-          }} />
-          <span style={{ color: '#004A69', fontWeight: 500 }}>Loading skills checklist...</span>
+            position: 'relative',
+            width: '64px',
+            height: '64px'
+          }}>
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '50%',
+              border: '3px solid #E5E7EB',
+            }} />
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '50%',
+              border: '3px solid transparent',
+              borderTopColor: '#004A69',
+              borderRightColor: '#0066A2',
+              animation: 'spin 1s linear infinite'
+            }} />
+            <div style={{
+              position: 'absolute',
+              inset: '8px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #004A69 0%, #0066A2 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              animation: 'pulse 2s ease-in-out infinite'
+            }}>
+              <BookOpen size={24} color="white" />
+            </div>
+          </div>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}>
+            <span style={{
+              fontFamily: 'Montserrat, sans-serif',
+              fontSize: '16px',
+              fontWeight: 600,
+              color: '#004A69'
+            }}>
+              Loading Skills Checklist
+            </span>
+            <div style={{
+              width: '120px',
+              height: '4px',
+              borderRadius: '4px',
+              background: '#E5E7EB',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                width: '100%',
+                height: '100%',
+                background: 'linear-gradient(90deg, transparent 0%, #004A69 50%, transparent 100%)',
+                animation: 'shimmer 1.5s ease-in-out infinite'
+              }} />
+            </div>
+          </div>
         </div>
         <style>{`
           @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
+          }
+          @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(0.95); opacity: 0.8; }
+          }
+          @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
           }
         `}</style>
       </div>

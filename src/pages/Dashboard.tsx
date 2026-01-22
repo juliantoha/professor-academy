@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { CheckCircle, Clock, XCircle, Award, ArrowRight, Eye, AlertCircle, Play, BookOpen, Video, FileText, CheckSquare, Download, MessageSquare, Smartphone } from 'lucide-react';
+import { CheckCircle, Clock, XCircle, Award, ArrowRight, Eye, AlertCircle, Play, BookOpen, Video, FileText, CheckSquare, Download, MessageSquare, Smartphone, Music2, Theater, Piano, PenLine, Target } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface ApprenticeData {
@@ -325,12 +325,73 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
         alignItems: 'center',
         justifyContent: 'center',
         background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)',
-        fontFamily: 'system-ui, -apple-system, sans-serif'
+        fontFamily: 'Lato, sans-serif'
       }}>
-        <div style={{ textAlign: 'center' }}>
-          <Clock size={48} color="#0066A2" className="animate-spin" />
-          <p style={{ marginTop: '1rem', fontSize: '18px', color: '#004A69' }}>Loading your dashboard...</p>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '1.5rem'
+        }}>
+          {/* Premium Loading Spinner */}
+          <div style={{
+            position: 'relative',
+            width: '56px',
+            height: '56px'
+          }}>
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '50%',
+              border: '3px solid #E5E7EB'
+            }} />
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '50%',
+              border: '3px solid transparent',
+              borderTopColor: '#0066A2',
+              borderRightColor: '#0066A2',
+              animation: 'spin 0.8s cubic-bezier(0.5, 0, 0.5, 1) infinite'
+            }} />
+            <div style={{
+              position: 'absolute',
+              inset: '8px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #004A69 0%, #0066A2 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(0,102,162,0.3)'
+            }}>
+              <Award size={20} color="white" />
+            </div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <p style={{
+              fontFamily: 'Montserrat, sans-serif',
+              fontSize: '16px',
+              fontWeight: 600,
+              color: '#004A69',
+              margin: '0 0 0.25rem 0'
+            }}>
+              Loading Dashboard
+            </p>
+            <p style={{
+              fontSize: '13px',
+              color: '#6B7280',
+              margin: 0
+            }}>
+              Preparing your training modules...
+            </p>
+          </div>
         </div>
+        <style>{`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }
@@ -342,13 +403,45 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%)',
-        fontFamily: 'system-ui, -apple-system, sans-serif'
+        background: 'linear-gradient(135deg, #FFF6ED 0%, #FEF2F2 50%, #FEE2E2 100%)',
+        fontFamily: 'Lato, sans-serif'
       }}>
-        <div style={{ textAlign: 'center', maxWidth: '400px', padding: '2rem' }}>
-          <XCircle size={48} color="#DC2626" />
-          <p style={{ marginTop: '1rem', fontSize: '18px', color: '#991B1B' }}>
-            {error || 'Dashboard not found'}
+        <div style={{
+          textAlign: 'center',
+          maxWidth: '400px',
+          padding: '3rem',
+          background: 'white',
+          borderRadius: '24px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.08)'
+        }}>
+          <div style={{
+            width: '64px',
+            height: '64px',
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 1.5rem'
+          }}>
+            <XCircle size={32} color="#DC2626" />
+          </div>
+          <h2 style={{
+            fontFamily: 'Montserrat, sans-serif',
+            fontSize: '20px',
+            fontWeight: 600,
+            color: '#991B1B',
+            margin: '0 0 0.5rem 0'
+          }}>
+            Dashboard Not Found
+          </h2>
+          <p style={{
+            fontSize: '14px',
+            color: '#6B7280',
+            margin: 0,
+            lineHeight: 1.5
+          }}>
+            {error || 'The dashboard you\'re looking for doesn\'t exist or you don\'t have access.'}
           </p>
         </div>
       </div>
@@ -1291,49 +1384,49 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
             gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
             gap: '1.25rem'
           }}>
-            <ResourceCard 
+            <ResourceCard
               href="https://studio.oclef.com/notation"
-              icon="🎼"
+              icon={<Music2 size={24} color="white" strokeWidth={2} />}
               title="Oclef Notation App"
               subtitle="PDF Annotation Tool"
               description="Annotate lesson scores with practice icons, shapes, and notes"
               color="#471657"
             />
-            <ResourceCard 
+            <ResourceCard
               href="https://events.oclef.com"
-              icon="🎭"
+              icon={<Theater size={24} color="white" strokeWidth={2} />}
               title="Oclef Events"
               subtitle="Community Calendar"
               description="Browse upcoming recitals, masterclasses, and performances"
               color="#B9314F"
             />
-            <ResourceCard 
+            <ResourceCard
               href="https://studio.oclef.com/virtuoso-piano"
-              icon="🎹"
+              icon={<Piano size={24} color="white" strokeWidth={2} />}
               title="Virtuoso Piano"
               subtitle="MIDI Instrument"
               description="Browser-based MIDI piano with velocity-sensitive playback"
               color="#471657"
             />
-            <ResourceCard 
+            <ResourceCard
               href="https://blog.oclef.com"
-              icon="✍️"
+              icon={<PenLine size={24} color="white" strokeWidth={2} />}
               title="Oclef Blog"
               subtitle="Articles & Insights"
               description="Teaching strategies, pedagogy insights, and faculty reflections"
-              color="#FFA6B4"
+              color="#B9314F"
             />
-            <ResourceCard 
+            <ResourceCard
               href="https://www.thevivekproject.com"
-              icon="📚"
+              icon={<BookOpen size={24} color="white" strokeWidth={2} />}
               title="The Vivek Project"
               subtitle="Pedagogical Study"
               description="Longitudinal study with teaching videos and expert commentary"
               color="#00952E"
             />
-            <ResourceCard 
+            <ResourceCard
               href="https://studio.oclef.com/instructor.html"
-              icon="🎯"
+              icon={<Target size={24} color="white" strokeWidth={2} />}
               title="Instructor Assessment"
               subtitle="Evaluation Rubric"
               description="Official rubric for instructor promotion evaluations"
@@ -1348,14 +1441,14 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
 
 const ResourceCard = ({ href, icon, title, subtitle, description, color }: {
   href: string;
-  icon: string;
+  icon: React.ReactNode;
   title: string;
   subtitle: string;
   description: string;
   color: string;
 }) => {
   const [isHovered, setIsHovered] = useState(false);
-  
+
   return (
     <a
       href={href}
@@ -1363,33 +1456,34 @@ const ResourceCard = ({ href, icon, title, subtitle, description, color }: {
       rel="noopener noreferrer"
       style={{
         textDecoration: 'none',
-        background: 'linear-gradient(135deg, #F9FAFB 0%, #FFFFFF 100%)',
+        background: 'linear-gradient(135deg, #FFFFFF 0%, #F9FAFB 100%)',
         border: `2px solid ${isHovered ? color : '#E5E7EB'}`,
-        borderRadius: '14px',
+        borderRadius: '16px',
         padding: '1.5rem',
-        transition: 'all 0.3s ease',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         display: 'flex',
         flexDirection: 'column',
         gap: '1rem',
         cursor: 'pointer',
         transform: isHovered ? 'translateY(-4px)' : 'translateY(0)',
-        boxShadow: isHovered ? `0 8px 20px ${color}20` : 'none'
+        boxShadow: isHovered ? `0 12px 24px ${color}18` : '0 2px 8px rgba(0,0,0,0.04)'
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <div style={{
-          width: '44px',
-          height: '44px',
-          borderRadius: '10px',
-          background: `linear-gradient(135deg, ${color} 0%, ${color}dd 100%)`,
+          width: '48px',
+          height: '48px',
+          borderRadius: '12px',
+          background: `linear-gradient(135deg, ${color} 0%, ${color}cc 100%)`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: '22px',
-          boxShadow: `0 4px 10px ${color}30`,
-          flexShrink: 0
+          boxShadow: `0 4px 12px ${color}25`,
+          flexShrink: 0,
+          transition: 'transform 0.3s ease',
+          transform: isHovered ? 'scale(1.05)' : 'scale(1)'
         }}>
           {icon}
         </div>
@@ -1398,11 +1492,12 @@ const ResourceCard = ({ href, icon, title, subtitle, description, color }: {
             fontSize: '15px',
             fontWeight: 600,
             color: '#1F2937',
-            margin: 0
+            margin: 0,
+            letterSpacing: '-0.01em'
           }}>
             {title}
           </h3>
-          <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>
+          <p style={{ fontSize: '12px', color: '#6B7280', margin: '0.15rem 0 0 0' }}>
             {subtitle}
           </p>
         </div>
@@ -1411,7 +1506,7 @@ const ResourceCard = ({ href, icon, title, subtitle, description, color }: {
         fontSize: '13px',
         color: '#4B5563',
         margin: 0,
-        lineHeight: '1.5'
+        lineHeight: '1.6'
       }}>
         {description}
       </p>
