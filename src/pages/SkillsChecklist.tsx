@@ -1078,55 +1078,232 @@ const SkillsChecklist = () => {
               </div>
             </div>
 
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.875rem 1.5rem',
-                background: saveSuccess
-                  ? 'linear-gradient(135deg, #059669 0%, #10B981 100%)'
-                  : 'linear-gradient(135deg, #eb6a18 0%, #ff8c3d 100%)',
-                border: 'none',
-                borderRadius: '12px',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: 600,
-                cursor: saving ? 'not-allowed' : 'pointer',
-                boxShadow: saveSuccess
-                  ? '0 4px 20px rgba(16, 185, 129, 0.4)'
-                  : '0 4px 20px rgba(235,106,24,0.4)',
-                transition: 'all 0.3s ease',
-                opacity: saving ? 0.7 : 1,
-                transform: saveSuccess ? 'scale(1.02)' : 'scale(1)'
-              }}
-            >
-              {saving ? (
-                <>
-                  <div style={{
-                    width: '18px',
-                    height: '18px',
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.875rem 1.5rem',
+                  background: saveSuccess
+                    ? 'linear-gradient(135deg, #059669 0%, #10B981 100%)'
+                    : 'linear-gradient(135deg, #eb6a18 0%, #ff8c3d 100%)',
+                  border: 'none',
+                  borderRadius: '12px',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: saving ? 'not-allowed' : 'pointer',
+                  boxShadow: saveSuccess
+                    ? '0 4px 20px rgba(16, 185, 129, 0.4)'
+                    : '0 4px 20px rgba(235,106,24,0.4)',
+                  transition: 'all 0.3s ease',
+                  opacity: saving ? 0.7 : 1,
+                  transform: saveSuccess ? 'scale(1.02)' : 'scale(1)'
+                }}
+              >
+                {saving ? (
+                  <>
+                    <div style={{
+                      width: '18px',
+                      height: '18px',
+                      border: '2px solid rgba(255,255,255,0.3)',
+                      borderTopColor: 'white',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }} />
+                    Saving...
+                  </>
+                ) : saveSuccess ? (
+                  <>
+                    <CheckCircle size={18} />
+                    Saved!
+                  </>
+                ) : (
+                  <>
+                    <Save size={18} />
+                    Save Progress
+                  </>
+                )}
+              </button>
+
+              {/* Profile Dropdown - Main Header */}
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.5rem 0.75rem',
+                    background: 'rgba(255,255,255,0.1)',
                     border: '2px solid rgba(255,255,255,0.3)',
-                    borderTopColor: 'white',
+                    borderRadius: '10px',
+                    color: 'white',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!showProfileMenu) {
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                    }
+                  }}
+                >
+                  <div style={{
+                    width: '28px',
+                    height: '28px',
                     borderRadius: '50%',
-                    animation: 'spin 1s linear infinite'
+                    background: profile?.avatarUrl
+                      ? `url(${profile.avatarUrl}) center/cover no-repeat`
+                      : 'linear-gradient(135deg, #eb6a18 0%, #ff8c3d 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '12px',
+                    fontWeight: 700
+                  }}>
+                    {!profile?.avatarUrl && displayName.charAt(0).toUpperCase()}
+                  </div>
+                  <ChevronDown size={14} style={{
+                    transform: showProfileMenu ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.2s ease'
                   }} />
-                  Saving...
-                </>
-              ) : saveSuccess ? (
-                <>
-                  <CheckCircle size={18} />
-                  Saved!
-                </>
-              ) : (
-                <>
-                  <Save size={18} />
-                  Save Progress
-                </>
-              )}
-            </button>
+                </button>
+
+                {/* Dropdown Menu - Main Header */}
+                {showProfileMenu && !isScrolled && (
+                  <>
+                    <div
+                      onClick={() => setShowProfileMenu(false)}
+                      style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        zIndex: 10
+                      }}
+                    />
+                    <div style={{
+                      position: 'absolute',
+                      top: '100%',
+                      right: 0,
+                      marginTop: '0.5rem',
+                      background: 'white',
+                      borderRadius: '12px',
+                      boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+                      width: '200px',
+                      zIndex: 20,
+                      overflow: 'hidden'
+                    }}>
+                      <div style={{
+                        padding: '1rem',
+                        borderBottom: '1px solid #E5E7EB'
+                      }}>
+                        <p style={{
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: '#002642',
+                          margin: '0 0 0.25rem 0'
+                        }}>
+                          {displayName}
+                        </p>
+                        <p style={{
+                          fontSize: '12px',
+                          color: 'rgba(0, 38, 66, 0.6)',
+                          margin: 0
+                        }}>
+                          {user?.email}
+                        </p>
+                      </div>
+                      <div style={{ padding: '0.5rem' }}>
+                        <button
+                          onClick={() => {
+                            setShowProfileMenu(false);
+                            navigate('/settings');
+                          }}
+                          style={{
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            padding: '0.75rem 1rem',
+                            background: 'transparent',
+                            border: 'none',
+                            borderRadius: '8px',
+                            color: '#374151',
+                            fontSize: '14px',
+                            cursor: 'pointer',
+                            textAlign: 'left'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = '#F3F4F6'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        >
+                          <Settings size={18} />
+                          Settings
+                        </button>
+
+                        {/* Dark Mode Toggle */}
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '0.75rem 1rem',
+                            borderRadius: '8px',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            {isDarkMode ? (
+                              <Moon size={18} color="#9CA3AF" />
+                            ) : (
+                              <Sun size={18} color="#F59E0B" />
+                            )}
+                            <span style={{ fontSize: '14px', color: '#374151' }}>
+                              {isDarkMode ? 'Dark Mode' : 'Light Mode'}
+                            </span>
+                          </div>
+                          <DarkModeToggle size="small" />
+                        </div>
+
+                        <div style={{ height: '1px', background: '#E5E7EB', margin: '0.25rem 0.5rem' }} />
+
+                        <button
+                          onClick={() => {
+                            setShowProfileMenu(false);
+                            signOut();
+                          }}
+                          style={{
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.75rem',
+                            padding: '0.75rem 1rem',
+                            background: 'transparent',
+                            border: 'none',
+                            borderRadius: '8px',
+                            color: '#DC2626',
+                            fontSize: '14px',
+                            cursor: 'pointer',
+                            textAlign: 'left'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = '#FEF2F2'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        >
+                          <LogOut size={18} />
+                          Sign Out
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </header>

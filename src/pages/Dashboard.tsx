@@ -38,8 +38,7 @@ const CURRICULUM = [
   { phase: 'Phase 2', module: 'Computer Essentials', number: '2.1' },
   { phase: 'Phase 2', module: 'Zoom Configuration', number: '2.2' },
   { phase: 'Phase 2', module: 'System Navigation', number: '2.3' },
-  { phase: 'Phase 2', module: 'Documentation & Lesson Closure', number: '2.4' },
-  { phase: 'Complete', module: 'Graduated', number: '🎓' }
+  { phase: 'Phase 2', module: 'Documentation & Lesson Closure', number: '2.4' }
 ];
 
 const MODULE_NUMBERS: Record<string, string> = {
@@ -55,8 +54,7 @@ const MODULE_ICONS: Record<string, React.ComponentType<{size?: number; color?: s
   'Computer Essentials': BookOpen,
   'Zoom Configuration': Video,
   'System Navigation': FileText,
-  'Documentation & Lesson Closure': CheckSquare,
-  'Graduated': Award
+  'Documentation & Lesson Closure': CheckSquare
 };
 
 const MODULE_DESCRIPTIONS: Record<string, string> = {
@@ -556,31 +554,7 @@ const JourneyTimeline = ({
 }) => {
   const [hoveredStep, setHoveredStep] = useState<number | null>(null);
 
-  // Count how many regular modules (not Graduated) are completed
-  const regularModulesCompleted = CURRICULUM.filter(item => item.module !== 'Graduated').every(item => {
-    const progressItem = progress.find(p => p.phase === item.phase && p.module === item.module);
-    const submission = progressItem?.submissionId ? submissions[progressItem.submissionId] : null;
-    return submission?.status === 'Approved' || (progressItem?.Status === 'Completed' && !progressItem?.submissionId);
-  });
-
-  const journeySteps = CURRICULUM.map((item, index) => {
-    // Handle the special "Graduated" milestone
-    if (item.module === 'Graduated') {
-      let status: 'completed' | 'current' | 'upcoming' = 'upcoming';
-      if (graduated) {
-        status = 'completed';
-      } else if (regularModulesCompleted) {
-        status = 'current'; // All modules done, waiting for professor to mark as graduated
-      }
-      return {
-        number: item.number,
-        name: item.module,
-        phase: item.phase,
-        status,
-        icon: MODULE_ICONS[item.module] || Award
-      };
-    }
-
+  const journeySteps = CURRICULUM.map((item) => {
     const progressItem = progress.find(p => p.phase === item.phase && p.module === item.module);
     const submission = progressItem?.submissionId ? submissions[progressItem.submissionId] : null;
 
@@ -601,6 +575,7 @@ const JourneyTimeline = ({
   });
 
   const completedCount = journeySteps.filter(s => s.status === 'completed').length;
+  const allModulesCompleted = completedCount === journeySteps.length;
   const progressPercent = (completedCount / journeySteps.length) * 100;
 
   return (
@@ -647,23 +622,68 @@ const JourneyTimeline = ({
             Your Learning Journey
           </h3>
         </div>
-        <div style={{
-          background: 'rgba(255,255,255,0.15)',
-          backdropFilter: 'blur(10px)',
-          padding: '0.5rem 1rem',
-          borderRadius: '50px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.5rem'
-        }}>
-          <Flag size={16} color="#10B981" />
-          <span style={{
-            fontSize: '13px',
-            fontWeight: 600,
-            color: 'white'
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{
+            background: 'rgba(255,255,255,0.15)',
+            backdropFilter: 'blur(10px)',
+            padding: '0.5rem 1rem',
+            borderRadius: '50px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
           }}>
-            {completedCount} of {journeySteps.length} milestones
-          </span>
+            <Flag size={16} color="#10B981" />
+            <span style={{
+              fontSize: '13px',
+              fontWeight: 600,
+              color: 'white'
+            }}>
+              {completedCount} of {journeySteps.length} milestones
+            </span>
+          </div>
+
+          {/* Graduated Badge */}
+          {graduated ? (
+            <div style={{
+              background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+              padding: '0.5rem 1rem',
+              borderRadius: '50px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)',
+              animation: 'pulse-glow 2s ease-in-out infinite'
+            }}>
+              <Award size={16} color="white" />
+              <span style={{
+                fontSize: '13px',
+                fontWeight: 700,
+                color: 'white'
+              }}>
+                Graduated! 🎓
+              </span>
+            </div>
+          ) : allModulesCompleted ? (
+            <div style={{
+              background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+              padding: '0.5rem 1rem',
+              borderRadius: '50px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              boxShadow: '0 4px 15px rgba(245, 158, 11, 0.4)',
+              animation: 'pulse-glow 2s ease-in-out infinite'
+            }}>
+              <Award size={16} color="white" />
+              <span style={{
+                fontSize: '13px',
+                fontWeight: 600,
+                color: 'white'
+              }}>
+                Ready to Graduate!
+              </span>
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -2078,6 +2098,10 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
         @keyframes pulse-dot {
           0%, 100% { transform: scale(1); opacity: 1; }
           50% { transform: scale(1.3); opacity: 0.7; }
+        }
+        @keyframes pulse-glow {
+          0%, 100% { box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4); }
+          50% { box-shadow: 0 4px 25px rgba(16, 185, 129, 0.6); }
         }
         @keyframes slideDown {
           from { transform: translateY(-100%); opacity: 0; }
