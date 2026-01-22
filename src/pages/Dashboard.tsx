@@ -168,33 +168,6 @@ const PremiumModuleCard = ({
         opacity: isHovered ? 1 : 0.95,
         transition: 'opacity 0.3s ease'
       }}>
-        {/* Animated particles/sparkles for completed modules */}
-        {isCompleted && (
-          <>
-            <Sparkles
-              size={16}
-              color="rgba(255,255,255,0.5)"
-              style={{
-                position: 'absolute',
-                top: '20%',
-                left: '10%',
-                animation: 'float 3s ease-in-out infinite'
-              }}
-            />
-            <Star
-              size={12}
-              color="rgba(255,255,255,0.4)"
-              fill="rgba(255,255,255,0.4)"
-              style={{
-                position: 'absolute',
-                top: '40%',
-                right: '15%',
-                animation: 'float 3s ease-in-out infinite 0.5s'
-              }}
-            />
-          </>
-        )}
-
         {/* Decorative pattern */}
         <div style={{
           position: 'absolute',
