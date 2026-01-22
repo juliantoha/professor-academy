@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, CheckCircle, BookOpen, Users, Music, Save, Star, Sparkles, Trophy, Zap } from 'lucide-react';
+import { ArrowLeft, CheckCircle, BookOpen, Users, Music, Save, Star, Sparkles, Trophy, Zap, MousePointerClick } from 'lucide-react';
 
 interface Apprentice {
   id: string;
@@ -293,6 +293,30 @@ const SkillNode = ({
             animation: 'sparkle 2s ease-in-out infinite'
           }}>
             <Sparkles size={16} color="#FBBF24" fill="#FBBF24" />
+          </div>
+        )}
+
+        {/* Tap indicator for uncompleted skills */}
+        {!isCompleted && (
+          <div style={{
+            position: 'absolute',
+            bottom: '-6px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: color,
+            color: 'white',
+            fontSize: '9px',
+            fontWeight: 700,
+            padding: '2px 6px',
+            borderRadius: '8px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+            whiteSpace: 'nowrap',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+            opacity: isHovered ? 1 : 0.85,
+            transition: 'opacity 0.2s ease'
+          }}>
+            tap
           </div>
         )}
       </div>
@@ -983,6 +1007,44 @@ const SkillsChecklist = () => {
           </div>
         </div>
 
+        {/* Instruction hint */}
+        {completedSkills < totalSkills && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.75rem',
+            padding: '1rem 1.5rem',
+            background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(245, 158, 11, 0.1) 100%)',
+            borderRadius: '16px',
+            marginBottom: '1.5rem',
+            border: '2px dashed rgba(251, 191, 36, 0.4)',
+            animation: 'subtle-pulse 3s ease-in-out infinite'
+          }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(251, 191, 36, 0.3)',
+              animation: 'tap-hint 2s ease-in-out infinite'
+            }}>
+              <MousePointerClick size={20} color="white" />
+            </div>
+            <p style={{
+              fontSize: '14px',
+              fontWeight: 500,
+              color: '#92400E',
+              margin: 0
+            }}>
+              <strong>Tap the numbered circles</strong> to confirm each skill as the apprentice demonstrates mastery
+            </p>
+          </div>
+        )}
+
         {/* Skills Categories */}
         {SKILLS_DATA.map((category) => {
           const categoryCompleted = category.skills.filter(s => checkedSkills[s.id]).length;
@@ -1249,6 +1311,14 @@ const SkillsChecklist = () => {
         @keyframes particle-burst-3 {
           0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
           100% { transform: translate(calc(-50% - 25px), calc(-50% + 30px)) scale(1); opacity: 0; }
+        }
+        @keyframes subtle-pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
+        }
+        @keyframes tap-hint {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.1); }
         }
       `}</style>
     </div>
