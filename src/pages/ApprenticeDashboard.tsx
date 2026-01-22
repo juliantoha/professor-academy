@@ -16,12 +16,6 @@ const ApprenticeDashboard = () => {
 
   const displayName = profile?.firstName || profile?.name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Student';
 
-  useEffect(() => {
-    if (user?.email) {
-      fetchDashboardToken();
-    }
-  }, [user]);
-
   const fetchDashboardToken = async () => {
     try {
       setLoading(true);
@@ -57,6 +51,13 @@ const ApprenticeDashboard = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (user?.email) {
+      fetchDashboardToken();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.email]);
 
   const handleSignOut = async () => {
     await signOut();

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { CheckCircle, Clock, XCircle, FileText, ZoomIn, Download, Mail, AlertCircle, Eye, ChevronLeft, ChevronRight, Lock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../contexts/ToastContext';
@@ -26,8 +26,6 @@ const ReviewSubmission = ({ submissionId }: { submissionId: string }) => {
   const [updating, setUpdating] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [emailSent, setEmailSent] = useState(false);
-  const [dashboardToken, setDashboardToken] = useState<string | null>(null);
   const toast = useToast();
 
   // Check if viewer is professor (has review=true parameter)
@@ -39,23 +37,8 @@ const ReviewSubmission = ({ submissionId }: { submissionId: string }) => {
 
   useEffect(() => {
     fetchSubmission();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [submissionId]);
-
-  const fetchDashboardToken = async (apprenticeEmail: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('apprentices')
-        .select('dashboardToken')
-        .eq('email', apprenticeEmail.toLowerCase())
-        .single();
-
-      if (!error && data) {
-        setDashboardToken(data.dashboardToken);
-      }
-    } catch (err) {
-      console.error('Error fetching dashboard token:', err);
-    }
-  };
 
   const fetchSubmission = async () => {
     try {
@@ -173,9 +156,9 @@ const ReviewSubmission = ({ submissionId }: { submissionId: string }) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          service_id: 'service_b7vul04',
-          template_id: 'template_feedback',
-          user_id: 'GImjhsi-c_0q7ZtUA',
+          service_id: import.meta.env.VITE_EMAILJS_SERVICE_ID,
+          template_id: import.meta.env.VITE_EMAILJS_FEEDBACK_TEMPLATE_ID,
+          user_id: import.meta.env.VITE_EMAILJS_PUBLIC_KEY,
           template_params: {
             student_name: submission.studentName,
             module_name: submission.moduleName,
@@ -187,13 +170,16 @@ const ReviewSubmission = ({ submissionId }: { submissionId: string }) => {
           }
         })
       });
-      setEmailSent(true);
     } catch (error) {
       console.error('Email notification failed:', error);
     }
   };
 
-  const screenshotEntries = submission ? Object.entries(submission.screenshotUrls) : [];
+  // Memoize screenshotEntries to prevent useEffect dependency issues
+  const screenshotEntries = useMemo(
+    () => submission ? Object.entries(submission.screenshotUrls) : [],
+    [submission]
+  );
 
   const openLightbox = (url: string, index: number) => {
     setLightboxImage(url);
@@ -216,12 +202,20 @@ const ReviewSubmission = ({ submissionId }: { submissionId: string }) => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!lightboxImage) return;
       if (e.key === 'Escape') closeLightbox();
-      if (e.key === 'ArrowLeft') navigateLightbox('prev');
-      if (e.key === 'ArrowRight') navigateLightbox('next');
+      if (e.key === 'ArrowLeft') {
+        const newIndex = (lightboxIndex - 1 + screenshotEntries.length) % screenshotEntries.length;
+        setLightboxIndex(newIndex);
+        setLightboxImage(screenshotEntries[newIndex][1]);
+      }
+      if (e.key === 'ArrowRight') {
+        const newIndex = (lightboxIndex + 1) % screenshotEntries.length;
+        setLightboxIndex(newIndex);
+        setLightboxImage(screenshotEntries[newIndex][1]);
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [lightboxImage, lightboxIndex]);
+  }, [lightboxImage, lightboxIndex, screenshotEntries]);
 
   if (loading) {
     return (
@@ -655,39 +649,6 @@ const ReviewSubmission = ({ submissionId }: { submissionId: string }) => {
                   This submission has been reviewed and is now locked.
                 </span>
               </div>
-              {dashboardToken && (
-                <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
-                  <button
-                    onClick={() => window.location.href = `/dashboard/${dashboardToken}`}
-                    style={{
-                      padding: '1rem 2.5rem',
-                      fontSize: '16px',
-                      fontWeight: 600,
-                      color: '#0066A2',
-                      background: 'white',
-                      border: '2px solid #0066A2',
-                      borderRadius: '12px',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s ease',
-                      boxShadow: '0 2px 8px rgba(0,102,162,0.1)'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = '#0066A2';
-                      e.currentTarget.style.color = 'white';
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,102,162,0.2)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'white';
-                      e.currentTarget.style.color = '#0066A2';
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,102,162,0.1)';
-                    }}
-                  >
-                    Back to Dashboard
-                  </button>
-                </div>
-              )}
             </div>
           ) : (
             <div style={{ textAlign: 'center' }}>

@@ -61,8 +61,8 @@ interface Submission {
   professorEmail: string;
 }
 
-// Super admin emails - only these users can access this page
-const SUPER_ADMIN_EMAILS = ['julian@oclef.com'];
+// Super admin emails - configured via environment variable
+const SUPER_ADMIN_EMAILS = (import.meta.env.VITE_SUPER_ADMIN_EMAILS || '').split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
 
 const AdminDashboard = () => {
   const { user, profile, signOut } = useAuth();
@@ -105,6 +105,7 @@ const AdminDashboard = () => {
       return;
     }
     fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, isSuperAdmin]);
 
   const fetchData = async () => {
@@ -650,24 +651,38 @@ const AdminDashboard = () => {
                     transition: 'all 0.3s ease'
                   }}
                 >
-                  <div style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    <span style={{
-                      fontFamily: "'Lora', Georgia, serif",
-                      fontSize: '14px',
-                      fontWeight: 700,
-                      color: '#1a1a2e'
+                  {profile?.avatarUrl ? (
+                    <img
+                      src={profile.avatarUrl}
+                      alt={displayName}
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                        border: '2px solid rgba(255,215,0,0.5)'
+                      }}
+                    />
+                  ) : (
+                    <div style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
                     }}>
-                      {displayName.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
+                      <span style={{
+                        fontFamily: "'Lora', Georgia, serif",
+                        fontSize: '14px',
+                        fontWeight: 700,
+                        color: '#1a1a2e'
+                      }}>
+                        {displayName.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
                   <span>{displayName}</span>
                   <ChevronDown size={16} style={{
                     transform: showProfileMenu ? 'rotate(180deg)' : 'rotate(0deg)',

@@ -83,8 +83,9 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
       return;
     }
     hasInitialized.current = true;
-    
+
     fetchDashboardData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dashboardToken]);
 
   const initializeProgress = async (apprenticeEmail: string) => {

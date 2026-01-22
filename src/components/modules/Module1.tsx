@@ -16,7 +16,7 @@ interface Task {
   practice: string;
 }
 
-const VideoPlaceholder = ({ taskId }: { taskId: string }) => {
+const VideoPlaceholder = () => {
   return (
     <div style={{
       background: 'linear-gradient(135deg, #F0F9FF 0%, #DBEAFE 100%)',
@@ -70,9 +70,9 @@ const Module1ComputerEssentials = () => {
   const tokenFromUrl = urlParams.get('token') || '';
   
   // Student Information State - Auto-populated from URL
-  const [studentName, setStudentName] = useState(nameFromUrl);
-  const [apprenticeEmail, setApprenticeEmail] = useState(emailFromUrl);
-  const [professorEmail, setProfessorEmail] = useState(professorFromUrl);
+  const [studentName] = useState(nameFromUrl);
+  const [apprenticeEmail] = useState(emailFromUrl);
+  const [professorEmail] = useState(professorFromUrl);
   const [dashboardToken] = useState(tokenFromUrl);
   
   // Module State
@@ -836,7 +836,7 @@ const Module1ComputerEssentials = () => {
               </ul>
             </div>
 
-            <VideoPlaceholder taskId={task.id} />
+            <VideoPlaceholder />
 
             {/* Practice Task */}
             <div style={{

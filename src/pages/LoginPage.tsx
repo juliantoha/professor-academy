@@ -47,7 +47,7 @@ const LoginPage = () => {
         setError(error.message);
       }
       // Navigation is handled by useEffect based on role
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred');
     } finally {
       setLoading(false);
