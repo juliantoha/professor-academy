@@ -15,6 +15,10 @@ interface SchoolWideData {
     apprenticeEmail: string;
   }>;
   pendingSubmissions: number;
+  submissions?: Array<{
+    submittedAt: string;
+    status: string;
+  }>;
 }
 
 interface AnalyticsDashboardProps {
@@ -472,11 +476,54 @@ const AnalyticsDashboard = ({ schoolWideData, isDarkMode = false }: AnalyticsDas
     // Approval rate
     const approvalRate = completed > 0 ? Math.round((completed / (completed + pending)) * 100) : 0;
 
-    // Generate mock activity data for heatmap (28 days)
-    const activityData = Array.from({ length: 28 }, () => Math.floor(Math.random() * 5));
+    // Generate real activity data for heatmap (28 days) based on submissions
+    const activityData = Array.from({ length: 28 }, (_, dayIndex) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (27 - dayIndex)); // Start from 28 days ago
+      const dayStart = new Date(date.setHours(0, 0, 0, 0));
+      const dayEnd = new Date(date.setHours(23, 59, 59, 999));
 
-    // Completion trend (mock percentage)
-    const completionTrend = Math.round((Math.random() - 0.3) * 30);
+      // Count submissions on this day
+      const submissionsOnDay = (schoolWideData.submissions || []).filter(sub => {
+        const subDate = new Date(sub.submittedAt);
+        return subDate >= dayStart && subDate <= dayEnd;
+      }).length;
+
+      // Also count apprentices who joined on this day
+      const apprenticesJoinedOnDay = apprentices.filter(a => {
+        if (!a.createdAt) return false;
+        const joinDate = new Date(a.createdAt);
+        return joinDate >= dayStart && joinDate <= dayEnd;
+      }).length;
+
+      // Also count graduations on this day
+      const graduationsOnDay = apprentices.filter(a => {
+        if (!a.graduatedAt) return false;
+        const gradDate = new Date(a.graduatedAt);
+        return gradDate >= dayStart && gradDate <= dayEnd;
+      }).length;
+
+      return submissionsOnDay + apprenticesJoinedOnDay + graduationsOnDay;
+    });
+
+    // Calculate completion trend based on recent vs older completions
+    const recentCompleted = (schoolWideData.submissions || []).filter(sub => {
+      const subDate = new Date(sub.submittedAt);
+      const twoWeeksAgo = new Date();
+      twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+      return sub.status === 'Approved' && subDate >= twoWeeksAgo;
+    }).length;
+    const olderCompleted = (schoolWideData.submissions || []).filter(sub => {
+      const subDate = new Date(sub.submittedAt);
+      const twoWeeksAgo = new Date();
+      const fourWeeksAgo = new Date();
+      twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+      fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+      return sub.status === 'Approved' && subDate >= fourWeeksAgo && subDate < twoWeeksAgo;
+    }).length;
+    const completionTrend = olderCompleted > 0
+      ? Math.round(((recentCompleted - olderCompleted) / olderCompleted) * 100)
+      : recentCompleted > 0 ? 100 : 0;
 
     // Graduates with dates for the training days chart
     const graduatesWithDates = apprentices

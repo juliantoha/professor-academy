@@ -76,6 +76,10 @@ const ProfessorDashboard = () => {
     apprenticeEmail: string;
   }>>([]);
   const [schoolWidePendingCount, setSchoolWidePendingCount] = useState(0);
+  const [schoolWideSubmissions, setSchoolWideSubmissions] = useState<Array<{
+    submittedAt: string;
+    status: string;
+  }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -290,7 +294,7 @@ const ProfessorDashboard = () => {
       }
 
       // Fetch school-wide data for analytics dashboard
-      const [schoolApprenticesResult, schoolProgressResult, schoolPendingResult] = await Promise.all([
+      const [schoolApprenticesResult, schoolProgressResult, schoolPendingResult, schoolSubmissionsResult] = await Promise.all([
         // All apprentices school-wide
         supabase
           .from('apprentices')
@@ -303,7 +307,12 @@ const ProfessorDashboard = () => {
         supabase
           .from('submissions')
           .select('*', { count: 'exact', head: true })
-          .eq('status', 'Pending')
+          .eq('status', 'Pending'),
+        // All submissions for activity tracking (last 30 days)
+        supabase
+          .from('submissions')
+          .select('submittedAt, status')
+          .gte('submittedAt', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
       ]);
 
       if (schoolApprenticesResult.error) {
@@ -322,6 +331,12 @@ const ProfessorDashboard = () => {
         console.error('Error fetching school-wide pending count:', schoolPendingResult.error);
       } else {
         setSchoolWidePendingCount(schoolPendingResult.count || 0);
+      }
+
+      if (schoolSubmissionsResult.error) {
+        console.error('Error fetching school-wide submissions:', schoolSubmissionsResult.error);
+      } else {
+        setSchoolWideSubmissions(schoolSubmissionsResult.data || []);
       }
 
     } catch (err: any) {
@@ -1080,7 +1095,8 @@ const ProfessorDashboard = () => {
           schoolWideData={{
             apprentices: schoolWideApprentices,
             progress: schoolWideProgress,
-            pendingSubmissions: schoolWidePendingCount
+            pendingSubmissions: schoolWidePendingCount,
+            submissions: schoolWideSubmissions
           }}
           isDarkMode={isDarkMode}
         />

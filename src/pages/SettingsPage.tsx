@@ -231,16 +231,43 @@ const SettingsPage = () => {
             flexWrap: 'wrap',
             gap: '1rem'
           }}>
-            <h1 style={{
-              fontFamily: 'Montserrat, sans-serif',
-              fontSize: '28px',
-              fontWeight: 700,
-              color: 'white',
-              margin: 0,
-              letterSpacing: '-0.5px'
-            }}>
-              Account Settings
-            </h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <button
+                onClick={() => navigate(-1)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0.625rem',
+                  background: 'rgba(255,255,255,0.1)',
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  borderRadius: '10px',
+                  color: 'white',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+                  e.currentTarget.style.transform = 'translateX(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                  e.currentTarget.style.transform = 'translateX(0)';
+                }}
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <h1 style={{
+                fontFamily: 'Montserrat, sans-serif',
+                fontSize: '28px',
+                fontWeight: 700,
+                color: 'white',
+                margin: 0,
+                letterSpacing: '-0.5px'
+              }}>
+                Account Settings
+              </h1>
+            </div>
 
             {/* Profile Dropdown */}
             <div style={{ position: 'relative' }}>
