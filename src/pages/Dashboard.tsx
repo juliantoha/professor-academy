@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { CheckCircle, Clock, XCircle, Award, ArrowRight, Eye, AlertCircle, Play, BookOpen, Video, FileText, CheckSquare, Download, MessageSquare, Smartphone, Music2, Theater, Piano, PenLine, Target } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { CheckCircle, Clock, XCircle, Award, ArrowRight, Eye, AlertCircle, Play, BookOpen, Video, FileText, CheckSquare, Download, MessageSquare, Smartphone, Music2, Theater, Piano, PenLine, Target, Sparkles, Star, Lock, Unlock } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface ApprenticeData {
@@ -47,7 +47,7 @@ const MODULE_NUMBERS: Record<string, string> = {
   'Documentation & Lesson Closure': '2.4'
 };
 
-const MODULE_ICONS: Record<string, any> = {
+const MODULE_ICONS: Record<string, React.ComponentType<{size?: number; color?: string}>> = {
   'Orientation': Play,
   'Computer Essentials': BookOpen,
   'Zoom Configuration': Video,
@@ -61,6 +61,507 @@ const MODULE_DESCRIPTIONS: Record<string, string> = {
   'Zoom Configuration': 'Set up and optimize your Zoom environment',
   'System Navigation': 'Navigate Oclef systems and student portal',
   'Documentation & Lesson Closure': 'Document lessons and manage closures effectively'
+};
+
+// Premium Module Card with 3D parallax effect
+const PremiumModuleCard = ({
+  moduleNumber,
+  moduleName,
+  description,
+  status,
+  submissionStatus,
+  submittedAt,
+  professorNotes,
+  onStartClick,
+  onViewSubmission,
+  hasSubmission,
+  isPhase1 = false,
+  gradientFrom,
+  gradientTo,
+  accentColor
+}: {
+  moduleNumber: string;
+  moduleName: string;
+  description: string;
+  status: 'Not Started' | 'In Progress' | 'Completed';
+  submissionStatus?: 'Pending' | 'Approved' | 'Needs Work';
+  submittedAt?: string;
+  professorNotes?: string;
+  onStartClick: () => void;
+  onViewSubmission?: () => void;
+  hasSubmission: boolean;
+  isPhase1?: boolean;
+  gradientFrom: string;
+  gradientTo: string;
+  accentColor: string;
+}) => {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
+
+  const ModuleIcon = MODULE_ICONS[moduleName] || BookOpen;
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    setMousePosition({ x, y });
+  }, []);
+
+  const getStatusDisplay = () => {
+    if (submissionStatus === 'Pending') {
+      return { bg: 'linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)', color: '#92400E', icon: Clock, text: 'Under Review', glow: 'rgba(245, 158, 11, 0.3)' };
+    }
+    if (submissionStatus === 'Needs Work') {
+      return { bg: 'linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)', color: '#B91C1C', icon: AlertCircle, text: 'Needs Revision', glow: 'rgba(239, 68, 68, 0.3)' };
+    }
+    if (submissionStatus === 'Approved') {
+      return { bg: 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)', color: '#047857', icon: CheckCircle, text: 'Approved', glow: 'rgba(16, 185, 129, 0.3)' };
+    }
+    switch (status) {
+      case 'Completed': return { bg: 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)', color: '#047857', icon: CheckCircle, text: 'Completed', glow: 'rgba(16, 185, 129, 0.3)' };
+      case 'In Progress': return { bg: 'linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)', color: '#92400E', icon: Clock, text: 'In Progress', glow: 'rgba(245, 158, 11, 0.3)' };
+      default: return { bg: 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)', color: '#6B7280', icon: XCircle, text: 'Not Started', glow: 'rgba(107, 114, 128, 0.2)' };
+    }
+  };
+
+  const statusDisplay = getStatusDisplay();
+  const StatusIcon = statusDisplay.icon;
+  const isCompleted = submissionStatus === 'Approved' || (status === 'Completed' && !hasSubmission);
+  const needsRevision = submissionStatus === 'Needs Work';
+
+  return (
+    <div
+      ref={cardRef}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => {
+        setIsHovered(false);
+        setMousePosition({ x: 0, y: 0 });
+      }}
+      style={{
+        position: 'relative',
+        borderRadius: '20px',
+        overflow: 'hidden',
+        background: 'white',
+        border: needsRevision ? '2px solid #FCA5A5' : '2px solid transparent',
+        boxShadow: isHovered
+          ? `0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 30px ${statusDisplay.glow}`
+          : '0 10px 40px rgba(0, 0, 0, 0.08)',
+        transform: isHovered
+          ? `perspective(1000px) rotateX(${mousePosition.y * -8}deg) rotateY(${mousePosition.x * 8}deg) scale(1.02)`
+          : 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        cursor: 'pointer'
+      }}
+      onClick={onStartClick}
+    >
+      {/* Animated gradient background */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '140px',
+        background: `linear-gradient(135deg, ${gradientFrom} 0%, ${gradientTo} 100%)`,
+        opacity: isHovered ? 1 : 0.95,
+        transition: 'opacity 0.3s ease'
+      }}>
+        {/* Animated particles/sparkles for completed modules */}
+        {isCompleted && (
+          <>
+            <Sparkles
+              size={16}
+              color="rgba(255,255,255,0.5)"
+              style={{
+                position: 'absolute',
+                top: '20%',
+                left: '10%',
+                animation: 'float 3s ease-in-out infinite'
+              }}
+            />
+            <Star
+              size={12}
+              color="rgba(255,255,255,0.4)"
+              fill="rgba(255,255,255,0.4)"
+              style={{
+                position: 'absolute',
+                top: '40%',
+                right: '15%',
+                animation: 'float 3s ease-in-out infinite 0.5s'
+              }}
+            />
+          </>
+        )}
+
+        {/* Decorative pattern */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          opacity: 0.1,
+          backgroundImage: 'radial-gradient(circle at 20% 50%, white 1px, transparent 1px)',
+          backgroundSize: '30px 30px'
+        }} />
+
+        {/* Floating light effect on hover */}
+        {isHovered && (
+          <div style={{
+            position: 'absolute',
+            top: `${50 + mousePosition.y * 50}%`,
+            left: `${50 + mousePosition.x * 50}%`,
+            width: '150px',
+            height: '150px',
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%)',
+            transform: 'translate(-50%, -50%)',
+            pointerEvents: 'none',
+            transition: 'all 0.1s ease'
+          }} />
+        )}
+      </div>
+
+      {/* Module Icon with glow */}
+      <div style={{
+        position: 'relative',
+        zIndex: 10,
+        padding: '1.5rem 1.5rem 0'
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between'
+        }}>
+          <div style={{
+            width: '60px',
+            height: '60px',
+            borderRadius: '16px',
+            background: 'rgba(255,255,255,0.2)',
+            backdropFilter: 'blur(10px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: isHovered
+              ? '0 8px 25px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.3)'
+              : '0 4px 15px rgba(0,0,0,0.1)',
+            border: '1px solid rgba(255,255,255,0.3)',
+            transform: isHovered ? 'translateY(-4px)' : 'translateY(0)',
+            transition: 'all 0.3s ease'
+          }}>
+            <ModuleIcon size={28} color="white" />
+          </div>
+
+          {/* Module number badge */}
+          <div style={{
+            background: 'rgba(255,255,255,0.95)',
+            padding: '0.5rem 1rem',
+            borderRadius: '30px',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}>
+            <span style={{
+              fontFamily: "'Montserrat', sans-serif",
+              fontSize: '14px',
+              fontWeight: 700,
+              color: accentColor
+            }}>
+              {moduleNumber}
+            </span>
+            {isCompleted && <CheckCircle size={16} color="#059669" />}
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div style={{
+        padding: '1.5rem',
+        paddingTop: '4.5rem',
+        background: 'white'
+      }}>
+        <h3 style={{
+          fontFamily: "'Montserrat', sans-serif",
+          fontSize: '18px',
+          fontWeight: 700,
+          color: '#1F2937',
+          margin: '0 0 0.5rem 0',
+          letterSpacing: '-0.02em'
+        }}>
+          {moduleName}
+        </h3>
+
+        <p style={{
+          fontSize: '14px',
+          color: '#6B7280',
+          margin: '0 0 1.25rem 0',
+          lineHeight: 1.6
+        }}>
+          {description}
+        </p>
+
+        {/* Status badge with animation */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          flexWrap: 'wrap'
+        }}>
+          <div style={{
+            background: statusDisplay.bg,
+            padding: '0.5rem 1rem',
+            borderRadius: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            boxShadow: `0 2px 10px ${statusDisplay.glow}`,
+            transition: 'all 0.3s ease',
+            transform: isHovered ? 'scale(1.02)' : 'scale(1)'
+          }}>
+            <StatusIcon size={16} color={statusDisplay.color} />
+            <span style={{
+              fontWeight: 600,
+              color: statusDisplay.color,
+              fontSize: '13px'
+            }}>
+              {statusDisplay.text}
+            </span>
+          </div>
+
+          {submittedAt && (
+            <span style={{
+              fontSize: '12px',
+              color: '#9CA3AF'
+            }}>
+              {new Date(submittedAt).toLocaleDateString()}
+            </span>
+          )}
+        </div>
+
+        {/* Professor feedback */}
+        {professorNotes && (
+          <div style={{
+            marginTop: '1rem',
+            padding: '1rem',
+            background: 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)',
+            borderRadius: '12px',
+            border: '1px solid rgba(59, 130, 246, 0.2)'
+          }}>
+            <div style={{
+              fontSize: '11px',
+              fontWeight: 700,
+              color: '#1D4ED8',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              marginBottom: '0.5rem'
+            }}>
+              Professor Feedback
+            </div>
+            <p style={{
+              fontSize: '13px',
+              color: '#1E40AF',
+              margin: 0,
+              lineHeight: 1.5
+            }}>
+              {professorNotes}
+            </p>
+          </div>
+        )}
+
+        {/* Action buttons */}
+        <div style={{
+          marginTop: '1.25rem',
+          display: 'flex',
+          gap: '0.75rem',
+          flexWrap: 'wrap'
+        }}>
+          {hasSubmission && onViewSubmission && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewSubmission();
+              }}
+              style={{
+                fontSize: '13px',
+                fontWeight: 600,
+                color: accentColor,
+                background: 'white',
+                border: `2px solid ${accentColor}`,
+                borderRadius: '10px',
+                padding: '0.625rem 1.25rem',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              <Eye size={16} />
+              View Submission
+            </button>
+          )}
+
+          {(!hasSubmission || needsRevision) && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onStartClick();
+              }}
+              style={{
+                fontSize: '13px',
+                fontWeight: 600,
+                color: 'white',
+                background: needsRevision
+                  ? 'linear-gradient(135deg, #DC2626 0%, #EF4444 100%)'
+                  : `linear-gradient(135deg, ${gradientFrom} 0%, ${gradientTo} 100%)`,
+                border: 'none',
+                borderRadius: '10px',
+                padding: '0.625rem 1.25rem',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                boxShadow: isHovered
+                  ? needsRevision
+                    ? '0 8px 25px rgba(220, 38, 38, 0.4)'
+                    : `0 8px 25px ${statusDisplay.glow}`
+                  : 'none'
+              }}
+            >
+              {needsRevision ? 'Revise & Resubmit' : isPhase1 ? 'Start Orientation' : 'Start Module'}
+              <ArrowRight size={16} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Completion glow effect */}
+      {isCompleted && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          borderRadius: '20px',
+          border: '2px solid rgba(16, 185, 129, 0.5)',
+          pointerEvents: 'none',
+          animation: 'pulse-border 2s ease-in-out infinite'
+        }} />
+      )}
+    </div>
+  );
+};
+
+// Phase 2 locked state card
+const LockedPhase2Card = () => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <div
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{
+        textAlign: 'center',
+        padding: '3.5rem 2rem',
+        background: 'linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 50%, #BAE6FD 100%)',
+        borderRadius: '20px',
+        border: '2px solid rgba(14, 165, 233, 0.2)',
+        position: 'relative',
+        overflow: 'hidden',
+        transition: 'all 0.3s ease',
+        transform: isHovered ? 'scale(1.01)' : 'scale(1)',
+        boxShadow: isHovered
+          ? '0 20px 50px rgba(14, 165, 233, 0.15)'
+          : '0 10px 30px rgba(0, 0, 0, 0.05)'
+      }}
+    >
+      {/* Animated background pattern */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        opacity: 0.5,
+        backgroundImage: `
+          radial-gradient(circle at 20% 30%, rgba(14, 165, 233, 0.1) 0%, transparent 40%),
+          radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.1) 0%, transparent 40%)
+        `,
+        animation: 'float-bg 8s ease-in-out infinite'
+      }} />
+
+      <div style={{
+        position: 'relative',
+        zIndex: 1
+      }}>
+        <div style={{
+          width: '80px',
+          height: '80px',
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          margin: '0 auto 1.5rem',
+          boxShadow: '0 10px 30px rgba(14, 165, 233, 0.3)',
+          transition: 'all 0.3s ease',
+          transform: isHovered ? 'scale(1.05)' : 'scale(1)'
+        }}>
+          {isHovered ? (
+            <Unlock size={36} color="white" />
+          ) : (
+            <Lock size={36} color="white" />
+          )}
+        </div>
+
+        <h3 style={{
+          fontFamily: "'Montserrat', sans-serif",
+          fontSize: '24px',
+          fontWeight: 700,
+          color: '#0C4A6E',
+          margin: '0 0 0.75rem 0'
+        }}>
+          Phase 2 Awaits
+        </h3>
+
+        <p style={{
+          fontSize: '15px',
+          color: '#0369A1',
+          margin: '0 0 1.5rem 0',
+          maxWidth: '350px',
+          marginLeft: 'auto',
+          marginRight: 'auto',
+          lineHeight: 1.6
+        }}>
+          Complete your Orientation to unlock Phase 2 training modules
+        </p>
+
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          background: 'rgba(255,255,255,0.8)',
+          padding: '0.75rem 1.25rem',
+          borderRadius: '50px',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.05)'
+        }}>
+          <Clock size={18} color="#0284C7" />
+          <span style={{
+            fontSize: '13px',
+            fontWeight: 600,
+            color: '#0284C7'
+          }}>
+            4 modules ready to unlock
+          </span>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
@@ -89,8 +590,8 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
   }, [dashboardToken]);
 
   const initializeProgress = async (apprenticeEmail: string) => {
-    console.log('📄 initializeProgress called for:', apprenticeEmail);
-    
+    console.log('initializeProgress called for:', apprenticeEmail);
+
     try {
       // Check existing progress records
       const { data: existingProgress, error: progressError } = await supabase
@@ -103,25 +604,25 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
         return;
       }
 
-      console.log('📊 Found', existingProgress?.length || 0, 'existing progress records');
-      
-      const existingModulesMap = new Map<string, any>();
-      existingProgress?.forEach((r: any) => {
+      console.log('Found', existingProgress?.length || 0, 'existing progress records');
+
+      const existingModulesMap = new Map<string, ProgressItem>();
+      existingProgress?.forEach((r: ProgressItem) => {
         const key = `${r.phase}-${r.module}`;
         if (!existingModulesMap.has(key) || r.submissionId) {
           existingModulesMap.set(key, r);
         }
       });
 
-      console.log('📋 Unique modules already in Supabase:', Array.from(existingModulesMap.keys()));
+      console.log('Unique modules already in Supabase:', Array.from(existingModulesMap.keys()));
 
       const missingModules = CURRICULUM.filter(
         module => !existingModulesMap.has(`${module.phase}-${module.module}`)
       );
 
       if (missingModules.length > 0) {
-        console.log('➕ Creating', missingModules.length, 'missing progress records:', missingModules.map(m => m.module));
-        
+        console.log('Creating', missingModules.length, 'missing progress records:', missingModules.map(m => m.module));
+
         const records = missingModules.map(module => ({
           apprenticeEmail,
           phase: module.phase,
@@ -136,13 +637,13 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
         if (insertError) {
           console.error('Error inserting progress:', insertError);
         } else {
-          console.log('✅ Progress initialization complete');
+          console.log('Progress initialization complete');
         }
       } else {
-        console.log('✅ All progress records already exist for', apprenticeEmail, '- no action needed');
+        console.log('All progress records already exist for', apprenticeEmail, '- no action needed');
       }
     } catch (error) {
-      console.error('❌ Error initializing progress:', error);
+      console.error('Error initializing progress:', error);
     }
   };
 
@@ -179,26 +680,26 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
       if (progressError) {
         throw new Error('Failed to fetch progress data');
       }
-      
+
       const curriculumModuleKeys = new Set(
         CURRICULUM.map(m => `${m.phase}-${m.module}`)
       );
-      
+
       const progressMap = new Map<string, ProgressItem>();
-      
-      progressData?.forEach((r: any) => {
+
+      progressData?.forEach((r: ProgressItem) => {
         const item = r as ProgressItem;
         const key = `${item.phase}-${item.module}`;
-        
+
         if (curriculumModuleKeys.has(key)) {
-          if (!progressMap.has(key) || 
+          if (!progressMap.has(key) ||
               (item.Status === 'Completed' && progressMap.get(key)?.Status !== 'Completed') ||
               (item.Status === 'In Progress' && progressMap.get(key)?.Status === 'Not Started')) {
             progressMap.set(key, item);
           }
         }
       });
-      
+
       const progressItems = Array.from(progressMap.values());
       setProgress(progressItems);
 
@@ -206,7 +707,7 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
       const submissionIds = progressItems
         .filter(p => p.submissionId)
         .map(p => p.submissionId!);
-      
+
       if (submissionIds.length > 0) {
         const { data: submissionsData, error: submissionsError } = await supabase
           .from('submissions')
@@ -215,13 +716,13 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
 
         if (!submissionsError && submissionsData) {
           const submissionsMap: Record<string, SubmissionData> = {};
-          submissionsData.forEach((sub: any) => {
+          submissionsData.forEach((sub: SubmissionData) => {
             submissionsMap[sub.submissionId] = sub as SubmissionData;
           });
           setSubmissions(submissionsMap);
         }
       }
-      
+
       setLoading(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -241,7 +742,7 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
       if (error) {
         console.error('Failed to update pre-orientation check:', error);
       } else {
-        console.log('✅ Saved', field, '=', value);
+        console.log('Saved', field, '=', value);
       }
     } catch (error) {
       console.error('Error updating pre-orientation check:', error);
@@ -250,16 +751,16 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
 
   const toggleCheck = (key: keyof typeof preOrientationChecks) => {
     const newValue = !preOrientationChecks[key];
-    
+
     setPreOrientationChecks(prev => ({ ...prev, [key]: newValue }));
-    
+
     const fieldMap = {
       zoomDownloaded: 'preOrientationZoomDownloaded',
       gchatBrowser: 'preOrientationGchatBrowser',
       gchatPhone: 'preOrientationGchatPhone',
       hasGmail: 'hasGmail'
     };
-    
+
     updatePreOrientationCheck(fieldMap[key], newValue);
   };
 
@@ -278,13 +779,13 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
 
   const getModuleUrl = (phase: string, module: string): string => {
     if (!apprentice) return '/';
-    
+
     const params = `email=${encodeURIComponent(apprentice.email)}&professor=${encodeURIComponent(apprentice.professorEmail)}&name=${encodeURIComponent(apprentice.name)}&token=${dashboardToken}`;
-    
+
     if (phase === 'Phase 1' && module === 'Orientation') {
       return `/orientation?${params}`;
     }
-    
+
     if (phase === 'Phase 2') {
       const moduleMap: Record<string, string> = {
         'Computer Essentials': '/module1',
@@ -295,28 +796,8 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
       const basePath = moduleMap[module] || '/';
       return `${basePath}?${params}`;
     }
-    
+
     return '/';
-  };
-
-  const getStatusStyle = (status: string, submissionStatus?: string): { bg: string; color: string; icon: any; text: string } => {
-    // Using Oclef Design System colors
-    if (submissionStatus === 'Pending') {
-      return { bg: '#FEF3C7', color: '#F6AE00', icon: Clock, text: 'Under Review' };
-    }
-    if (submissionStatus === 'Needs Work') {
-      return { bg: '#FEE2E2', color: '#B9314F', icon: AlertCircle, text: 'Needs Revision' };
-    }
-    if (submissionStatus === 'Approved') {
-      return { bg: '#ECFDF5', color: '#00952E', icon: CheckCircle, text: 'Approved' };
-    }
-
-    switch (status) {
-      case 'Completed': return { bg: '#ECFDF5', color: '#00952E', icon: CheckCircle, text: 'Completed' };
-      case 'In Progress': return { bg: '#FEF3C7', color: '#F6AE00', icon: Clock, text: 'In Progress' };
-      case 'Not Started': return { bg: '#F3F4F6', color: 'rgba(0, 38, 66, 0.5)', icon: XCircle, text: 'Not Started' };
-      default: return { bg: '#F3F4F6', color: 'rgba(0, 38, 66, 0.5)', icon: Clock, text: 'Not Started' };
-    }
   };
 
   if (loading) {
@@ -338,8 +819,8 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
           {/* Premium Loading Spinner */}
           <div style={{
             position: 'relative',
-            width: '56px',
-            height: '56px'
+            width: '70px',
+            height: '70px'
           }}>
             <div style={{
               position: 'absolute',
@@ -358,29 +839,29 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
             }} />
             <div style={{
               position: 'absolute',
-              inset: '8px',
+              inset: '10px',
               borderRadius: '50%',
               background: 'linear-gradient(135deg, #004A69 0%, #0066A2 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(0,74,105,0.3)'
+              boxShadow: '0 4px 20px rgba(0,74,105,0.3)'
             }}>
-              <Award size={20} color="white" />
+              <Award size={24} color="white" />
             </div>
           </div>
           <div style={{ textAlign: 'center' }}>
             <p style={{
-              fontFamily: "'Lora', Georgia, serif",
+              fontFamily: "'Montserrat', sans-serif",
               fontSize: '18px',
               fontWeight: 600,
               color: '#002642',
-              margin: '0 0 0.25rem 0'
+              margin: '0 0 0.5rem 0'
             }}>
-              Loading Dashboard
+              Loading Your Journey
             </p>
             <p style={{
-              fontSize: '13px',
+              fontSize: '14px',
               color: 'rgba(0, 38, 66, 0.6)',
               margin: 0
             }}>
@@ -429,7 +910,7 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
             <XCircle size={32} color="#B9314F" />
           </div>
           <h2 style={{
-            fontFamily: "'Lora', Georgia, serif",
+            fontFamily: "'Montserrat', sans-serif",
             fontSize: '22px',
             fontWeight: 600,
             color: '#B9314F',
@@ -452,7 +933,7 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
 
   const overallProgress = calculateOverallProgress();
   const orientationStatus = getOrientationStatus();
-  
+
   const phase2Progress = progress
     .filter(p => !(p.phase === 'Phase 1' && p.module === 'Orientation'))
     .sort((a, b) => {
@@ -461,8 +942,8 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
       return numA.localeCompare(numB);
     });
   const hasPhase2Progress = phase2Progress.length > 0;
-  const preOrientationComplete = preOrientationChecks.zoomDownloaded && 
-    preOrientationChecks.gchatBrowser && 
+  const preOrientationComplete = preOrientationChecks.zoomDownloaded &&
+    preOrientationChecks.gchatBrowser &&
     preOrientationChecks.gchatPhone;
 
   return (
@@ -500,13 +981,13 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
             </div>
             <div style={{ flex: 1, minWidth: '200px' }}>
               <h1 style={{
-                fontFamily: "'Lora', Georgia, serif",
+                fontFamily: "'Montserrat', sans-serif",
                 fontSize: '28px',
                 fontWeight: 700,
                 color: '#002642',
                 margin: '0 0 0.5rem 0'
               }}>
-                {apprentice.name}'s Training Dashboard
+                {apprentice.name}'s Training Journey
               </h1>
               <p style={{ color: 'rgba(0, 38, 66, 0.6)', fontSize: '15px', margin: 0 }}>
                 Professor: {apprentice.professorEmail}
@@ -529,7 +1010,7 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
               gap: '1rem'
             }}>
               <span style={{
-                fontFamily: "'Lora', Georgia, serif",
+                fontFamily: "'Montserrat', sans-serif",
                 fontSize: '17px',
                 fontWeight: 600,
                 color: '#002642'
@@ -603,7 +1084,7 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
               </div>
               <div>
                 <h2 style={{
-                  fontFamily: "'Lora', Georgia, serif",
+                  fontFamily: "'Montserrat', sans-serif",
                   fontSize: '22px',
                   fontWeight: 700,
                   color: '#002642',
@@ -714,7 +1195,7 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                   }}>
                     <Download size={20} color="#004A69" />
                     <h3 style={{
-                      fontFamily: "'Lora', Georgia, serif",
+                      fontFamily: "'Montserrat', sans-serif",
                       fontSize: '16px',
                       fontWeight: 600,
                       color: '#002642',
@@ -796,10 +1277,10 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                   margin: 0,
                   lineHeight: '1.5'
                 }}>
-                  📧 <strong>Note:</strong> Google Chat requires a Gmail account. If you don't have one, please{' '}
-                  <a 
-                    href="https://accounts.google.com/signup" 
-                    target="_blank" 
+                  <strong>Note:</strong> Google Chat requires a Gmail account. If you don't have one, please{' '}
+                  <a
+                    href="https://accounts.google.com/signup"
+                    target="_blank"
                     rel="noopener noreferrer"
                     style={{ color: '#D97706', fontWeight: 600, textDecoration: 'underline' }}
                   >
@@ -853,7 +1334,7 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                   }}>
                     <MessageSquare size={20} color="#004A69" />
                     <h3 style={{
-                      fontFamily: "'Lora', Georgia, serif",
+                      fontFamily: "'Montserrat', sans-serif",
                       fontSize: '16px',
                       fontWeight: 600,
                       color: '#002642',
@@ -939,7 +1420,7 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
                   }}>
                     <Smartphone size={20} color="#004A69" />
                     <h3 style={{
-                      fontFamily: "'Lora', Georgia, serif",
+                      fontFamily: "'Montserrat', sans-serif",
                       fontSize: '16px',
                       fontWeight: 600,
                       color: '#002642',
@@ -993,385 +1474,110 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
           marginBottom: '2rem'
         }}>
           <h2 style={{
-            fontFamily: "'Lora', Georgia, serif",
-            fontSize: '22px',
+            fontFamily: "'Montserrat', sans-serif",
+            fontSize: '24px',
             fontWeight: 700,
             color: '#002642',
-            margin: '0 0 2rem 0'
+            margin: '0 0 2rem 0',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem'
           }}>
+            <Star size={24} color="#eb6a18" fill="#eb6a18" />
             Training Modules
           </h2>
 
+          {/* Phase 1 */}
           <div style={{
             fontSize: '14px',
             fontWeight: 700,
             color: '#eb6a18',
             textTransform: 'uppercase',
-            letterSpacing: '1px',
+            letterSpacing: '1.5px',
             marginBottom: '1rem',
             display: 'flex',
             alignItems: 'center',
             gap: '0.75rem'
           }}>
             <div style={{
-              width: '32px',
+              width: '40px',
               height: '3px',
               background: 'linear-gradient(90deg, #eb6a18 0%, #ff8c3d 100%)',
               borderRadius: '2px'
-            }}></div>
-            Phase 1
+            }} />
+            Phase 1 - Foundation
           </div>
 
-          <div style={{
-            background: 'linear-gradient(135deg, #FFF6ED 0%, #FFE0BA 100%)',
-            border: '2px solid rgba(235,106,24,0.25)',
-            borderRadius: '14px',
-            padding: '1.75rem',
-            marginBottom: '2.5rem',
-            cursor: 'pointer',
-            transition: 'all 0.3s ease'
-          }}
-          onClick={() => {
-            window.location.href = getModuleUrl('Phase 1', 'Orientation');
-          }}
-          >
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '1.5rem',
-              flexWrap: 'wrap'
-            }}>
-              <div style={{ flex: 1, minWidth: '280px' }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '1rem',
-                  marginBottom: '0.5rem'
-                }}>
-                  <div style={{
-                    width: '44px',
-                    height: '44px',
-                    borderRadius: '10px',
-                    background: 'linear-gradient(135deg, #eb6a18 0%, #ff8c3d 100%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 4px 10px rgba(235,106,24,0.3)',
-                    flexShrink: 0
-                  }}>
-                    <Play size={22} color="white" />
-                  </div>
-                  <div>
-                    <h3 style={{
-                      fontFamily: "'Lora', Georgia, serif",
-                      fontSize: '18px',
-                      fontWeight: 600,
-                      color: '#002642',
-                      margin: '0 0 0.25rem 0'
-                    }}>
-                      1.1 - Orientation
-                    </h3>
-                    <p style={{
-                      fontSize: '14px',
-                      color: 'rgba(0, 38, 66, 0.6)',
-                      margin: 0
-                    }}>
-                      {MODULE_DESCRIPTIONS['Orientation']}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              {orientationStatus === 'Completed' ? (
-                <div style={{
-                  background: '#ECFDF5',
-                  padding: '0.7rem 1.3rem',
-                  borderRadius: '10px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  boxShadow: '0 2px 6px rgba(0,149,46,0.15)',
-                  flexShrink: 0
-                }}>
-                  <CheckCircle size={18} color="#00952E" />
-                  <span style={{
-                    fontWeight: 600,
-                    color: '#00952E',
-                    fontSize: '14px'
-                  }}>
-                    Completed
-                  </span>
-                </div>
-              ) : (
-                <div style={{
-                  background: 'linear-gradient(135deg, #eb6a18 0%, #ff8c3d 100%)',
-                  padding: '0.7rem 1.3rem',
-                  borderRadius: '10px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  boxShadow: '0 4px 10px rgba(235,106,24,0.3)',
-                  color: 'white',
-                  flexShrink: 0
-                }}>
-                  <ArrowRight size={18} />
-                  <span style={{
-                    fontWeight: 600,
-                    fontSize: '14px'
-                  }}>
-                    Start Now
-                  </span>
-                </div>
-              )}
-            </div>
+          <div style={{ marginBottom: '2.5rem' }}>
+            <PremiumModuleCard
+              moduleNumber="1.1"
+              moduleName="Orientation"
+              description={MODULE_DESCRIPTIONS['Orientation']}
+              status={orientationStatus}
+              onStartClick={() => {
+                window.location.href = getModuleUrl('Phase 1', 'Orientation');
+              }}
+              hasSubmission={false}
+              isPhase1={true}
+              gradientFrom="#eb6a18"
+              gradientTo="#ff8c3d"
+              accentColor="#eb6a18"
+            />
           </div>
 
+          {/* Phase 2 */}
           <div style={{
             fontSize: '14px',
             fontWeight: 700,
             color: '#0066A2',
             textTransform: 'uppercase',
-            letterSpacing: '1px',
+            letterSpacing: '1.5px',
             marginBottom: '1rem',
             display: 'flex',
             alignItems: 'center',
             gap: '0.75rem'
           }}>
             <div style={{
-              width: '32px',
+              width: '40px',
               height: '3px',
               background: 'linear-gradient(90deg, #0066A2 0%, #004A69 100%)',
               borderRadius: '2px'
-            }}></div>
-            Phase 2
+            }} />
+            Phase 2 - Core Skills
           </div>
 
           {!hasPhase2Progress ? (
-            <div style={{
-              textAlign: 'center',
-              padding: '3.5rem 2rem',
-              background: 'linear-gradient(135deg, #F0F9FF 0%, #C4E5F4 100%)',
-              borderRadius: '14px',
-              border: '2px solid rgba(0, 74, 105, 0.25)'
-            }}>
-              <div style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #004A69 0%, #0066A2 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 1.25rem',
-                boxShadow: '0 6px 20px rgba(0, 74, 105, 0.25)'
-              }}>
-                <Clock size={32} color="white" />
-              </div>
-              <h3 style={{
-                fontFamily: "'Lora', Georgia, serif",
-                fontSize: '22px',
-                fontWeight: 700,
-                color: '#002642',
-                margin: '0 0 0.75rem 0'
-              }}>
-                Ready for Phase 2?
-              </h3>
-              <p style={{
-                color: '#004A69',
-                marginBottom: '1.75rem',
-                fontSize: '15px',
-                fontWeight: 500
-              }}>
-                Complete Phase 1 Orientation to unlock Phase 2 modules
-              </p>
-            </div>
+            <LockedPhase2Card />
           ) : (
-            <div style={{ display: 'grid', gap: '1.25rem' }}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
+              gap: '1.5rem'
+            }}>
               {phase2Progress.map((item, index) => {
                 const submission = item.submissionId ? submissions[item.submissionId] : null;
-                
-                let displayStyle: { bg: string; color: string; icon: any; text: string };
-                
-                if (submission) {
-                  displayStyle = getStatusStyle(item.Status, submission.status);
-                } else if (item.Status === 'Completed' && item.submissionId) {
-                  displayStyle = { bg: '#FEF3C7', color: '#92400E', icon: Clock, text: 'Under Review' };
-                } else {
-                  displayStyle = getStatusStyle(item.Status);
-                }
-                
-                const StatusIcon = displayStyle.icon;
-                const ModuleIcon = MODULE_ICONS[item.module] || BookOpen;
-                
+
                 return (
-                  <div key={index} style={{
-                    border: `2px solid ${submission?.status === 'Needs Work' ? '#FCA5A5' : '#E5E7EB'}`,
-                    borderRadius: '14px',
-                    overflow: 'hidden',
-                    transition: 'all 0.3s ease',
-                    background: submission?.status === 'Needs Work' ? '#FEF2F2' : 'white',
-                    boxShadow: submission?.status === 'Needs Work' ? '0 2px 12px rgba(220,38,38,0.1)' : 'none'
-                  }}>
-                    <div style={{
-                      padding: '1.5rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '1rem',
-                      flexWrap: 'wrap'
-                    }}>
-                      <div style={{ flex: 1, minWidth: '280px' }}>
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '1rem',
-                          marginBottom: '0.5rem'
-                        }}>
-                          <div style={{
-                            width: '40px',
-                            height: '40px',
-                            borderRadius: '8px',
-                            background: 'linear-gradient(135deg, #0066A2 0%, #004A69 100%)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0
-                          }}>
-                            <ModuleIcon size={20} color="white" />
-                          </div>
-                          <div>
-                            <div style={{
-                              fontFamily: "'Lora', Georgia, serif",
-                              fontSize: '17px',
-                              fontWeight: 600,
-                              color: '#002642',
-                              marginBottom: '0.25rem'
-                            }}>
-                              {MODULE_NUMBERS[item.module] || ''} - {item.module}
-                            </div>
-                            <div style={{ fontSize: '13px', color: 'rgba(0, 38, 66, 0.6)' }}>
-                              {MODULE_DESCRIPTIONS[item.module] || 'Complete this training module'}
-                            </div>
-                          </div>
-                        </div>
-                        {submission && (
-                          <div style={{ fontSize: '13px', color: '#9CA3AF', marginLeft: '52px' }}>
-                            Submitted: {new Date(submission.submittedAt).toLocaleDateString()}
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                        <div style={{
-                          background: displayStyle.bg,
-                          padding: '0.65rem 1.1rem',
-                          borderRadius: '10px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.4rem',
-                          flexShrink: 0
-                        }}>
-                          <StatusIcon size={16} color={displayStyle.color} />
-                          <span style={{
-                            fontWeight: 600,
-                            color: displayStyle.color,
-                            fontSize: '13px'
-                          }}>
-                            {displayStyle.text}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {submission?.professorNotes && (
-                      <div style={{
-                        background: 'linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%)',
-                        padding: '1.25rem 1.5rem',
-                        borderTop: '1px solid rgba(0,102,162,0.1)'
-                      }}>
-                        <div style={{
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          color: '#0369A1',
-                          marginBottom: '0.65rem',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px'
-                        }}>
-                          Professor Feedback
-                        </div>
-                        <p style={{
-                          color: '#0C4A6E',
-                          fontSize: '14px',
-                          lineHeight: '1.6',
-                          margin: 0,
-                          whiteSpace: 'pre-wrap'
-                        }}>
-                          {submission.professorNotes}
-                        </p>
-                      </div>
-                    )}
-
-                    <div style={{
-                      padding: '1rem 1.5rem',
-                      background: '#F9FAFB',
-                      display: 'flex',
-                      gap: '0.75rem',
-                      justifyContent: 'flex-end',
-                      flexWrap: 'wrap'
-                    }}>
-                      {item.submissionId && (
-                        <button
-                          onClick={() => window.location.href = `/review/${item.submissionId}`}
-                          style={{
-                            fontSize: '13px',
-                            fontWeight: 600,
-                            color: '#0066A2',
-                            background: 'white',
-                            border: '2px solid #0066A2',
-                            borderRadius: '8px',
-                            padding: '0.5rem 1.1rem',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s ease',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.4rem'
-                          }}
-                        >
-                          <Eye size={14} />
-                          View Submission
-                        </button>
-                      )}
-                      
-                      {(!item.submissionId || submission?.status === 'Needs Work') && (
-                        <button
-                          onClick={() => {
-                            const url = getModuleUrl(item.phase, item.module);
-                            window.location.href = url;
-                          }}
-                          style={{
-                            fontSize: '13px',
-                            fontWeight: 600,
-                            color: 'white',
-                            background: submission?.status === 'Needs Work' 
-                              ? 'linear-gradient(135deg, #DC2626 0%, #EF4444 100%)'
-                              : 'linear-gradient(135deg, #0066A2 0%, #004A69 100%)',
-                            border: 'none',
-                            borderRadius: '8px',
-                            padding: '0.5rem 1.1rem',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s ease',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.4rem'
-                          }}
-                        >
-                          {submission?.status === 'Needs Work' ? 'Revise & Resubmit' : 'Start Module'}
-                          <ArrowRight size={14} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                  <PremiumModuleCard
+                    key={index}
+                    moduleNumber={MODULE_NUMBERS[item.module] || ''}
+                    moduleName={item.module}
+                    description={MODULE_DESCRIPTIONS[item.module] || 'Complete this training module'}
+                    status={item.Status}
+                    submissionStatus={submission?.status}
+                    submittedAt={submission?.submittedAt}
+                    professorNotes={submission?.professorNotes}
+                    onStartClick={() => {
+                      window.location.href = getModuleUrl(item.phase, item.module);
+                    }}
+                    onViewSubmission={item.submissionId ? () => {
+                      window.location.href = `/review/${item.submissionId}`;
+                    } : undefined}
+                    hasSubmission={!!item.submissionId}
+                    gradientFrom="#0066A2"
+                    gradientTo="#004A69"
+                    accentColor="#0066A2"
+                  />
                 );
               })}
             </div>
@@ -1386,7 +1592,7 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
           boxShadow: '0 4px 16px rgba(0, 38, 66, 0.06)'
         }}>
           <h2 style={{
-            fontFamily: "'Lora', Georgia, serif",
+            fontFamily: "'Montserrat', sans-serif",
             fontSize: '22px',
             fontWeight: 700,
             color: '#002642',
@@ -1451,6 +1657,26 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
           </div>
         </div>
       </div>
+
+      {/* CSS animations */}
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          50% { transform: translateY(-8px) rotate(5deg); }
+        }
+        @keyframes float-bg {
+          0%, 100% { transform: scale(1); opacity: 0.5; }
+          50% { transform: scale(1.1); opacity: 0.7; }
+        }
+        @keyframes pulse-border {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+          50% { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2); }
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };
@@ -1505,7 +1731,7 @@ const ResourceCard = ({ href, icon, title, subtitle, description, color }: {
         </div>
         <div style={{ flex: 1 }}>
           <h3 style={{
-            fontFamily: "'Lora', Georgia, serif",
+            fontFamily: "'Montserrat', sans-serif",
             fontSize: '15px',
             fontWeight: 600,
             color: '#002642',
