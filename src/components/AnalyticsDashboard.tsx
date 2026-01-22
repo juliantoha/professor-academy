@@ -245,66 +245,6 @@ const DonutChart = ({
   );
 };
 
-// Mini bar chart
-const MiniBarChart = ({
-  data,
-  height = 80,
-  isDarkMode
-}: {
-  data: Array<{ label: string; value: number; color?: string }>;
-  height?: number;
-  isDarkMode?: boolean;
-}) => {
-  const maxValue = Math.max(...data.map(d => d.value), 1);
-
-  return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'flex-end',
-      gap: '8px',
-      height,
-      padding: '0 4px'
-    }}>
-      {data.map((item, i) => (
-        <div key={i} style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '4px'
-        }}>
-          <div style={{
-            width: '100%',
-            background: isDarkMode ? 'rgba(255,255,255,0.1)' : '#E2E8F0',
-            borderRadius: '4px 4px 0 0',
-            position: 'relative',
-            height: height - 20
-          }}>
-            <div style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: `${(item.value / maxValue) * 100}%`,
-              background: item.color || 'linear-gradient(180deg, #F97316 0%, #EA580C 100%)',
-              borderRadius: '4px 4px 0 0',
-              transition: 'height 0.5s ease',
-              animation: `barGrow 0.6s ease ${i * 0.1}s both`
-            }} />
-          </div>
-          <span style={{
-            fontSize: '10px',
-            color: isDarkMode ? '#94A3B8' : '#64748B',
-            fontWeight: 500
-          }}>
-            {item.label}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-};
-
 // Activity heatmap (7x4 grid representing last 4 weeks)
 const ActivityHeatmap = ({
   activityData,
@@ -433,14 +373,6 @@ const AnalyticsDashboard = ({ data, isDarkMode = false }: AnalyticsDashboardProp
     { value: analytics.inProgress, color: '#3B82F6', label: 'In Progress' }
   ];
 
-  const moduleChartData = Object.entries(analytics.moduleStats)
-    .slice(0, 4)
-    .map(([mod, stats]) => ({
-      label: `M${mod}`,
-      value: stats.completed,
-      color: `linear-gradient(180deg, #F97316 0%, #EA580C 100%)`
-    }));
-
   return (
     <div style={{ marginBottom: '2rem' }}>
       {/* Section Header */}
@@ -516,8 +448,7 @@ const AnalyticsDashboard = ({ data, isDarkMode = false }: AnalyticsDashboardProp
           icon={Award}
           label="Graduated"
           value={analytics.graduated}
-          trend={8}
-          trendLabel="this quarter"
+          trendLabel="all time"
           color="#8B5CF6"
           isDarkMode={isDarkMode}
         />
@@ -580,46 +511,6 @@ const AnalyticsDashboard = ({ data, isDarkMode = false }: AnalyticsDashboardProp
           </div>
         </div>
 
-        {/* Module Performance */}
-        <div style={{
-          background: isDarkMode ? 'rgba(255,255,255,0.05)' : 'white',
-          borderRadius: '16px',
-          padding: '1.5rem',
-          boxShadow: isDarkMode ? 'none' : '0 4px 20px rgba(0,0,0,0.08)',
-          border: isDarkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.05)'
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            marginBottom: '1rem'
-          }}>
-            <BarChart3 size={16} color={isDarkMode ? '#94A3B8' : '#64748B'} />
-            <span style={{
-              fontSize: '14px',
-              fontWeight: 600,
-              color: isDarkMode ? '#F1F5F9' : '#1E293B'
-            }}>
-              Module Completions
-            </span>
-          </div>
-
-          {moduleChartData.length > 0 ? (
-            <MiniBarChart data={moduleChartData} isDarkMode={isDarkMode} />
-          ) : (
-            <div style={{
-              height: 80,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: isDarkMode ? '#64748B' : '#94A3B8',
-              fontSize: '13px'
-            }}>
-              No module data yet
-            </div>
-          )}
-        </div>
-
         {/* Activity Heatmap */}
         <div style={{
           background: isDarkMode ? 'rgba(255,255,255,0.05)' : 'white',
@@ -677,12 +568,6 @@ const AnalyticsDashboard = ({ data, isDarkMode = false }: AnalyticsDashboardProp
         @keyframes donutGrow {
           from {
             stroke-dasharray: 0 1000;
-          }
-        }
-
-        @keyframes barGrow {
-          from {
-            height: 0;
           }
         }
       `}</style>
