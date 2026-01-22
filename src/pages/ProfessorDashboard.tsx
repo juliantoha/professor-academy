@@ -668,29 +668,31 @@ const ProfessorDashboard = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            flexWrap: 'wrap',
             gap: '1rem'
           }}>
-            <div>
+            <div style={{ flex: '1 1 auto', minWidth: 0 }}>
               <h1 style={{
                 fontFamily: "'Lora', Georgia, serif",
-                fontSize: '28px',
+                fontSize: 'clamp(20px, 5vw, 28px)',
                 fontWeight: 700,
                 color: 'white',
-                margin: '0 0 0.5rem 0',
+                margin: '0 0 0.25rem 0',
                 letterSpacing: '-0.5px'
               }}>
                 Professor Dashboard
               </h1>
               <p style={{
-                fontSize: '16px',
+                fontSize: 'clamp(12px, 3vw, 16px)',
                 color: 'rgba(255,255,255,0.8)',
-                margin: 0
+                margin: 0,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
               }}>
                 Welcome back, {displayName}
               </p>
             </div>
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexShrink: 0 }}>
               {/* Profile Dropdown */}
               <div style={{ position: 'relative' }}>
                 <button
@@ -741,7 +743,7 @@ const ProfessorDashboard = () => {
                       </span>
                     )}
                   </div>
-                  <span>{displayName}</span>
+                  <span className="profile-name-text">{displayName}</span>
                   <ChevronDown size={16} style={{
                     transform: showProfileMenu ? 'rotate(180deg)' : 'rotate(0deg)',
                     transition: 'transform 0.2s ease'
@@ -2942,6 +2944,11 @@ const ProfessorDashboard = () => {
         @keyframes sparkle-empty {
           0%, 100% { transform: scale(1); opacity: 1; }
           50% { transform: scale(1.3); opacity: 0.6; }
+        }
+        @media (max-width: 480px) {
+          .profile-name-text {
+            display: none !important;
+          }
         }
       `}</style>
     </div>
