@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import { apprenticeCache } from '../lib/apprenticeCache';
 import { LogOut, Users, Clock, CheckCircle, ExternalLink, Settings, ChevronDown, Plus, X, UserPlus, Copy, Check, Shield, ClipboardList, GraduationCap, RotateCcw, Music2, Theater, Piano, PenLine, BookOpen, Target, Search, UserMinus, ChevronUp, Moon, Sun, Star } from 'lucide-react';
 import MasqueradeBanner from '../components/MasqueradeBanner';
 import DarkModeToggle from '../components/DarkModeToggle';
@@ -1699,6 +1700,7 @@ const ProfessorDashboard = () => {
                           gap: '0.5rem'
                         }}
                         onMouseEnter={(e) => {
+                          apprenticeCache.prefetch(apprentice.dashboardToken);
                           e.currentTarget.style.background = 'linear-gradient(135deg, #471657 0%, #6B2C7B 100%)';
                           e.currentTarget.style.color = 'white';
                           e.currentTarget.style.borderColor = '#471657';
@@ -1968,6 +1970,7 @@ const ProfessorDashboard = () => {
                         </a>
                         <a
                           href={`/skills/${apprentice.dashboardToken}`}
+                          onMouseEnter={() => apprenticeCache.prefetch(apprentice.dashboardToken)}
                           style={{
                             flex: 1,
                             display: 'flex',
@@ -2246,6 +2249,7 @@ const ProfessorDashboard = () => {
                             gap: '0.5rem'
                           }}
                           onMouseEnter={(e) => {
+                            apprenticeCache.prefetch(apprentice.dashboardToken);
                             e.currentTarget.style.background = '#F3F4F6';
                             e.currentTarget.style.color = '#374151';
                           }}

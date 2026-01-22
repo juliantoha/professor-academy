@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { apprenticeCache } from '../lib/apprenticeCache';
 import { useAuth } from '../contexts/AuthContext';
 import { ArrowLeft, CheckCircle, BookOpen, Users, Music, Save, Star, Sparkles, Trophy, Zap, MousePointerClick, ChevronDown, Settings, LogOut } from 'lucide-react';
 
@@ -505,6 +506,21 @@ const SkillsChecklist = () => {
   }, []);
 
   const fetchApprentice = useCallback(async () => {
+    if (!dashboardToken) return;
+
+    // Check cache first for instant load
+    const cached = apprenticeCache.get(dashboardToken);
+    if (cached) {
+      console.log('[Skills] Using cached data - instant load');
+      setApprentice(cached);
+      if (cached.skillsChecklist) {
+        setCheckedSkills(cached.skillsChecklist);
+      }
+      setLoading(false);
+      return;
+    }
+
+    // Cache miss - fetch from database
     try {
       setLoading(true);
       const { data, error: fetchError } = await supabase
@@ -515,6 +531,8 @@ const SkillsChecklist = () => {
 
       if (fetchError) throw fetchError;
 
+      // Update cache
+      apprenticeCache.set(dashboardToken, data);
       setApprentice(data);
 
       if (data?.skillsChecklist) {
@@ -556,7 +574,7 @@ const SkillsChecklist = () => {
   };
 
   const handleSave = async () => {
-    if (!apprentice) return;
+    if (!apprentice || !dashboardToken) return;
 
     setSaving(true);
     setSaveSuccess(false);
@@ -568,6 +586,9 @@ const SkillsChecklist = () => {
         .eq('dashboardToken', dashboardToken);
 
       if (updateError) throw updateError;
+
+      // Update cache with new skills data
+      apprenticeCache.update(dashboardToken, { skillsChecklist: checkedSkills });
 
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
