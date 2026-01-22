@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { CheckCircle, Clock, XCircle, Award, ArrowRight, Eye, AlertCircle, Play, BookOpen, Video, FileText, CheckSquare, Download, MessageSquare, Smartphone, Music2, Theater, Piano, PenLine, Target, Sparkles, Star, Lock, Unlock } from 'lucide-react';
+import { CheckCircle, Clock, XCircle, Award, ArrowRight, Eye, AlertCircle, Play, BookOpen, Video, FileText, CheckSquare, Download, MessageSquare, Smartphone, Music2, Theater, Piano, PenLine, Target, Sparkles, Star, Lock, Unlock, MapPin, Flag, Rocket } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface ApprenticeData {
@@ -564,6 +564,307 @@ const LockedPhase2Card = () => {
   );
 };
 
+// Animated Journey Timeline Component
+const JourneyTimeline = ({
+  progress,
+  submissions
+}: {
+  progress: ProgressItem[];
+  submissions: Record<string, SubmissionData>;
+}) => {
+  const [hoveredStep, setHoveredStep] = useState<number | null>(null);
+
+  const journeySteps = CURRICULUM.map((item, index) => {
+    const progressItem = progress.find(p => p.phase === item.phase && p.module === item.module);
+    const submission = progressItem?.submissionId ? submissions[progressItem.submissionId] : null;
+
+    let status: 'completed' | 'current' | 'upcoming' = 'upcoming';
+    if (submission?.status === 'Approved' || (progressItem?.Status === 'Completed' && !progressItem?.submissionId)) {
+      status = 'completed';
+    } else if (progressItem?.Status === 'In Progress' || progressItem?.Status === 'Completed') {
+      status = 'current';
+    }
+
+    return {
+      number: item.number,
+      name: item.module,
+      phase: item.phase,
+      status,
+      icon: MODULE_ICONS[item.module] || BookOpen
+    };
+  });
+
+  const completedCount = journeySteps.filter(s => s.status === 'completed').length;
+  const progressPercent = (completedCount / journeySteps.length) * 100;
+
+  return (
+    <div style={{
+      background: 'linear-gradient(135deg, #003250 0%, #004A69 50%, #0066A2 100%)',
+      borderRadius: '20px',
+      padding: '2rem',
+      marginBottom: '2rem',
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {/* Decorative background */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        opacity: 0.1,
+        backgroundImage: 'radial-gradient(circle at 20% 50%, white 1px, transparent 1px)',
+        backgroundSize: '30px 30px'
+      }} />
+
+      {/* Title */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: '2rem',
+        flexWrap: 'wrap',
+        gap: '1rem',
+        position: 'relative',
+        zIndex: 1
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <Rocket size={24} color="#FBBF24" />
+          <h3 style={{
+            fontFamily: "'Montserrat', sans-serif",
+            fontSize: '18px',
+            fontWeight: 700,
+            color: 'white',
+            margin: 0
+          }}>
+            Your Learning Journey
+          </h3>
+        </div>
+        <div style={{
+          background: 'rgba(255,255,255,0.15)',
+          backdropFilter: 'blur(10px)',
+          padding: '0.5rem 1rem',
+          borderRadius: '50px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem'
+        }}>
+          <Flag size={16} color="#10B981" />
+          <span style={{
+            fontSize: '13px',
+            fontWeight: 600,
+            color: 'white'
+          }}>
+            {completedCount} of {journeySteps.length} milestones
+          </span>
+        </div>
+      </div>
+
+      {/* Timeline */}
+      <div style={{
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 1rem'
+      }}>
+        {/* Progress line background */}
+        <div style={{
+          position: 'absolute',
+          left: '2.5rem',
+          right: '2.5rem',
+          top: '50%',
+          height: '4px',
+          background: 'rgba(255,255,255,0.15)',
+          borderRadius: '2px',
+          transform: 'translateY(-50%)'
+        }} />
+
+        {/* Animated progress line */}
+        <div style={{
+          position: 'absolute',
+          left: '2.5rem',
+          top: '50%',
+          height: '4px',
+          width: `calc(${progressPercent}% * 0.85)`,
+          background: 'linear-gradient(90deg, #10B981 0%, #34D399 50%, #6EE7B7 100%)',
+          borderRadius: '2px',
+          transform: 'translateY(-50%)',
+          transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)',
+          boxShadow: '0 0 20px rgba(16, 185, 129, 0.5)'
+        }} />
+
+        {/* Steps */}
+        {journeySteps.map((step, index) => {
+          const StepIcon = step.icon;
+          const isHovered = hoveredStep === index;
+          const isCompleted = step.status === 'completed';
+          const isCurrent = step.status === 'current';
+
+          return (
+            <div
+              key={index}
+              onMouseEnter={() => setHoveredStep(index)}
+              onMouseLeave={() => setHoveredStep(null)}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                position: 'relative',
+                zIndex: 10,
+                cursor: 'pointer'
+              }}
+            >
+              {/* Tooltip */}
+              {isHovered && (
+                <div style={{
+                  position: 'absolute',
+                  bottom: '100%',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  marginBottom: '0.75rem',
+                  background: 'white',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '12px',
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+                  whiteSpace: 'nowrap',
+                  animation: 'tooltip-appear 0.2s ease-out',
+                  zIndex: 100
+                }}>
+                  <div style={{
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    color: '#002642',
+                    marginBottom: '0.25rem'
+                  }}>
+                    {step.number} - {step.name}
+                  </div>
+                  <div style={{
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    color: isCompleted ? '#059669' : isCurrent ? '#D97706' : '#6B7280',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem'
+                  }}>
+                    {isCompleted && <><CheckCircle size={12} /> Completed</>}
+                    {isCurrent && <><Clock size={12} /> In Progress</>}
+                    {!isCompleted && !isCurrent && <><MapPin size={12} /> Upcoming</>}
+                  </div>
+                  {/* Tooltip arrow */}
+                  <div style={{
+                    position: 'absolute',
+                    bottom: '-6px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: 0,
+                    height: 0,
+                    borderLeft: '6px solid transparent',
+                    borderRight: '6px solid transparent',
+                    borderTop: '6px solid white'
+                  }} />
+                </div>
+              )}
+
+              {/* Step circle */}
+              <div style={{
+                width: isHovered ? '60px' : '50px',
+                height: isHovered ? '60px' : '50px',
+                borderRadius: '50%',
+                background: isCompleted
+                  ? 'linear-gradient(135deg, #059669 0%, #10B981 100%)'
+                  : isCurrent
+                    ? 'linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%)'
+                    : 'rgba(255,255,255,0.1)',
+                border: isCompleted || isCurrent
+                  ? '3px solid rgba(255,255,255,0.9)'
+                  : '3px solid rgba(255,255,255,0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: isCompleted
+                  ? '0 0 25px rgba(16, 185, 129, 0.5)'
+                  : isCurrent
+                    ? '0 0 25px rgba(251, 191, 36, 0.5)'
+                    : 'none',
+                transform: isHovered ? 'scale(1.1)' : 'scale(1)'
+              }}>
+                {isCompleted ? (
+                  <CheckCircle size={24} color="white" strokeWidth={2.5} />
+                ) : isCurrent ? (
+                  <div style={{
+                    width: '12px',
+                    height: '12px',
+                    borderRadius: '50%',
+                    background: 'white',
+                    animation: 'pulse-dot 1.5s ease-in-out infinite'
+                  }} />
+                ) : (
+                  <StepIcon size={20} color="rgba(255,255,255,0.5)" />
+                )}
+              </div>
+
+              {/* Step label (mobile-hidden) */}
+              <span style={{
+                marginTop: '0.75rem',
+                fontSize: '11px',
+                fontWeight: 600,
+                color: isCompleted ? '#10B981' : isCurrent ? '#FBBF24' : 'rgba(255,255,255,0.5)',
+                textAlign: 'center',
+                maxWidth: '80px',
+                display: window.innerWidth > 768 ? 'block' : 'none'
+              }}>
+                {step.number}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Journey status message */}
+      <div style={{
+        marginTop: '2rem',
+        textAlign: 'center',
+        position: 'relative',
+        zIndex: 1
+      }}>
+        {completedCount === journeySteps.length ? (
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(52, 211, 153, 0.2) 100%)',
+            padding: '0.75rem 1.5rem',
+            borderRadius: '50px',
+            border: '1px solid rgba(16, 185, 129, 0.3)'
+          }}>
+            <Sparkles size={18} color="#34D399" />
+            <span style={{
+              fontSize: '14px',
+              fontWeight: 600,
+              color: '#34D399'
+            }}>
+              Congratulations! Journey Complete!
+            </span>
+          </div>
+        ) : (
+          <div style={{
+            fontSize: '13px',
+            color: 'rgba(255,255,255,0.7)'
+          }}>
+            {completedCount === 0
+              ? 'Start your journey by completing the Orientation module'
+              : `${journeySteps.length - completedCount} milestone${journeySteps.length - completedCount > 1 ? 's' : ''} remaining`
+            }
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
   const [apprentice, setApprentice] = useState<ApprenticeData | null>(null);
   const [progress, setProgress] = useState<ProgressItem[]>([]);
@@ -1045,6 +1346,9 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
             </div>
           </div>
         </div>
+
+        {/* Journey Timeline */}
+        <JourneyTimeline progress={progress} submissions={submissions} />
 
         {/* Pre-Orientation Checklist */}
         <div style={{
@@ -1675,6 +1979,14 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+        @keyframes tooltip-appear {
+          from { opacity: 0; transform: translateX(-50%) translateY(5px); }
+          to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        @keyframes pulse-dot {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.3); opacity: 0.7; }
         }
       `}</style>
     </div>

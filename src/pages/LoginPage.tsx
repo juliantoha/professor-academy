@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { LogIn, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { LogIn, Mail, Lock, AlertCircle } from 'lucide-react';
+import { SmartInput } from '../components';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -54,26 +54,74 @@ const LoginPage = () => {
     }
   };
 
+  // Email validation
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // Password validation (minimum 6 characters)
+  const validatePassword = (password: string) => {
+    return password.length >= 6;
+  };
+
   return (
     <div style={{
-      fontFamily: 'Lato, sans-serif',
+      fontFamily: "'Inter', system-ui, sans-serif",
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '2rem'
+      padding: '2rem',
+      position: 'relative',
+      overflow: 'hidden'
     }}>
+      {/* Animated background elements */}
+      <div style={{
+        position: 'absolute',
+        top: '10%',
+        left: '5%',
+        width: '120px',
+        height: '120px',
+        borderRadius: '50%',
+        background: 'rgba(235, 106, 24, 0.08)',
+        animation: 'float-login 8s ease-in-out infinite'
+      }} />
+      <div style={{
+        position: 'absolute',
+        bottom: '15%',
+        right: '10%',
+        width: '80px',
+        height: '80px',
+        borderRadius: '50%',
+        background: 'rgba(0, 102, 162, 0.06)',
+        animation: 'float-login 8s ease-in-out infinite 2s'
+      }} />
+      <div style={{
+        position: 'absolute',
+        top: '60%',
+        left: '8%',
+        width: '50px',
+        height: '50px',
+        borderRadius: '50%',
+        background: 'rgba(16, 185, 129, 0.08)',
+        animation: 'float-login 8s ease-in-out infinite 1s'
+      }} />
+
       <div style={{
         width: '100%',
-        maxWidth: '480px'
+        maxWidth: '480px',
+        position: 'relative',
+        zIndex: 1
       }}>
         {/* Card */}
         <div style={{
           background: 'white',
-          borderRadius: '24px',
+          borderRadius: '28px',
           overflow: 'hidden',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+          boxShadow: '0 20px 60px rgba(0,0,0,0.12)',
+          border: '1px solid rgba(0,74,105,0.08)'
         }}>
           {/* Header */}
           <div style={{
@@ -96,22 +144,24 @@ const LoginPage = () => {
             }} />
 
             <div style={{
-              width: '72px',
-              height: '72px',
-              borderRadius: '18px',
+              width: '80px',
+              height: '80px',
+              borderRadius: '20px',
               background: 'rgba(255,255,255,0.15)',
               backdropFilter: 'blur(10px)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 1.5rem',
-              border: '2px solid rgba(255,255,255,0.2)'
+              border: '2px solid rgba(255,255,255,0.2)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+              animation: 'pulse-icon 3s ease-in-out infinite'
             }}>
-              <LogIn size={36} color="white" />
+              <LogIn size={40} color="white" strokeWidth={1.5} />
             </div>
 
             <h1 style={{
-              fontFamily: 'Montserrat, sans-serif',
+              fontFamily: "'Montserrat', sans-serif",
               fontSize: '32px',
               fontWeight: 700,
               color: 'white',
@@ -127,7 +177,7 @@ const LoginPage = () => {
               margin: 0,
               position: 'relative'
             }}>
-              Sign in to access your dashboard
+              Sign in to continue your journey
             </p>
           </div>
 
@@ -136,158 +186,94 @@ const LoginPage = () => {
             {error && (
               <div style={{
                 background: 'linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)',
-                border: '2px solid #DC2626',
-                borderRadius: '12px',
+                border: '2px solid #EF4444',
+                borderRadius: '14px',
                 padding: '1rem 1.25rem',
                 marginBottom: '1.5rem',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.75rem'
+                gap: '0.75rem',
+                animation: 'shake-error 0.4s ease-in-out'
               }}>
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  background: '#EF4444',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <AlertCircle size={18} color="white" />
+                </div>
                 <span style={{ color: '#991B1B', fontSize: '14px', fontWeight: 500 }}>{error}</span>
               </div>
             )}
 
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{
-                display: 'block',
-                fontSize: '14px',
-                fontWeight: 600,
-                color: '#004A69',
-                marginBottom: '0.75rem'
-              }}>
-                Email Address
-              </label>
-              <div style={{ position: 'relative' }}>
-                <Mail size={20} color="#6B7280" style={{
-                  position: 'absolute',
-                  left: '1rem',
-                  top: '50%',
-                  transform: 'translateY(-50%)'
-                }} />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="you@example.com"
-                  style={{
-                    width: '100%',
-                    padding: '1rem 1rem 1rem 3rem',
-                    fontSize: '15px',
-                    border: '2px solid #E5E7EB',
-                    borderRadius: '12px',
-                    outline: 'none',
-                    transition: 'all 0.3s ease',
-                    boxSizing: 'border-box',
-                    backgroundColor: 'white',
-                    color: '#1F2937'
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = '#0066A2';
-                    e.target.style.boxShadow = '0 0 0 4px rgba(0,102,162,0.1)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = '#E5E7EB';
-                    e.target.style.boxShadow = 'none';
-                  }}
-                />
-              </div>
-            </div>
+            <SmartInput
+              type="email"
+              value={email}
+              onChange={setEmail}
+              label="Email Address"
+              placeholder="you@example.com"
+              icon={<Mail size={20} />}
+              required
+              validate={validateEmail}
+              errorMessage="Please enter a valid email address"
+              successMessage="Email looks good!"
+              autoComplete="email"
+            />
 
-            <div style={{ marginBottom: '1rem' }}>
+            <div style={{ marginBottom: '0.5rem' }}>
               <div style={{
                 display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '0.75rem'
+                justifyContent: 'flex-end',
+                marginBottom: '-0.5rem'
               }}>
-                <label style={{
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  color: '#004A69'
-                }}>
-                  Password
-                </label>
                 <Link
                   to="/forgot-password"
                   style={{
                     fontSize: '13px',
                     color: '#0066A2',
                     textDecoration: 'none',
-                    fontWeight: 500
+                    fontWeight: 500,
+                    transition: 'color 0.2s ease'
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
-                  onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.textDecoration = 'underline';
+                    e.currentTarget.style.color = '#004A69';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.textDecoration = 'none';
+                    e.currentTarget.style.color = '#0066A2';
+                  }}
                 >
                   Forgot password?
                 </Link>
               </div>
-              <div style={{ position: 'relative' }}>
-                <Lock size={20} color="#6B7280" style={{
-                  position: 'absolute',
-                  left: '1rem',
-                  top: '50%',
-                  transform: 'translateY(-50%)'
-                }} />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  placeholder="Enter your password"
-                  style={{
-                    width: '100%',
-                    padding: '1rem 3rem 1rem 3rem',
-                    fontSize: '15px',
-                    border: '2px solid #E5E7EB',
-                    borderRadius: '12px',
-                    outline: 'none',
-                    transition: 'all 0.3s ease',
-                    boxSizing: 'border-box',
-                    backgroundColor: 'white',
-                    color: '#1F2937'
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderColor = '#0066A2';
-                    e.target.style.boxShadow = '0 0 0 4px rgba(0,102,162,0.1)';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderColor = '#E5E7EB';
-                    e.target.style.boxShadow = 'none';
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{
-                    position: 'absolute',
-                    right: '1rem',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  {showPassword ? (
-                    <EyeOff size={20} color="#6B7280" />
-                  ) : (
-                    <Eye size={20} color="#6B7280" />
-                  )}
-                </button>
-              </div>
             </div>
+
+            <SmartInput
+              type="password"
+              value={password}
+              onChange={setPassword}
+              label="Password"
+              placeholder="Enter your password"
+              icon={<Lock size={20} />}
+              required
+              validate={validatePassword}
+              errorMessage="Password must be at least 6 characters"
+              successMessage="Password is valid"
+              showPasswordToggle
+              autoComplete="current-password"
+            />
 
             <button
               type="submit"
               disabled={loading}
               style={{
-                fontFamily: 'Montserrat, sans-serif',
+                fontFamily: "'Montserrat', sans-serif",
                 width: '100%',
                 padding: '1.1rem',
                 fontSize: '16px',
@@ -297,36 +283,36 @@ const LoginPage = () => {
                   ? 'linear-gradient(135deg, #9CA3AF 0%, #D1D5DB 100%)'
                   : 'linear-gradient(135deg, #eb6a18 0%, #ff8c3d 100%)',
                 border: 'none',
-                borderRadius: '12px',
+                borderRadius: '14px',
                 cursor: loading ? 'not-allowed' : 'pointer',
-                boxShadow: loading ? 'none' : '0 8px 24px rgba(235,106,24,0.4)',
-                transition: 'all 0.3s ease',
+                boxShadow: loading ? 'none' : '0 8px 30px rgba(235,106,24,0.35)',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '0.75rem',
-                marginTop: '1.5rem'
+                marginTop: '1rem'
               }}
               onMouseEnter={(e) => {
                 if (!loading) {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 12px 32px rgba(235,106,24,0.5)';
+                  e.currentTarget.style.transform = 'translateY(-3px) scale(1.01)';
+                  e.currentTarget.style.boxShadow = '0 12px 40px rgba(235,106,24,0.45)';
                 }
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = loading ? 'none' : '0 8px 24px rgba(235,106,24,0.4)';
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                e.currentTarget.style.boxShadow = loading ? 'none' : '0 8px 30px rgba(235,106,24,0.35)';
               }}
             >
               {loading ? (
                 <>
                   <div style={{
-                    width: '20px',
-                    height: '20px',
+                    width: '22px',
+                    height: '22px',
                     border: '3px solid rgba(255,255,255,0.3)',
                     borderTopColor: 'white',
                     borderRadius: '50%',
-                    animation: 'spin 1s linear infinite'
+                    animation: 'spin 0.8s linear infinite'
                   }} />
                   Signing in...
                 </>
@@ -355,10 +341,17 @@ const LoginPage = () => {
                 style={{
                   color: '#0066A2',
                   fontWeight: 600,
-                  textDecoration: 'none'
+                  textDecoration: 'none',
+                  transition: 'color 0.2s ease'
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
-                onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.textDecoration = 'underline';
+                  e.currentTarget.style.color = '#004A69';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.textDecoration = 'none';
+                  e.currentTarget.style.color = '#0066A2';
+                }}
               >
                 Sign up
               </Link>
@@ -377,10 +370,17 @@ const LoginPage = () => {
               textDecoration: 'none',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '0.5rem'
+              gap: '0.5rem',
+              padding: '0.75rem 1.25rem',
+              borderRadius: '10px',
+              transition: 'all 0.2s ease'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
-            onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(0,74,105,0.08)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+            }}
           >
             ← Back to Home
           </Link>
@@ -391,6 +391,19 @@ const LoginPage = () => {
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+        @keyframes float-login {
+          0%, 100% { transform: translateY(0) scale(1); }
+          50% { transform: translateY(-20px) scale(1.05); }
+        }
+        @keyframes pulse-icon {
+          0%, 100% { transform: scale(1); box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
+          50% { transform: scale(1.02); box-shadow: 0 12px 40px rgba(0,0,0,0.15); }
+        }
+        @keyframes shake-error {
+          0%, 100% { transform: translateX(0); }
+          20%, 60% { transform: translateX(-4px); }
+          40%, 80% { transform: translateX(4px); }
         }
       `}</style>
     </div>

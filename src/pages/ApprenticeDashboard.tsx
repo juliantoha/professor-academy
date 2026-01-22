@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import Dashboard from './Dashboard';
-import { LogOut, Settings, ChevronDown, AlertCircle, Clock, Mail } from 'lucide-react';
+import { LogOut, Settings, ChevronDown, AlertCircle, Clock, Mail, Award, CheckCircle } from 'lucide-react';
 
 const ApprenticeDashboard = () => {
   const { user, profile, signOut } = useAuth();
@@ -135,106 +135,246 @@ const ApprenticeDashboard = () => {
   if (waitingForProfessor) {
     return (
       <div style={{
-        fontFamily: 'Lato, sans-serif',
+        fontFamily: "'Inter', system-ui, sans-serif",
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '2rem'
+        padding: '2rem',
+        position: 'relative',
+        overflow: 'hidden'
       }}>
+        {/* Animated background elements */}
+        <div style={{
+          position: 'absolute',
+          top: '10%',
+          left: '10%',
+          width: '100px',
+          height: '100px',
+          borderRadius: '50%',
+          background: 'rgba(251, 191, 36, 0.1)',
+          animation: 'float-waiting 6s ease-in-out infinite'
+        }} />
+        <div style={{
+          position: 'absolute',
+          bottom: '20%',
+          right: '15%',
+          width: '80px',
+          height: '80px',
+          borderRadius: '50%',
+          background: 'rgba(0, 102, 162, 0.08)',
+          animation: 'float-waiting 6s ease-in-out infinite 2s'
+        }} />
+        <div style={{
+          position: 'absolute',
+          top: '60%',
+          left: '5%',
+          width: '50px',
+          height: '50px',
+          borderRadius: '50%',
+          background: 'rgba(235, 106, 24, 0.08)',
+          animation: 'float-waiting 6s ease-in-out infinite 1s'
+        }} />
+
         <div style={{
           background: 'white',
-          borderRadius: '24px',
-          padding: '3rem',
-          maxWidth: '520px',
+          borderRadius: '28px',
+          padding: '3.5rem 3rem',
+          maxWidth: '540px',
           width: '100%',
           textAlign: 'center',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+          boxShadow: '0 20px 60px rgba(0,0,0,0.12)',
+          position: 'relative',
+          zIndex: 1,
+          border: '1px solid rgba(0,74,105,0.08)'
         }}>
+          {/* Animated illustration */}
           <div style={{
-            width: '100px',
-            height: '100px',
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 1.5rem',
-            border: '3px solid #F59E0B'
+            position: 'relative',
+            width: '160px',
+            height: '160px',
+            margin: '0 auto 2rem'
           }}>
-            <Clock size={48} color="#D97706" />
+            {/* Outer pulse ring */}
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '50%',
+              border: '3px solid rgba(251, 191, 36, 0.2)',
+              animation: 'pulse-ring 2s ease-out infinite'
+            }} />
+            <div style={{
+              position: 'absolute',
+              inset: '10px',
+              borderRadius: '50%',
+              border: '3px solid rgba(251, 191, 36, 0.3)',
+              animation: 'pulse-ring 2s ease-out infinite 0.5s'
+            }} />
+            {/* Main icon circle */}
+            <div style={{
+              position: 'absolute',
+              inset: '25px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 15px 40px rgba(251, 191, 36, 0.35)',
+              animation: 'bounce-waiting 2s ease-in-out infinite'
+            }}>
+              <Clock size={52} color="white" strokeWidth={1.5} />
+            </div>
+            {/* Decorative sparkles */}
+            <div style={{
+              position: 'absolute',
+              top: '15px',
+              right: '25px',
+              width: '14px',
+              height: '14px',
+              borderRadius: '50%',
+              background: '#10B981',
+              animation: 'sparkle-waiting 2s ease-in-out infinite'
+            }} />
+            <div style={{
+              position: 'absolute',
+              bottom: '20px',
+              left: '15px',
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
+              background: '#3B82F6',
+              animation: 'sparkle-waiting 2s ease-in-out infinite 0.5s'
+            }} />
           </div>
 
           <h1 style={{
-            fontFamily: 'Montserrat, sans-serif',
-            fontSize: '26px',
+            fontFamily: "'Montserrat', sans-serif",
+            fontSize: '28px',
             fontWeight: 700,
-            color: '#004A69',
-            margin: '0 0 0.5rem 0'
+            color: '#002642',
+            margin: '0 0 0.75rem 0',
+            letterSpacing: '-0.5px'
           }}>
-            Almost There!
+            You're Almost Ready!
           </h1>
 
           <p style={{
-            fontSize: '17px',
+            fontSize: '16px',
             color: '#D97706',
             fontWeight: 600,
-            margin: '0 0 1.5rem 0'
+            margin: '0 0 2rem 0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.5rem'
           }}>
-            Waiting for your professor to set up your dashboard
+            <span style={{
+              display: 'inline-block',
+              width: '8px',
+              height: '8px',
+              borderRadius: '50%',
+              background: '#FBBF24',
+              animation: 'dot-pulse 1.5s ease-in-out infinite'
+            }} />
+            Waiting for professor setup
           </p>
+
+          {/* Progress steps */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.5rem',
+            marginBottom: '2rem'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}>
+              <div style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+              }}>
+                <CheckCircle size={18} color="white" />
+              </div>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#059669' }}>Account Created</span>
+            </div>
+            <div style={{
+              width: '40px',
+              height: '2px',
+              background: 'linear-gradient(90deg, #10B981 0%, #FBBF24 100%)',
+              borderRadius: '2px'
+            }} />
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}>
+              <div style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(251, 191, 36, 0.3)',
+                animation: 'pulse-step 2s ease-in-out infinite'
+              }}>
+                <Clock size={16} color="white" />
+              </div>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#D97706' }}>Professor Setup</span>
+            </div>
+            <div style={{
+              width: '40px',
+              height: '2px',
+              background: '#E5E7EB',
+              borderRadius: '2px'
+            }} />
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}>
+              <div style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                background: '#F3F4F6',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Award size={16} color="#9CA3AF" />
+              </div>
+              <span style={{ fontSize: '13px', fontWeight: 500, color: '#9CA3AF' }}>Start Training</span>
+            </div>
+          </div>
 
           <div style={{
             background: 'linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%)',
-            borderRadius: '14px',
+            borderRadius: '16px',
             padding: '1.5rem',
             marginBottom: '1.5rem',
-            border: '2px solid rgba(0,102,162,0.2)',
+            border: '1px solid rgba(0,102,162,0.15)',
             textAlign: 'left'
           }}>
-            <p style={{
-              fontSize: '15px',
-              color: '#004A69',
-              margin: '0 0 1rem 0',
-              lineHeight: 1.6
-            }}>
-              <strong>What's happening?</strong>
-            </p>
-            <p style={{
-              fontSize: '14px',
-              color: '#374151',
-              margin: '0 0 1rem 0',
-              lineHeight: 1.7
-            }}>
-              Your account is created successfully! Your professor just needs to add you to their studio before you can access your training dashboard.
-            </p>
             <p style={{
               fontSize: '14px',
               color: '#374151',
               margin: 0,
               lineHeight: 1.7
             }}>
-              <strong>What to do:</strong> Reach out to your professor and let them know you've signed up with this email. They'll add you to the system, and you'll be good to go!
+              <strong style={{ color: '#004A69' }}>Next step:</strong> Reach out to your professor and let them know you've signed up with <strong>{user?.email}</strong>. Once they add you to their studio, you'll be ready to begin your training journey!
             </p>
-          </div>
-
-          <div style={{
-            background: '#FEF3C7',
-            borderRadius: '10px',
-            padding: '1rem',
-            marginBottom: '1.5rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem'
-          }}>
-            <Mail size={20} color="#D97706" />
-            <span style={{
-              fontSize: '14px',
-              color: '#92400E'
-            }}>
-              Your email: <strong>{user?.email}</strong>
-            </span>
           </div>
 
           <div style={{
@@ -251,26 +391,26 @@ const ApprenticeDashboard = () => {
                 color: 'white',
                 background: 'linear-gradient(135deg, #0066A2 0%, #004A69 100%)',
                 border: 'none',
-                borderRadius: '12px',
+                borderRadius: '14px',
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '0.5rem',
-                boxShadow: '0 4px 12px rgba(0,102,162,0.3)'
+                boxShadow: '0 8px 25px rgba(0,102,162,0.3)'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,102,162,0.4)';
+                e.currentTarget.style.transform = 'translateY(-3px)';
+                e.currentTarget.style.boxShadow = '0 12px 35px rgba(0,102,162,0.4)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,102,162,0.3)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,102,162,0.3)';
               }}
             >
               <Clock size={18} />
-              Check Status
+              Check Again
             </button>
 
             <button
@@ -282,7 +422,7 @@ const ApprenticeDashboard = () => {
                 color: '#6B7280',
                 background: 'transparent',
                 border: '2px solid #E5E7EB',
-                borderRadius: '10px',
+                borderRadius: '12px',
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
                 display: 'flex',
@@ -290,12 +430,45 @@ const ApprenticeDashboard = () => {
                 justifyContent: 'center',
                 gap: '0.5rem'
               }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#9CA3AF';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#E5E7EB';
+              }}
             >
               <LogOut size={16} />
               Sign Out
             </button>
           </div>
         </div>
+
+        <style>{`
+          @keyframes float-waiting {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-20px) scale(1.05); }
+          }
+          @keyframes pulse-ring {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.3); opacity: 0; }
+          }
+          @keyframes bounce-waiting {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+          }
+          @keyframes sparkle-waiting {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.4); opacity: 0.6; }
+          }
+          @keyframes dot-pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+          }
+          @keyframes pulse-step {
+            0%, 100% { box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3); }
+            50% { box-shadow: 0 4px 20px rgba(251, 191, 36, 0.5); }
+          }
+        `}</style>
       </div>
     );
   }
