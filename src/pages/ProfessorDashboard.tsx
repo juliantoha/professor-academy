@@ -7,6 +7,7 @@ import { LogOut, Users, Clock, CheckCircle, ExternalLink, Settings, ChevronDown,
 import MasqueradeBanner from '../components/MasqueradeBanner';
 import DarkModeToggle from '../components/DarkModeToggle';
 import NotificationCenter from '../components/NotificationCenter';
+import AnalyticsDashboard from '../components/AnalyticsDashboard';
 import { useDarkMode } from '../contexts/DarkModeContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useOnboarding, OnboardingStep } from '../contexts/OnboardingContext';
@@ -1022,6 +1023,21 @@ const ProfessorDashboard = () => {
             {error}
           </div>
         )}
+
+        {/* Analytics Dashboard */}
+        <AnalyticsDashboard
+          data={{
+            apprentices: apprentices.map(a => ({
+              email: a.email,
+              createdAt: a.createdAt,
+              graduated: a.graduated,
+              graduatedAt: a.graduatedAt
+            })),
+            progress,
+            pendingSubmissions
+          }}
+          isDarkMode={isDarkMode}
+        />
 
         {/* Pending Reviews Section */}
         <section data-tour="pending-submissions" style={{ marginBottom: '2.5rem' }}>

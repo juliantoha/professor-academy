@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useOnboarding } from '../contexts/OnboardingContext';
 import { X, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 
@@ -13,6 +13,8 @@ const OnboardingOverlay = () => {
   const { isActive, currentStep, steps, nextStep, prevStep, skipTour, completeTour } = useOnboarding();
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
+  const [isReady, setIsReady] = useState(false);
+  const tooltipRef = useRef<HTMLDivElement>(null);
 
   const currentStepData = steps[currentStep];
   const isLastStep = currentStep === steps.length - 1;
@@ -20,72 +22,130 @@ const OnboardingOverlay = () => {
 
   // Find and measure target element
   const measureTarget = useCallback(() => {
-    if (!currentStepData?.target) return;
+    if (!currentStepData?.target) {
+      setIsReady(false);
+      return;
+    }
 
     const element = document.querySelector(currentStepData.target);
     if (element) {
       const rect = element.getBoundingClientRect();
       const padding = 8;
+
+      // Use viewport-relative coordinates (no scrollY since we're fixed positioned)
       setTargetRect({
-        top: rect.top - padding + window.scrollY,
+        top: rect.top - padding,
         left: rect.left - padding,
         width: rect.width + padding * 2,
         height: rect.height + padding * 2
       });
 
-      // Calculate tooltip position
-      const tooltipWidth = 320;
-      const tooltipHeight = 180;
-      const gap = 16;
+      // Calculate responsive tooltip width based on viewport
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const margin = 16;
+      const tooltipWidth = Math.min(320, viewportWidth - margin * 2);
+      const tooltipHeight = tooltipRef.current?.offsetHeight || 240;
+      const gap = viewportWidth < 480 ? 8 : 16;
 
       let top = 0;
       let left = 0;
+      let placement = currentStepData.placement;
 
-      switch (currentStepData.placement) {
+      // On small screens, prefer bottom placement to avoid side collisions
+      if (viewportWidth < 640) {
+        // Check if there's room below, otherwise go above
+        if (rect.bottom + tooltipHeight + gap + margin < viewportHeight) {
+          placement = 'bottom';
+        } else if (rect.top - tooltipHeight - gap - margin > 0) {
+          placement = 'top';
+        } else {
+          // Center in viewport if no good position
+          placement = 'bottom';
+        }
+      }
+
+      switch (placement) {
         case 'bottom':
-          top = rect.bottom + gap + window.scrollY;
+          top = rect.bottom + gap;
           left = rect.left + rect.width / 2 - tooltipWidth / 2;
           break;
         case 'top':
-          top = rect.top - tooltipHeight - gap + window.scrollY;
+          top = rect.top - tooltipHeight - gap;
           left = rect.left + rect.width / 2 - tooltipWidth / 2;
           break;
         case 'left':
-          top = rect.top + rect.height / 2 - tooltipHeight / 2 + window.scrollY;
+          top = rect.top + rect.height / 2 - tooltipHeight / 2;
           left = rect.left - tooltipWidth - gap;
+          // Fall back to bottom if no room on left
+          if (left < margin) {
+            top = rect.bottom + gap;
+            left = rect.left + rect.width / 2 - tooltipWidth / 2;
+          }
           break;
         case 'right':
-          top = rect.top + rect.height / 2 - tooltipHeight / 2 + window.scrollY;
+          top = rect.top + rect.height / 2 - tooltipHeight / 2;
           left = rect.right + gap;
+          // Fall back to bottom if no room on right
+          if (left + tooltipWidth + margin > viewportWidth) {
+            top = rect.bottom + gap;
+            left = rect.left + rect.width / 2 - tooltipWidth / 2;
+          }
           break;
       }
 
-      // Keep tooltip in viewport
-      left = Math.max(16, Math.min(left, window.innerWidth - tooltipWidth - 16));
-      top = Math.max(16, top);
+      // Keep tooltip in viewport with proper margins
+      left = Math.max(margin, Math.min(left, viewportWidth - tooltipWidth - margin));
+      top = Math.max(margin, Math.min(top, viewportHeight - tooltipHeight - margin));
 
       setTooltipPosition({ top, left });
 
-      // Scroll element into view if needed
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Scroll element into view if needed (only if significantly off-screen)
+      if (rect.top < 0 || rect.bottom > window.innerHeight) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+
+      setIsReady(true);
+    } else {
+      // Target element not found - still show tooltip in center
+      console.warn(`Onboarding target not found: ${currentStepData.target}`);
+      setTargetRect(null);
+      setTooltipPosition({
+        top: window.innerHeight / 2 - 120,
+        left: window.innerWidth / 2 - 160
+      });
+      setIsReady(true);
     }
   }, [currentStepData]);
 
   useEffect(() => {
     if (isActive && currentStepData) {
-      // Small delay to let DOM settle
-      const timer = setTimeout(measureTarget, 100);
+      setIsReady(false);
+      // Small delay to let DOM settle, then measure
+      const timer = setTimeout(measureTarget, 150);
       return () => clearTimeout(timer);
     }
   }, [isActive, currentStepData, measureTarget]);
 
-  // Handle resize
+  // Re-measure after tooltip renders to get accurate height
+  useEffect(() => {
+    if (isReady && tooltipRef.current) {
+      const timer = setTimeout(measureTarget, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isReady]);
+
+  // Handle resize and scroll
   useEffect(() => {
     if (!isActive) return;
 
-    const handleResize = () => measureTarget();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    const handleUpdate = () => measureTarget();
+    window.addEventListener('resize', handleUpdate);
+    window.addEventListener('scroll', handleUpdate, true);
+    return () => {
+      window.removeEventListener('resize', handleUpdate);
+      window.removeEventListener('scroll', handleUpdate, true);
+    };
   }, [isActive, measureTarget]);
 
   // Handle keyboard navigation
@@ -106,81 +166,131 @@ const OnboardingOverlay = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isActive, nextStep, prevStep, skipTour]);
 
-  if (!isActive || !currentStepData || !targetRect) {
+  if (!isActive || !currentStepData) {
     return null;
   }
+
+  // Create overlay segments that go around the target (4 divs forming a frame)
+  // This allows the target element to remain clickable
+  const renderOverlaySegments = () => {
+    if (!targetRect) {
+      // Full overlay when no target
+      return (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.75)',
+            animation: 'fadeIn 0.3s ease-out'
+          }}
+          onClick={skipTour}
+        />
+      );
+    }
+
+    return (
+      <>
+        {/* Top segment */}
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: Math.max(0, targetRect.top),
+            background: 'rgba(0, 0, 0, 0.75)',
+            animation: 'fadeIn 0.3s ease-out'
+          }}
+          onClick={skipTour}
+        />
+        {/* Bottom segment */}
+        <div
+          style={{
+            position: 'fixed',
+            top: targetRect.top + targetRect.height,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.75)',
+            animation: 'fadeIn 0.3s ease-out'
+          }}
+          onClick={skipTour}
+        />
+        {/* Left segment */}
+        <div
+          style={{
+            position: 'fixed',
+            top: targetRect.top,
+            left: 0,
+            width: Math.max(0, targetRect.left),
+            height: targetRect.height,
+            background: 'rgba(0, 0, 0, 0.75)',
+            animation: 'fadeIn 0.3s ease-out'
+          }}
+          onClick={skipTour}
+        />
+        {/* Right segment */}
+        <div
+          style={{
+            position: 'fixed',
+            top: targetRect.top,
+            left: targetRect.left + targetRect.width,
+            right: 0,
+            height: targetRect.height,
+            background: 'rgba(0, 0, 0, 0.75)',
+            animation: 'fadeIn 0.3s ease-out'
+          }}
+          onClick={skipTour}
+        />
+      </>
+    );
+  };
 
   return (
     <div style={{
       position: 'fixed',
       inset: 0,
       zIndex: 10000,
-      pointerEvents: 'none'
+      pointerEvents: 'auto'
     }}>
-      {/* Overlay with spotlight cutout */}
-      <svg
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          pointerEvents: 'auto'
-        }}
-      >
-        <defs>
-          <mask id="spotlight-mask">
-            <rect x="0" y="0" width="100%" height="100%" fill="white" />
-            <rect
-              x={targetRect.left}
-              y={targetRect.top}
-              width={targetRect.width}
-              height={targetRect.height}
-              rx="12"
-              fill="black"
-            />
-          </mask>
-        </defs>
-        <rect
-          x="0"
-          y="0"
-          width="100%"
-          height="100%"
-          fill="rgba(0, 0, 0, 0.75)"
-          mask="url(#spotlight-mask)"
-          style={{ animation: 'fadeIn 0.3s ease-out' }}
-        />
-      </svg>
+      {/* Overlay segments around target */}
+      {renderOverlaySegments()}
 
-      {/* Spotlight ring */}
-      <div
-        style={{
-          position: 'absolute',
-          top: targetRect.top - 4,
-          left: targetRect.left - 4,
-          width: targetRect.width + 8,
-          height: targetRect.height + 8,
-          borderRadius: '16px',
-          border: '3px solid rgba(249, 115, 22, 0.8)',
-          boxShadow: '0 0 0 4px rgba(249, 115, 22, 0.3), 0 0 30px rgba(249, 115, 22, 0.4)',
-          pointerEvents: 'none',
-          animation: 'pulse-ring 2s ease-in-out infinite'
-        }}
-      />
+      {/* Spotlight ring around target */}
+      {targetRect && (
+        <div
+          style={{
+            position: 'fixed',
+            top: targetRect.top - 4,
+            left: targetRect.left - 4,
+            width: targetRect.width + 8,
+            height: targetRect.height + 8,
+            borderRadius: '16px',
+            border: '3px solid rgba(249, 115, 22, 0.8)',
+            boxShadow: '0 0 0 4px rgba(249, 115, 22, 0.3), 0 0 30px rgba(249, 115, 22, 0.4)',
+            pointerEvents: 'none',
+            animation: 'pulse-ring 2s ease-in-out infinite'
+          }}
+        />
+      )}
 
       {/* Tooltip */}
       <div
+        ref={tooltipRef}
         style={{
-          position: 'absolute',
+          position: 'fixed',
           top: tooltipPosition.top,
           left: tooltipPosition.left,
-          width: '320px',
+          width: 'min(320px, calc(100vw - 32px))',
+          maxWidth: '320px',
           background: 'white',
           borderRadius: '16px',
           boxShadow: '0 20px 60px rgba(0, 0, 0, 0.25)',
           overflow: 'hidden',
           pointerEvents: 'auto',
-          animation: 'slideUp 0.3s ease-out'
+          animation: 'slideUp 0.3s ease-out',
+          opacity: isReady ? 1 : 0,
+          transition: 'opacity 0.15s ease'
         }}
       >
         {/* Header */}
@@ -204,24 +314,36 @@ const OnboardingOverlay = () => {
             </span>
           </div>
           <button
-            onClick={skipTour}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              skipTour();
+            }}
+            aria-label="Close tour"
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              width: '28px',
-              height: '28px',
+              width: '32px',
+              height: '32px',
               borderRadius: '8px',
-              border: 'none',
-              background: 'rgba(255,255,255,0.1)',
+              border: '1px solid rgba(255,255,255,0.3)',
+              background: 'rgba(255,255,255,0.2)',
               color: 'white',
               cursor: 'pointer',
-              transition: 'background 0.15s ease'
+              transition: 'all 0.15s ease',
+              zIndex: 10001
             }}
-            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.3)';
+              e.currentTarget.style.transform = 'scale(1.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
           >
-            <X size={16} />
+            <X size={18} strokeWidth={2.5} />
           </button>
         </div>
 
@@ -269,7 +391,11 @@ const OnboardingOverlay = () => {
           gap: '0.75rem'
         }}>
           <button
-            onClick={skipTour}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              skipTour();
+            }}
             style={{
               padding: '0.625rem 1rem',
               borderRadius: '8px',
@@ -290,7 +416,11 @@ const OnboardingOverlay = () => {
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             {!isFirstStep && (
               <button
-                onClick={prevStep}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  prevStep();
+                }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -320,7 +450,15 @@ const OnboardingOverlay = () => {
             )}
 
             <button
-              onClick={isLastStep ? completeTour : nextStep}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (isLastStep) {
+                  completeTour();
+                } else {
+                  nextStep();
+                }
+              }}
               style={{
                 display: 'flex',
                 alignItems: 'center',

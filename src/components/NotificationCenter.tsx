@@ -305,7 +305,7 @@ const NotificationCenter = () => {
           if (!isOpen) e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
         }}
       >
-        <Bell size={20} style={{
+        <Bell size={22} color="white" strokeWidth={2} style={{
           animation: unreadCount > 0 ? 'bell-ring 0.5s ease-in-out' : 'none'
         }} />
 

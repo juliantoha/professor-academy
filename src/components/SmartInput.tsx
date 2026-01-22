@@ -1,6 +1,20 @@
 import { useState, useRef, useEffect } from 'react';
 import { Check, AlertCircle } from 'lucide-react';
 
+// Password strength calculator
+const calculatePasswordStrength = (password: string): { score: number; label: string; color: string } => {
+  let score = 0;
+  if (password.length >= 8) score += 1;
+  if (password.length >= 12) score += 1;
+  if (/[a-z]/.test(password)) score += 1;
+  if (/[A-Z]/.test(password)) score += 1;
+  if (/[0-9]/.test(password)) score += 1;
+  if (/[^a-zA-Z0-9]/.test(password)) score += 1;
+  if (score <= 2) return { score, label: 'Weak', color: '#EF4444' };
+  if (score <= 4) return { score, label: 'Medium', color: '#F59E0B' };
+  return { score, label: 'Strong', color: '#10B981' };
+};
+
 interface SmartInputProps {
   type?: string;
   value: string;
@@ -13,6 +27,7 @@ interface SmartInputProps {
   errorMessage?: string;
   successMessage?: string;
   showPasswordToggle?: boolean;
+  showPasswordStrength?: boolean;
   autoComplete?: string;
 }
 
@@ -28,8 +43,10 @@ const SmartInput = ({
   errorMessage = 'Invalid input',
   successMessage = 'Looks good!',
   showPasswordToggle = false,
+  showPasswordStrength = false,
   autoComplete
 }: SmartInputProps) => {
+  const passwordStrength = showPasswordStrength && type === 'password' ? calculatePasswordStrength(value) : null;
   const [isFocused, setIsFocused] = useState(false);
   const [isTouched, setIsTouched] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -263,8 +280,41 @@ const SmartInput = ({
         </div>
       </div>
 
+      {/* Password strength meter */}
+      {passwordStrength && value.length > 0 && (
+        <div style={{ marginTop: '0.75rem', paddingLeft: icon ? '3rem' : '1rem', paddingRight: '1rem' }}>
+          <div style={{ display: 'flex', gap: '4px', marginBottom: '0.375rem' }}>
+            {[1, 2, 3, 4, 5, 6].map(i => (
+              <div
+                key={i}
+                style={{
+                  flex: 1,
+                  height: '4px',
+                  borderRadius: '2px',
+                  background: i <= passwordStrength.score ? passwordStrength.color : '#E5E7EB',
+                  transition: 'background 0.3s ease'
+                }}
+              />
+            ))}
+          </div>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            fontSize: '11px',
+            fontWeight: 600
+          }}>
+            <span style={{ color: passwordStrength.color }}>{passwordStrength.label}</span>
+            <span style={{ color: '#9CA3AF' }}>
+              {passwordStrength.score < 3 && 'Add uppercase, numbers, symbols'}
+              {passwordStrength.score >= 3 && passwordStrength.score < 5 && 'Getting better!'}
+              {passwordStrength.score >= 5 && 'Great password!'}
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Validation message */}
-      {showValidation && (
+      {showValidation && !passwordStrength && (
         <div
           style={{
             marginTop: '0.5rem',
