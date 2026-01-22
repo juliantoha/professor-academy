@@ -98,7 +98,7 @@ const ApprenticeDashboard = () => {
   if (loading) {
     return (
       <div style={{
-        fontFamily: 'Lato, sans-serif',
+        fontFamily: "'Inter', system-ui, sans-serif",
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)',
         display: 'flex',
@@ -109,19 +109,66 @@ const ApprenticeDashboard = () => {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: '1rem'
+          gap: '1.5rem',
+          animation: 'fadeIn 0.3s ease-out'
         }}>
+          {/* Premium Loading Spinner */}
           <div style={{
-            width: '48px',
-            height: '48px',
-            border: '4px solid #E5E7EB',
-            borderTopColor: '#0066A2',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite'
-          }} />
-          <span style={{ color: '#004A69', fontWeight: 500 }}>Loading your dashboard...</span>
+            position: 'relative',
+            width: '70px',
+            height: '70px'
+          }}>
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '50%',
+              border: '3px solid #E5E7EB'
+            }} />
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '50%',
+              border: '3px solid transparent',
+              borderTopColor: '#004A69',
+              borderRightColor: '#0066A2',
+              animation: 'spin 0.8s cubic-bezier(0.5, 0, 0.5, 1) infinite'
+            }} />
+            <div style={{
+              position: 'absolute',
+              inset: '10px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #004A69 0%, #0066A2 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 20px rgba(0,74,105,0.3)'
+            }}>
+              <Award size={24} color="white" />
+            </div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <p style={{
+              fontSize: '18px',
+              fontWeight: 600,
+              color: '#002642',
+              margin: '0 0 0.5rem 0'
+            }}>
+              Loading Dashboard
+            </p>
+            <p style={{
+              fontSize: '14px',
+              color: 'rgba(0, 38, 66, 0.6)',
+              margin: 0
+            }}>
+              Preparing your training journey...
+            </p>
+          </div>
         </div>
         <style>{`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
           @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
