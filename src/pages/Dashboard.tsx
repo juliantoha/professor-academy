@@ -850,7 +850,17 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
     gchatPhone: false,
     hasGmail: true
   });
+  const [isScrolled, setIsScrolled] = useState(false);
   const hasInitialized = useRef(false);
+
+  // Scroll detection for compact header
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 150);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     if (hasInitialized.current) {
@@ -1227,6 +1237,84 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
       background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)',
       padding: '2rem'
     }}>
+      {/* Compact Sticky Header - appears on scroll */}
+      {isScrolled && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          background: 'linear-gradient(135deg, #002642 0%, #004A69 100%)',
+          boxShadow: '0 4px 20px rgba(0, 38, 66, 0.2)',
+          zIndex: 100,
+          animation: 'slideDown 0.3s ease-out'
+        }}>
+          <div style={{
+            maxWidth: '1200px',
+            margin: '0 auto',
+            padding: '0.75rem 2rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '1rem'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #eb6a18 0%, #ff8c3d 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <Award size={18} color="white" />
+              </div>
+              <div>
+                <h2 style={{
+                  fontFamily: "'Montserrat', sans-serif",
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  color: 'white',
+                  margin: 0
+                }}>
+                  {apprentice.name}'s Journey
+                </h2>
+              </div>
+            </div>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem'
+            }}>
+              <div style={{
+                width: '120px',
+                height: '8px',
+                background: 'rgba(255,255,255,0.2)',
+                borderRadius: '50px',
+                overflow: 'hidden'
+              }}>
+                <div style={{
+                  width: `${overallProgress}%`,
+                  height: '100%',
+                  background: 'linear-gradient(90deg, #eb6a18 0%, #ff8c3d 100%)',
+                  borderRadius: '50px',
+                  transition: 'width 0.3s ease'
+                }} />
+              </div>
+              <span style={{
+                fontSize: '13px',
+                fontWeight: 700,
+                color: '#FBBF24'
+              }}>
+                {overallProgress}%
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* Header Card */}
         <div style={{
@@ -1234,10 +1322,7 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
           borderRadius: '20px',
           padding: '2.5rem',
           marginBottom: '2rem',
-          boxShadow: '0 4px 16px rgba(0, 38, 66, 0.06)',
-          position: 'sticky',
-          top: '1rem',
-          zIndex: 50
+          boxShadow: '0 4px 16px rgba(0, 38, 66, 0.06)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
             <div style={{
@@ -1960,6 +2045,10 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
         @keyframes pulse-dot {
           0%, 100% { transform: scale(1); opacity: 1; }
           50% { transform: scale(1.3); opacity: 0.7; }
+        }
+        @keyframes slideDown {
+          from { transform: translateY(-100%); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
         }
       `}</style>
     </div>
