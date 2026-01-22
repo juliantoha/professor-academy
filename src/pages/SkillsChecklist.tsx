@@ -183,15 +183,31 @@ const SkillNode = ({
   const [showBurst, setShowBurst] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [justCompleted, setJustCompleted] = useState(false);
+  const [showSparkle, setShowSparkle] = useState(false);
+  const [sparklesFading, setSparklesFading] = useState(false);
 
   const handleClick = () => {
     if (!isCompleted) {
       setShowBurst(true);
       setJustCompleted(true);
+      setShowSparkle(true);
+      setSparklesFading(false);
+
       setTimeout(() => {
         setShowBurst(false);
         setJustCompleted(false);
       }, 700);
+
+      // Start fading sparkles after 1.5 seconds
+      setTimeout(() => {
+        setSparklesFading(true);
+      }, 1500);
+
+      // Hide sparkles after 2 seconds
+      setTimeout(() => {
+        setShowSparkle(false);
+        setSparklesFading(false);
+      }, 2000);
     }
     onClick();
   };
@@ -284,13 +300,15 @@ const SkillNode = ({
           )}
         </div>
 
-        {/* Completion sparkle */}
-        {isCompleted && (
+        {/* Completion sparkle - shows briefly then fades */}
+        {showSparkle && (
           <div style={{
             position: 'absolute',
             top: '-4px',
             right: '-4px',
-            animation: 'sparkle 2s ease-in-out infinite'
+            animation: 'sparkle 0.5s ease-in-out',
+            opacity: sparklesFading ? 0 : 1,
+            transition: 'opacity 0.5s ease-out'
           }}>
             <Sparkles size={16} color="#FBBF24" fill="#FBBF24" />
           </div>
