@@ -552,11 +552,13 @@ const SkillsChecklist = () => {
 
   if (loading) {
     return (
-      <div style={{
-        fontFamily: "'Inter', system-ui, sans-serif",
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)'
-      }}>
+      <div
+        className="page-enter"
+        style={{
+          fontFamily: "'Inter', system-ui, sans-serif",
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)'
+        }}>
         {/* Skeleton Header */}
         <header style={{
           background: 'linear-gradient(135deg, #003250 0%, #004A69 50%, #0066A2 100%)',
@@ -846,11 +848,13 @@ const SkillsChecklist = () => {
   }
 
   return (
-    <div style={{
-      fontFamily: "'Inter', system-ui, sans-serif",
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)'
-    }}>
+    <div
+      className="page-enter"
+      style={{
+        fontFamily: "'Inter', system-ui, sans-serif",
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)'
+      }}>
       {/* Confetti overlay for full completion */}
       {showConfetti && (
         <div style={{
