@@ -15,6 +15,8 @@ interface ApprenticeData {
   preOrientationGchatBrowser?: string;
   preOrientationGchatPhone?: string;
   hasGmail?: string;
+  graduated?: boolean;
+  graduatedAt?: string;
 }
 
 interface SubmissionData {
@@ -36,7 +38,8 @@ const CURRICULUM = [
   { phase: 'Phase 2', module: 'Computer Essentials', number: '2.1' },
   { phase: 'Phase 2', module: 'Zoom Configuration', number: '2.2' },
   { phase: 'Phase 2', module: 'System Navigation', number: '2.3' },
-  { phase: 'Phase 2', module: 'Documentation & Lesson Closure', number: '2.4' }
+  { phase: 'Phase 2', module: 'Documentation & Lesson Closure', number: '2.4' },
+  { phase: 'Complete', module: 'Graduated', number: '🎓' }
 ];
 
 const MODULE_NUMBERS: Record<string, string> = {
@@ -52,7 +55,8 @@ const MODULE_ICONS: Record<string, React.ComponentType<{size?: number; color?: s
   'Computer Essentials': BookOpen,
   'Zoom Configuration': Video,
   'System Navigation': FileText,
-  'Documentation & Lesson Closure': CheckSquare
+  'Documentation & Lesson Closure': CheckSquare,
+  'Graduated': Award
 };
 
 const MODULE_DESCRIPTIONS: Record<string, string> = {
@@ -153,7 +157,10 @@ const PremiumModuleCard = ({
           ? `perspective(1000px) rotateX(${mousePosition.y * -8}deg) rotateY(${mousePosition.x * 8}deg) scale(1.02)`
           : 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        cursor: 'pointer'
+        cursor: 'pointer',
+        transformStyle: 'preserve-3d',
+        backfaceVisibility: 'hidden',
+        willChange: 'transform'
       }}
       onClick={onStartClick}
     >
@@ -540,14 +547,40 @@ const LockedPhase2Card = () => {
 // Animated Journey Timeline Component
 const JourneyTimeline = ({
   progress,
-  submissions
+  submissions,
+  graduated = false
 }: {
   progress: ProgressItem[];
   submissions: Record<string, SubmissionData>;
+  graduated?: boolean;
 }) => {
   const [hoveredStep, setHoveredStep] = useState<number | null>(null);
 
+  // Count how many regular modules (not Graduated) are completed
+  const regularModulesCompleted = CURRICULUM.filter(item => item.module !== 'Graduated').every(item => {
+    const progressItem = progress.find(p => p.phase === item.phase && p.module === item.module);
+    const submission = progressItem?.submissionId ? submissions[progressItem.submissionId] : null;
+    return submission?.status === 'Approved' || (progressItem?.Status === 'Completed' && !progressItem?.submissionId);
+  });
+
   const journeySteps = CURRICULUM.map((item, index) => {
+    // Handle the special "Graduated" milestone
+    if (item.module === 'Graduated') {
+      let status: 'completed' | 'current' | 'upcoming' = 'upcoming';
+      if (graduated) {
+        status = 'completed';
+      } else if (regularModulesCompleted) {
+        status = 'current'; // All modules done, waiting for professor to mark as graduated
+      }
+      return {
+        number: item.number,
+        name: item.module,
+        phase: item.phase,
+        status,
+        icon: MODULE_ICONS[item.module] || Award
+      };
+    }
+
     const progressItem = progress.find(p => p.phase === item.phase && p.module === item.module);
     const submission = progressItem?.submissionId ? submissions[progressItem.submissionId] : null;
 
@@ -1406,7 +1439,7 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
         </div>
 
         {/* Journey Timeline */}
-        <JourneyTimeline progress={progress} submissions={submissions} />
+        <JourneyTimeline progress={progress} submissions={submissions} graduated={apprentice?.graduated} />
 
         {/* Pre-Orientation Checklist */}
         <div style={{

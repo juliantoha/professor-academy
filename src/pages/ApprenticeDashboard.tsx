@@ -1,13 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useDarkMode } from '../contexts/DarkModeContext';
 import { supabase } from '../lib/supabase';
 import Dashboard from './Dashboard';
 import PremiumLoader from '../components/PremiumLoader';
-import { LogOut, Settings, ChevronDown, AlertCircle, Clock, Mail, Award, CheckCircle } from 'lucide-react';
+import DarkModeToggle from '../components/DarkModeToggle';
+import { LogOut, Settings, ChevronDown, AlertCircle, Clock, Mail, Award, CheckCircle, Moon, Sun } from 'lucide-react';
 
 const ApprenticeDashboard = () => {
   const { user, profile, signOut } = useAuth();
+  const { isDarkMode } = useDarkMode();
   const navigate = useNavigate();
   const [dashboardToken, setDashboardToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -700,6 +703,32 @@ const ApprenticeDashboard = () => {
                     <Settings size={18} color="#6B7280" />
                     <span style={{ fontSize: '14px', color: '#1F2937' }}>Settings</span>
                   </button>
+
+                  {/* Dark Mode Toggle */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '0.75rem 1rem',
+                      borderRadius: '8px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      {isDarkMode ? (
+                        <Moon size={18} color="#9CA3AF" />
+                      ) : (
+                        <Sun size={18} color="#F59E0B" />
+                      )}
+                      <span style={{ fontSize: '14px', color: '#1F2937' }}>
+                        {isDarkMode ? 'Dark Mode' : 'Light Mode'}
+                      </span>
+                    </div>
+                    <DarkModeToggle size="small" />
+                  </div>
+
+                  <div style={{ height: '1px', background: '#E5E7EB', margin: '0.25rem 0.5rem' }} />
+
                   <button
                     onClick={() => {
                       setShowProfileMenu(false);
