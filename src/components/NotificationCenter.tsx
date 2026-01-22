@@ -56,9 +56,9 @@ const NotificationCenter = () => {
         return <Settings size={18} />;
       default:
         return (
-          <svg xmlns="http://www.w3.org/2000/svg" width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
-            <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
+          <svg width="18" height="18" viewBox="0 0 24 24" style={{ display: 'block' }}>
+            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         );
     }
@@ -315,22 +315,32 @@ const NotificationCenter = () => {
       >
         {/* Bell icon - using raw SVG for reliable rendering */}
         <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width={22}
-          height={22}
+          width="22"
+          height="22"
           viewBox="0 0 24 24"
-          fill="none"
-          stroke="#FFFFFF"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
           style={{
             display: 'block',
+            minWidth: '22px',
+            minHeight: '22px',
             animation: unreadCount > 0 ? 'bell-ring 0.5s ease-in-out' : 'none'
           }}
         >
-          <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
-          <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
+          <path
+            d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"
+            fill="none"
+            stroke="white"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M10.3 21a1.94 1.94 0 0 0 3.4 0"
+            fill="none"
+            stroke="white"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
 
         {/* Badge */}
@@ -408,20 +418,9 @@ const NotificationCenter = () => {
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width={20}
-                    height={20}
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#FFFFFF"
-                    strokeWidth={2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    style={{ display: 'block' }}
-                  >
-                    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
-                    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
+                  <svg width="20" height="20" viewBox="0 0 24 24" style={{ display: 'block', minWidth: '20px', minHeight: '20px' }}>
+                    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
                 <div>
@@ -487,9 +486,9 @@ const NotificationCenter = () => {
                   onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
                   onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  <svg width="18" height="18" viewBox="0 0 24 24" style={{ display: 'block', minWidth: '18px', minHeight: '18px' }}>
+                    <line x1="18" y1="6" x2="6" y2="18" stroke="white" strokeWidth="2" strokeLinecap="round" />
+                    <line x1="6" y1="6" x2="18" y2="18" stroke="white" strokeWidth="2" strokeLinecap="round" />
                   </svg>
                 </button>
               </div>
@@ -520,20 +519,9 @@ const NotificationCenter = () => {
                     justifyContent: 'center',
                     marginBottom: '1.5rem'
                   }}>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width={32}
-                      height={32}
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="#0284C7"
-                      strokeWidth={2}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      style={{ display: 'block' }}
-                    >
-                      <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
-                      <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
+                    <svg width="32" height="32" viewBox="0 0 24 24" style={{ display: 'block', minWidth: '32px', minHeight: '32px' }}>
+                      <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" fill="none" stroke="#0284C7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" fill="none" stroke="#0284C7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </div>
                   <h3 style={{
