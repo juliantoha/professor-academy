@@ -2049,7 +2049,7 @@ const ProfessorDashboard = () => {
               fontFamily: "'Lora', Georgia, serif",
               fontSize: '22px',
               fontWeight: 700,
-              color: '#002642',
+              color: isDarkMode ? '#F9FAFB' : '#002642',
               margin: 0
             }}>
               Apps & Resources
@@ -2057,10 +2057,10 @@ const ProfessorDashboard = () => {
           </div>
 
           <div style={{
-            background: 'white',
+            background: isDarkMode ? '#1E293B' : 'white',
             borderRadius: '20px',
             padding: '2rem',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.06)'
+            boxShadow: isDarkMode ? '0 4px 16px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)'
           }}>
             <div style={{
               display: 'grid',
@@ -2767,6 +2767,7 @@ const ResourceCard = ({ href, icon, title, subtitle, description, color }: {
   color: string;
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const { isDarkMode } = useDarkMode();
 
   return (
     <a
@@ -2775,8 +2776,10 @@ const ResourceCard = ({ href, icon, title, subtitle, description, color }: {
       rel="noopener noreferrer"
       style={{
         textDecoration: 'none',
-        background: 'linear-gradient(135deg, #FFFFFF 0%, #F9FAFB 100%)',
-        border: `2px solid ${isHovered ? color : '#E5E7EB'}`,
+        background: isDarkMode
+          ? 'linear-gradient(135deg, #374151 0%, #1F2937 100%)'
+          : 'linear-gradient(135deg, #FFFFFF 0%, #F9FAFB 100%)',
+        border: `2px solid ${isHovered ? color : isDarkMode ? '#4B5563' : '#E5E7EB'}`,
         borderRadius: '16px',
         padding: '1.5rem',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -2785,7 +2788,7 @@ const ResourceCard = ({ href, icon, title, subtitle, description, color }: {
         gap: '1rem',
         cursor: 'pointer',
         transform: isHovered ? 'translateY(-4px)' : 'translateY(0)',
-        boxShadow: isHovered ? `0 12px 24px ${color}18` : '0 2px 8px rgba(0,0,0,0.04)'
+        boxShadow: isHovered ? `0 12px 24px ${color}18` : isDarkMode ? '0 2px 8px rgba(0,0,0,0.2)' : '0 2px 8px rgba(0,0,0,0.04)'
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -2810,20 +2813,20 @@ const ResourceCard = ({ href, icon, title, subtitle, description, color }: {
           <h3 style={{
             fontSize: '15px',
             fontWeight: 600,
-            color: '#002642',
+            color: isDarkMode ? '#F9FAFB' : '#002642',
             margin: 0,
             letterSpacing: '-0.01em'
           }}>
             {title}
           </h3>
-          <p style={{ fontSize: '12px', color: 'rgba(0, 38, 66, 0.6)', margin: '0.15rem 0 0 0' }}>
+          <p style={{ fontSize: '12px', color: isDarkMode ? '#9CA3AF' : 'rgba(0, 38, 66, 0.6)', margin: '0.15rem 0 0 0' }}>
             {subtitle}
           </p>
         </div>
       </div>
       <p style={{
         fontSize: '13px',
-        color: '#4B5563',
+        color: isDarkMode ? '#D1D5DB' : '#4B5563',
         margin: 0,
         lineHeight: '1.6'
       }}>
