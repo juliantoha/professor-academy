@@ -183,15 +183,31 @@ const SkillNode = ({
   const [showBurst, setShowBurst] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [justCompleted, setJustCompleted] = useState(false);
+  const [showSparkle, setShowSparkle] = useState(false);
+  const [sparklesFading, setSparklesFading] = useState(false);
 
   const handleClick = () => {
     if (!isCompleted) {
       setShowBurst(true);
       setJustCompleted(true);
+      setShowSparkle(true);
+      setSparklesFading(false);
+
       setTimeout(() => {
         setShowBurst(false);
         setJustCompleted(false);
       }, 700);
+
+      // Start fading sparkles after 1.5 seconds
+      setTimeout(() => {
+        setSparklesFading(true);
+      }, 1500);
+
+      // Hide sparkles after 2 seconds
+      setTimeout(() => {
+        setShowSparkle(false);
+        setSparklesFading(false);
+      }, 2000);
     }
     onClick();
   };
@@ -284,13 +300,15 @@ const SkillNode = ({
           )}
         </div>
 
-        {/* Completion sparkle */}
-        {isCompleted && (
+        {/* Completion sparkle - shows briefly then fades */}
+        {showSparkle && (
           <div style={{
             position: 'absolute',
             top: '-4px',
             right: '-4px',
-            animation: 'sparkle 2s ease-in-out infinite'
+            animation: 'sparkle 0.5s ease-in-out',
+            opacity: sparklesFading ? 0 : 1,
+            transition: 'opacity 0.5s ease-out'
           }}>
             <Sparkles size={16} color="#FBBF24" fill="#FBBF24" />
           </div>
@@ -552,11 +570,13 @@ const SkillsChecklist = () => {
 
   if (loading) {
     return (
-      <div style={{
-        fontFamily: "'Inter', system-ui, sans-serif",
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)'
-      }}>
+      <div
+        className="page-enter"
+        style={{
+          fontFamily: "'Inter', system-ui, sans-serif",
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)'
+        }}>
         {/* Skeleton Header */}
         <header style={{
           background: 'linear-gradient(135deg, #003250 0%, #004A69 50%, #0066A2 100%)',
@@ -846,11 +866,13 @@ const SkillsChecklist = () => {
   }
 
   return (
-    <div style={{
-      fontFamily: "'Inter', system-ui, sans-serif",
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)'
-    }}>
+    <div
+      className="page-enter"
+      style={{
+        fontFamily: "'Inter', system-ui, sans-serif",
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)'
+      }}>
       {/* Confetti overlay for full completion */}
       {showConfetti && (
         <div style={{

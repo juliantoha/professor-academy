@@ -1126,38 +1126,6 @@ const ProfessorDashboard = () => {
               }}>
                 No pending submissions to review. New submissions will appear here when your apprentices complete their work.
               </p>
-
-              {/* Status badge */}
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.625rem 1.25rem',
-                background: isDarkMode
-                  ? 'rgba(16, 185, 129, 0.15)'
-                  : 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.15) 100%)',
-                borderRadius: '50px',
-                border: isDarkMode
-                  ? '1px solid rgba(16, 185, 129, 0.2)'
-                  : '1px solid rgba(16, 185, 129, 0.25)',
-                position: 'relative',
-                zIndex: 1
-              }}>
-                <div style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  background: '#10B981',
-                  animation: 'pulse-dot-caught-up 2s ease-in-out infinite'
-                }} />
-                <span style={{
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  color: isDarkMode ? '#34D399' : '#059669'
-                }}>
-                  Inbox Clear
-                </span>
-              </div>
             </div>
           ) : (
             <div style={{
