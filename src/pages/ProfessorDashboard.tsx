@@ -767,6 +767,7 @@ const ProfessorDashboard = () => {
                       position: 'absolute',
                       top: '100%',
                       right: 0,
+                      left: 'auto',
                       marginTop: '0.5rem',
                       background: isDarkMode ? '#1f2937' : 'white',
                       borderRadius: '12px',
@@ -774,7 +775,7 @@ const ProfessorDashboard = () => {
                         ? '0 8px 32px rgba(0,0,0,0.4)'
                         : '0 8px 32px rgba(0,0,0,0.15)',
                       border: isDarkMode ? '1px solid #374151' : 'none',
-                      minWidth: '220px',
+                      width: '220px',
                       zIndex: 20,
                       overflow: 'hidden',
                       transition: 'background 0.3s ease, box-shadow 0.3s ease'
@@ -2199,7 +2200,7 @@ const ProfessorDashboard = () => {
           <div
             className="modal-content"
             style={{
-              background: 'white',
+              background: isDarkMode ? '#1E293B' : 'white',
               borderRadius: '24px',
               width: '100%',
               maxWidth: '480px',
@@ -2267,7 +2268,7 @@ const ProfessorDashboard = () => {
                     fontFamily: "'Lora', Georgia, serif",
                     fontSize: '18px',
                     fontWeight: 600,
-                    color: '#002642',
+                    color: isDarkMode ? '#F9FAFB' : '#002642',
                     textAlign: 'center',
                     margin: '0 0 0.5rem 0'
                   }}>
@@ -2276,7 +2277,7 @@ const ProfessorDashboard = () => {
 
                   <p style={{
                     fontSize: '14px',
-                    color: 'rgba(0, 38, 66, 0.6)',
+                    color: isDarkMode ? '#9CA3AF' : 'rgba(0, 38, 66, 0.6)',
                     textAlign: 'center',
                     margin: '0 0 1.5rem 0'
                   }}>
@@ -2284,8 +2285,8 @@ const ProfessorDashboard = () => {
                   </p>
 
                   <div style={{
-                    background: '#F9FAFB',
-                    border: '2px solid #E5E7EB',
+                    background: isDarkMode ? '#374151' : '#F9FAFB',
+                    border: isDarkMode ? '2px solid #4B5563' : '2px solid #E5E7EB',
                     borderRadius: '12px',
                     padding: '1rem',
                     marginBottom: '1rem'
@@ -2293,7 +2294,7 @@ const ProfessorDashboard = () => {
                     <p style={{
                       fontSize: '12px',
                       fontWeight: 600,
-                      color: '#002642',
+                      color: isDarkMode ? '#E5E7EB' : '#002642',
                       margin: '0 0 0.5rem 0'
                     }}>
                       Dashboard Link (optional - they can also just login):
@@ -2311,10 +2312,10 @@ const ProfessorDashboard = () => {
                           flex: 1,
                           padding: '0.75rem',
                           fontSize: '13px',
-                          border: '1px solid #E5E7EB',
+                          border: isDarkMode ? '1px solid #4B5563' : '1px solid #E5E7EB',
                           borderRadius: '8px',
-                          background: 'white',
-                          color: '#4B5563'
+                          background: isDarkMode ? '#1F2937' : 'white',
+                          color: isDarkMode ? '#D1D5DB' : '#4B5563'
                         }}
                       />
                       <button
@@ -2337,7 +2338,9 @@ const ProfessorDashboard = () => {
                   </div>
 
                   <div style={{
-                    background: 'linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%)',
+                    background: isDarkMode
+                      ? 'linear-gradient(135deg, #1E3A5F 0%, #1E293B 100%)'
+                      : 'linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%)',
                     border: '2px solid #0066A2',
                     borderRadius: '12px',
                     padding: '1rem',
@@ -2345,7 +2348,7 @@ const ProfessorDashboard = () => {
                   }}>
                     <p style={{
                       fontSize: '13px',
-                      color: '#002642',
+                      color: isDarkMode ? '#E5E7EB' : '#002642',
                       margin: 0,
                       lineHeight: 1.5
                     }}>
@@ -2375,7 +2378,7 @@ const ProfessorDashboard = () => {
                 <div>
                   <p style={{
                     fontSize: '14px',
-                    color: 'rgba(0, 38, 66, 0.6)',
+                    color: isDarkMode ? '#9CA3AF' : 'rgba(0, 38, 66, 0.6)',
                     margin: '0 0 1.5rem 0',
                     lineHeight: 1.5
                   }}>
@@ -2401,7 +2404,7 @@ const ProfessorDashboard = () => {
                       display: 'block',
                       fontSize: '14px',
                       fontWeight: 600,
-                      color: '#002642',
+                      color: isDarkMode ? '#E5E7EB' : '#002642',
                       marginBottom: '0.5rem'
                     }}>
                       Apprentice Name
@@ -2415,14 +2418,16 @@ const ProfessorDashboard = () => {
                         width: '100%',
                         padding: '0.875rem 1rem',
                         fontSize: '15px',
-                        border: '2px solid #E5E7EB',
+                        border: isDarkMode ? '2px solid #4B5563' : '2px solid #E5E7EB',
                         borderRadius: '10px',
                         outline: 'none',
                         boxSizing: 'border-box',
-                        transition: 'border-color 0.2s ease'
+                        transition: 'border-color 0.2s ease',
+                        background: isDarkMode ? '#374151' : 'white',
+                        color: isDarkMode ? '#F9FAFB' : '#1F2937'
                       }}
                       onFocus={(e) => e.target.style.borderColor = '#0066A2'}
-                      onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
+                      onBlur={(e) => e.target.style.borderColor = isDarkMode ? '#4B5563' : '#E5E7EB'}
                     />
                   </div>
 
@@ -2431,7 +2436,7 @@ const ProfessorDashboard = () => {
                       display: 'block',
                       fontSize: '14px',
                       fontWeight: 600,
-                      color: '#002642',
+                      color: isDarkMode ? '#E5E7EB' : '#002642',
                       marginBottom: '0.5rem'
                     }}>
                       Apprentice Email
@@ -2445,14 +2450,16 @@ const ProfessorDashboard = () => {
                         width: '100%',
                         padding: '0.875rem 1rem',
                         fontSize: '15px',
-                        border: '2px solid #E5E7EB',
+                        border: isDarkMode ? '2px solid #4B5563' : '2px solid #E5E7EB',
                         borderRadius: '10px',
                         outline: 'none',
                         boxSizing: 'border-box',
-                        transition: 'border-color 0.2s ease'
+                        transition: 'border-color 0.2s ease',
+                        background: isDarkMode ? '#374151' : 'white',
+                        color: isDarkMode ? '#F9FAFB' : '#1F2937'
                       }}
                       onFocus={(e) => e.target.style.borderColor = '#0066A2'}
-                      onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
+                      onBlur={(e) => e.target.style.borderColor = isDarkMode ? '#4B5563' : '#E5E7EB'}
                     />
                   </div>
 
@@ -2464,9 +2471,11 @@ const ProfessorDashboard = () => {
                         padding: '0.875rem',
                         fontSize: '15px',
                         fontWeight: 600,
-                        color: '#002642',
-                        background: 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)',
-                        border: '2px solid #E5E7EB',
+                        color: isDarkMode ? '#E5E7EB' : '#002642',
+                        background: isDarkMode
+                          ? 'linear-gradient(135deg, #374151 0%, #1F2937 100%)'
+                          : 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)',
+                        border: isDarkMode ? '2px solid #4B5563' : '2px solid #E5E7EB',
                         borderRadius: '10px',
                         cursor: 'pointer'
                       }}
@@ -2580,25 +2589,27 @@ const ProfessorDashboard = () => {
               <button
                 onClick={resetFollowModal}
                 style={{
-                  background: 'rgba(255,255,255,0.15)',
-                  border: 'none',
+                  background: 'rgba(0,0,0,0.2)',
+                  border: '2px solid rgba(255,255,255,0.4)',
                   borderRadius: '8px',
-                  width: '32px',
-                  height: '32px',
+                  width: '36px',
+                  height: '36px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
-                  transition: 'background 0.2s ease'
+                  transition: 'all 0.2s ease'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.3)';
+                  e.currentTarget.style.background = 'rgba(0,0,0,0.4)';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.6)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
+                  e.currentTarget.style.background = 'rgba(0,0,0,0.2)';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)';
                 }}
               >
-                <X size={18} color="white" strokeWidth={2.5} />
+                <span style={{ color: 'white', fontSize: '24px', fontWeight: 300, lineHeight: 1 }}>×</span>
               </button>
             </div>
 
