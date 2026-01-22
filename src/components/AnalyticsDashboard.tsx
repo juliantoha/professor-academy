@@ -516,8 +516,7 @@ const AnalyticsDashboard = ({ data, isDarkMode = false }: AnalyticsDashboardProp
           icon={Award}
           label="Graduated"
           value={analytics.graduated}
-          trend={8}
-          trendLabel="this quarter"
+          trendLabel="all time"
           color="#8B5CF6"
           isDarkMode={isDarkMode}
         />
