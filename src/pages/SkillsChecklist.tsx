@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { apprenticeCache } from '../lib/apprenticeCache';
 import { useAuth } from '../contexts/AuthContext';
+import PremiumLoader from '../components/PremiumLoader';
 import { ArrowLeft, CheckCircle, BookOpen, Users, Music, Save, Star, Sparkles, Trophy, Zap, MousePointerClick, ChevronDown, Settings, LogOut } from 'lucide-react';
 
 interface Apprentice {
@@ -606,238 +607,7 @@ const SkillsChecklist = () => {
   const progressPercent = Math.round((completedSkills / totalSkills) * 100);
 
   if (loading) {
-    return (
-      <div
-        className="page-enter"
-        style={{
-          fontFamily: "'Inter', system-ui, sans-serif",
-          minHeight: '100vh',
-          background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)'
-        }}>
-        {/* Skeleton Header */}
-        <header style={{
-          background: 'linear-gradient(135deg, #003250 0%, #004A69 50%, #0066A2 100%)',
-          boxShadow: '0 4px 30px rgba(0,0,0,0.2)',
-          position: 'sticky',
-          top: 0,
-          zIndex: 50
-        }}>
-          <div style={{
-            maxWidth: '1000px',
-            margin: '0 auto',
-            padding: '1.5rem 2rem'
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '1rem'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '10px',
-                  background: 'rgba(255,255,255,0.15)',
-                  animation: 'skeleton-pulse 1.5s ease-in-out infinite'
-                }} />
-                <div>
-                  <div style={{
-                    width: '120px',
-                    height: '24px',
-                    borderRadius: '6px',
-                    background: 'rgba(255,255,255,0.2)',
-                    marginBottom: '0.5rem',
-                    animation: 'skeleton-pulse 1.5s ease-in-out infinite'
-                  }} />
-                  <div style={{
-                    width: '180px',
-                    height: '14px',
-                    borderRadius: '4px',
-                    background: 'rgba(255,255,255,0.15)',
-                    animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.1s'
-                  }} />
-                </div>
-              </div>
-              <div style={{
-                width: '130px',
-                height: '44px',
-                borderRadius: '12px',
-                background: 'rgba(255,255,255,0.15)',
-                animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.2s'
-              }} />
-            </div>
-          </div>
-        </header>
-
-        <main style={{
-          maxWidth: '1000px',
-          margin: '0 auto',
-          padding: '2rem'
-        }}>
-          {/* Skeleton Progress Hero */}
-          <div style={{
-            background: 'linear-gradient(135deg, #003250 0%, #004A69 50%, #0066A2 100%)',
-            borderRadius: '24px',
-            padding: '2rem',
-            marginBottom: '2rem',
-            boxShadow: '0 20px 60px rgba(0, 50, 80, 0.25)'
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '2rem'
-            }}>
-              <div style={{ flex: 1, minWidth: '200px' }}>
-                <div style={{
-                  width: '150px',
-                  height: '20px',
-                  borderRadius: '6px',
-                  background: 'rgba(255,255,255,0.2)',
-                  marginBottom: '0.75rem',
-                  animation: 'skeleton-pulse 1.5s ease-in-out infinite'
-                }} />
-                <div style={{
-                  width: '200px',
-                  height: '14px',
-                  borderRadius: '4px',
-                  background: 'rgba(255,255,255,0.15)',
-                  marginBottom: '1.5rem',
-                  animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.1s'
-                }} />
-                <div style={{
-                  width: '100%',
-                  height: '12px',
-                  background: 'rgba(255,255,255,0.15)',
-                  borderRadius: '50px',
-                  animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.2s'
-                }} />
-              </div>
-              <div style={{
-                width: '100px',
-                height: '100px',
-                borderRadius: '50%',
-                background: 'rgba(255,255,255,0.15)',
-                animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.3s'
-              }} />
-            </div>
-          </div>
-
-          {/* Skeleton Category Cards */}
-          {[0, 1, 2].map((categoryIndex) => (
-            <div
-              key={categoryIndex}
-              style={{
-                background: 'white',
-                borderRadius: '24px',
-                marginBottom: '1.5rem',
-                boxShadow: '0 10px 40px rgba(0,0,0,0.08)',
-                overflow: 'hidden'
-              }}
-            >
-              {/* Skeleton Category Header */}
-              <div style={{
-                background: categoryIndex === 0
-                  ? 'linear-gradient(135deg, #002642 0%, #004A69 100%)'
-                  : categoryIndex === 1
-                    ? 'linear-gradient(135deg, #eb6a18 0%, #ff8c3d 100%)'
-                    : 'linear-gradient(135deg, #471657 0%, #6B2C7B 100%)',
-                padding: '1.5rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <div style={{
-                    width: '52px',
-                    height: '52px',
-                    borderRadius: '14px',
-                    background: 'rgba(255,255,255,0.2)',
-                    animation: 'skeleton-pulse 1.5s ease-in-out infinite'
-                  }} />
-                  <div>
-                    <div style={{
-                      width: '180px',
-                      height: '17px',
-                      borderRadius: '4px',
-                      background: 'rgba(255,255,255,0.25)',
-                      marginBottom: '0.5rem',
-                      animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.1s'
-                    }} />
-                    <div style={{
-                      width: '120px',
-                      height: '13px',
-                      borderRadius: '4px',
-                      background: 'rgba(255,255,255,0.15)',
-                      animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.2s'
-                    }} />
-                  </div>
-                </div>
-                <div style={{
-                  width: '56px',
-                  height: '56px',
-                  borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.2)',
-                  animation: 'skeleton-pulse 1.5s ease-in-out infinite 0.3s'
-                }} />
-              </div>
-
-              {/* Skeleton Skills */}
-              <div style={{ padding: '1rem' }}>
-                {[0, 1, 2, 3, 4].slice(0, categoryIndex === 2 ? 4 : 5).map((skillIndex) => (
-                  <div
-                    key={skillIndex}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '1rem',
-                      padding: '1.25rem',
-                      borderRadius: '16px'
-                    }}
-                  >
-                    <div style={{
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '50%',
-                      background: '#E5E7EB',
-                      flexShrink: 0,
-                      animation: `skeleton-pulse 1.5s ease-in-out infinite ${skillIndex * 0.1}s`
-                    }} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{
-                        width: `${60 + Math.random() * 30}%`,
-                        height: '15px',
-                        borderRadius: '4px',
-                        background: '#E5E7EB',
-                        marginBottom: '0.5rem',
-                        animation: `skeleton-pulse 1.5s ease-in-out infinite ${skillIndex * 0.1 + 0.05}s`
-                      }} />
-                      <div style={{
-                        width: `${70 + Math.random() * 25}%`,
-                        height: '13px',
-                        borderRadius: '4px',
-                        background: '#F3F4F6',
-                        animation: `skeleton-pulse 1.5s ease-in-out infinite ${skillIndex * 0.1 + 0.1}s`
-                      }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </main>
-
-        <style>{`
-          @keyframes skeleton-pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-          }
-        `}</style>
-      </div>
-    );
+    return <PremiumLoader message="Skill Tree" subMessage="Loading apprentice progress" />;
   }
 
   if (error || !apprentice) {
@@ -1192,13 +962,16 @@ const SkillsChecklist = () => {
         </div>
       )}
 
-      {/* Header - Sticky */}
+      {/* Header - Hidden when compact header shows */}
       <header style={{
         background: 'linear-gradient(135deg, #003250 0%, #004A69 50%, #0066A2 100%)',
         boxShadow: '0 4px 30px rgba(0,0,0,0.2)',
         position: 'sticky',
         top: 0,
-        zIndex: 50
+        zIndex: 50,
+        opacity: isScrolled ? 0 : 1,
+        visibility: isScrolled ? 'hidden' : 'visible',
+        transition: 'opacity 0.2s ease, visibility 0.2s ease'
       }}>
         <div style={{
           position: 'absolute',
