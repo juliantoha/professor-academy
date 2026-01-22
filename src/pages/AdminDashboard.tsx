@@ -456,22 +456,83 @@ const AdminDashboard = () => {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: '1rem'
+          gap: '1.5rem'
         }}>
           <div style={{
-            width: '48px',
-            height: '48px',
-            border: '4px solid rgba(255,255,255,0.2)',
-            borderTopColor: '#FFD700',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite'
-          }} />
-          <span style={{ color: '#FFD700', fontWeight: 500 }}>Loading admin dashboard...</span>
+            position: 'relative',
+            width: '72px',
+            height: '72px'
+          }}>
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '50%',
+              border: '3px solid rgba(255,215,0,0.15)',
+            }} />
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '50%',
+              border: '3px solid transparent',
+              borderTopColor: '#FFD700',
+              borderRightColor: '#FFA500',
+              animation: 'spin 1s linear infinite'
+            }} />
+            <div style={{
+              position: 'absolute',
+              inset: '10px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              animation: 'pulse 2s ease-in-out infinite'
+            }}>
+              <Shield size={28} color="#1a1a2e" />
+            </div>
+          </div>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}>
+            <span style={{
+              fontFamily: 'Montserrat, sans-serif',
+              fontSize: '16px',
+              fontWeight: 600,
+              color: '#FFD700'
+            }}>
+              Loading Admin Dashboard
+            </span>
+            <div style={{
+              width: '140px',
+              height: '4px',
+              borderRadius: '4px',
+              background: 'rgba(255,215,0,0.15)',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                width: '100%',
+                height: '100%',
+                background: 'linear-gradient(90deg, transparent 0%, #FFD700 50%, transparent 100%)',
+                animation: 'shimmer 1.5s ease-in-out infinite'
+              }} />
+            </div>
+          </div>
         </div>
         <style>{`
           @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
+          }
+          @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(0.95); opacity: 0.8; }
+          }
+          @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
           }
         `}</style>
       </div>
@@ -1187,11 +1248,40 @@ const AdminDashboard = () => {
             </table>
             {filteredProfessors.length === 0 && (
               <div style={{
-                padding: '3rem',
-                textAlign: 'center',
-                color: 'rgba(255,255,255,0.5)'
+                padding: '4rem 2rem',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '1rem'
               }}>
-                No professors found
+                <div style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '16px',
+                  background: 'rgba(255,215,0,0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <GraduationCap size={32} color="rgba(255,215,0,0.5)" />
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    color: 'rgba(255,255,255,0.7)',
+                    margin: '0 0 0.25rem 0'
+                  }}>
+                    No Professors Found
+                  </p>
+                  <p style={{
+                    fontSize: '14px',
+                    color: 'rgba(255,255,255,0.4)',
+                    margin: 0
+                  }}>
+                    {searchTerm ? 'Try adjusting your search criteria' : 'Professors will appear here once registered'}
+                  </p>
+                </div>
               </div>
             )}
           </div>
@@ -1385,11 +1475,40 @@ const AdminDashboard = () => {
             </table>
             {filteredApprentices.length === 0 && (
               <div style={{
-                padding: '3rem',
-                textAlign: 'center',
-                color: 'rgba(255,255,255,0.5)'
+                padding: '4rem 2rem',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '1rem'
               }}>
-                No apprentices found
+                <div style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '16px',
+                  background: 'rgba(16,185,129,0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <Users size={32} color="rgba(16,185,129,0.5)" />
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    color: 'rgba(255,255,255,0.7)',
+                    margin: '0 0 0.25rem 0'
+                  }}>
+                    No Apprentices Found
+                  </p>
+                  <p style={{
+                    fontSize: '14px',
+                    color: 'rgba(255,255,255,0.4)',
+                    margin: 0
+                  }}>
+                    {searchTerm ? 'Try adjusting your search criteria' : 'Apprentices will appear here once added by professors'}
+                  </p>
+                </div>
               </div>
             )}
           </div>
@@ -1414,12 +1533,15 @@ const AdminDashboard = () => {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(0,0,0,0.8)',
+          background: 'rgba(0,0,0,0.7)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 1000,
-          padding: '1rem'
+          padding: '1rem',
+          animation: 'fadeIn 0.2s ease-out'
         }}>
           <div style={{
             background: '#1a1a2e',
@@ -1428,7 +1550,8 @@ const AdminDashboard = () => {
             width: '100%',
             maxWidth: '450px',
             overflow: 'hidden',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.5)'
+            boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+            animation: 'modalSlideIn 0.3s ease-out'
           }}>
             {/* Modal Header */}
             <div style={{
@@ -1593,12 +1716,15 @@ const AdminDashboard = () => {
           left: 0,
           right: 0,
           bottom: 0,
-          background: 'rgba(0,0,0,0.8)',
+          background: 'rgba(0,0,0,0.7)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 1000,
-          padding: '1rem'
+          padding: '1rem',
+          animation: 'fadeIn 0.2s ease-out'
         }}>
           <div style={{
             background: '#1a1a2e',
@@ -1610,7 +1736,8 @@ const AdminDashboard = () => {
             overflow: 'hidden',
             boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
             display: 'flex',
-            flexDirection: 'column'
+            flexDirection: 'column',
+            animation: 'modalSlideIn 0.3s ease-out'
           }}>
             {/* Modal Header */}
             <div style={{
@@ -1849,6 +1976,20 @@ const AdminDashboard = () => {
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes modalSlideIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95) translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
         }
       `}</style>
     </div>
