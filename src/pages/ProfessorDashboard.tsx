@@ -60,7 +60,20 @@ const ProfessorDashboard = () => {
   const [progress, setProgress] = useState<Record<string, Progress[]>>({});
   const [pendingSubmissions, setPendingSubmissions] = useState<Submission[]>([]);
   const [apprenticeProfiles, setApprenticeProfiles] = useState<Record<string, { avatarUrl?: string }>>({});
-  const [schoolWideGraduates, setSchoolWideGraduates] = useState<Array<{ createdAt?: string; graduatedAt?: string }>>([]);
+  // School-wide analytics data
+  const [schoolWideApprentices, setSchoolWideApprentices] = useState<Array<{
+    email: string;
+    createdAt?: string;
+    graduated?: boolean;
+    graduatedAt?: string;
+  }>>([]);
+  const [schoolWideProgress, setSchoolWideProgress] = useState<Array<{
+    Status: string;
+    module: string;
+    phase: string;
+    apprenticeEmail: string;
+  }>>([]);
+  const [schoolWidePendingCount, setSchoolWidePendingCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -274,17 +287,39 @@ const ProfessorDashboard = () => {
         setFollowingIds(new Set());
       }
 
-      // Fetch school-wide graduates for analytics chart
-      const { data: schoolGradsData, error: schoolGradsError } = await supabase
-        .from('apprentices')
-        .select('createdAt, graduatedAt')
-        .eq('graduated', true)
-        .not('graduatedAt', 'is', null);
+      // Fetch school-wide data for analytics dashboard
+      const [schoolApprenticesResult, schoolProgressResult, schoolPendingResult] = await Promise.all([
+        // All apprentices school-wide
+        supabase
+          .from('apprentices')
+          .select('email, createdAt, graduated, graduatedAt'),
+        // All progress records school-wide
+        supabase
+          .from('progress')
+          .select('Status, module, phase, apprenticeEmail'),
+        // Count of all pending submissions school-wide
+        supabase
+          .from('submissions')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'Pending')
+      ]);
 
-      if (schoolGradsError) {
-        console.error('Error fetching school-wide graduates:', schoolGradsError);
+      if (schoolApprenticesResult.error) {
+        console.error('Error fetching school-wide apprentices:', schoolApprenticesResult.error);
       } else {
-        setSchoolWideGraduates(schoolGradsData || []);
+        setSchoolWideApprentices(schoolApprenticesResult.data || []);
+      }
+
+      if (schoolProgressResult.error) {
+        console.error('Error fetching school-wide progress:', schoolProgressResult.error);
+      } else {
+        setSchoolWideProgress(schoolProgressResult.data || []);
+      }
+
+      if (schoolPendingResult.error) {
+        console.error('Error fetching school-wide pending count:', schoolPendingResult.error);
+      } else {
+        setSchoolWidePendingCount(schoolPendingResult.count || 0);
       }
 
     } catch (err: any) {
@@ -1038,20 +1073,14 @@ const ProfessorDashboard = () => {
           </div>
         )}
 
-        {/* Analytics Dashboard */}
+        {/* Analytics Dashboard - School-wide data */}
         <AnalyticsDashboard
-          data={{
-            apprentices: apprentices.map(a => ({
-              email: a.email,
-              createdAt: a.createdAt,
-              graduated: a.graduated,
-              graduatedAt: a.graduatedAt
-            })),
-            progress,
-            pendingSubmissions
+          schoolWideData={{
+            apprentices: schoolWideApprentices,
+            progress: schoolWideProgress,
+            pendingSubmissions: schoolWidePendingCount
           }}
           isDarkMode={isDarkMode}
-          schoolWideGraduates={schoolWideGraduates}
         />
 
         {/* Pending Reviews Section */}
