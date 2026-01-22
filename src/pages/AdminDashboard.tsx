@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import NotificationCenter from '../components/NotificationCenter';
 import {
   Users,
   GraduationCap,
@@ -647,6 +648,9 @@ const AdminDashboard = () => {
             </div>
 
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              {/* Notification Center */}
+              <NotificationCenter />
+
               {/* Profile Dropdown */}
               <div style={{ position: 'relative' }}>
                 <button

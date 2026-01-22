@@ -6,7 +6,10 @@ import { apprenticeCache } from '../lib/apprenticeCache';
 import { LogOut, Users, Clock, CheckCircle, ExternalLink, Settings, ChevronDown, Plus, X, UserPlus, Copy, Check, Shield, ClipboardList, GraduationCap, RotateCcw, Music2, Theater, Piano, PenLine, BookOpen, Target, Search, UserMinus, ChevronUp, Moon, Sun, Star } from 'lucide-react';
 import MasqueradeBanner from '../components/MasqueradeBanner';
 import DarkModeToggle from '../components/DarkModeToggle';
+import NotificationCenter from '../components/NotificationCenter';
 import { useDarkMode } from '../contexts/DarkModeContext';
+import { useNotifications } from '../contexts/NotificationContext';
+import { useOnboarding, OnboardingStep } from '../contexts/OnboardingContext';
 
 // Super admin emails - configured via environment variable
 const SUPER_ADMIN_EMAILS = (import.meta.env.VITE_SUPER_ADMIN_EMAILS || '').split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
@@ -84,8 +87,57 @@ const ProfessorDashboard = () => {
   // Get display name
   const displayName = profile?.firstName || profile?.name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Professor';
 
+  // Notifications and onboarding
+  const { addNotification } = useNotifications();
+  const { startTour, hasCompletedTour } = useOnboarding();
+
   // Track if this is the initial load vs a real-time update
   const isInitialLoad = useRef(true);
+
+  // Onboarding tour steps for professor dashboard
+  const professorTourSteps: OnboardingStep[] = [
+    {
+      id: 'welcome',
+      target: '[data-tour="dashboard-title"]',
+      title: 'Welcome to Professor Dashboard!',
+      content: 'This is your command center for managing apprentices and tracking their progress through the training modules.',
+      placement: 'bottom'
+    },
+    {
+      id: 'add-apprentice',
+      target: '[data-tour="add-apprentice-btn"]',
+      title: 'Add Your First Apprentice',
+      content: 'Click here to add a new apprentice. They\'ll receive an email with their unique training dashboard link.',
+      placement: 'bottom',
+      action: 'Got it!'
+    },
+    {
+      id: 'submissions',
+      target: '[data-tour="pending-submissions"]',
+      title: 'Review Submissions',
+      content: 'When apprentices complete modules, their submissions appear here for your review. Approve or request revisions.',
+      placement: 'left'
+    },
+    {
+      id: 'notifications',
+      target: '[data-tour="notification-bell"]',
+      title: 'Stay Updated',
+      content: 'The notification bell keeps you informed of new submissions, approvals, and important updates.',
+      placement: 'bottom',
+      action: 'Finish Tour'
+    }
+  ];
+
+  // Start onboarding tour on first visit
+  useEffect(() => {
+    if (!loading && !hasCompletedTour('professor-dashboard')) {
+      // Delay slightly to let the page render
+      const timer = setTimeout(() => {
+        startTour('professor-dashboard', professorTourSteps);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, hasCompletedTour, startTour]);
 
   const fetchData = useCallback(async (showLoadingSpinner = true) => {
     try {
@@ -264,9 +316,20 @@ const ProfessorDashboard = () => {
           table: 'submissions',
           filter: `professorEmail=eq.${user.email}`
         },
-        () => {
-          console.log('[RealTime] Submissions changed, refreshing...');
+        (payload) => {
+          console.log('[RealTime] Submissions changed, refreshing...', payload.eventType);
           fetchData(false);
+
+          // Add notification for new submissions
+          if (payload.eventType === 'INSERT' && payload.new) {
+            const newSubmission = payload.new as { studentName?: string; moduleName?: string; submissionId?: string };
+            addNotification({
+              type: 'submission',
+              title: 'New Submission',
+              message: `${newSubmission.studentName || 'An apprentice'} submitted ${newSubmission.moduleName || 'a module'} for review`,
+              link: newSubmission.submissionId ? `/review/${newSubmission.submissionId}` : undefined
+            });
+          }
         }
       )
       .subscribe();
@@ -672,7 +735,9 @@ const ProfessorDashboard = () => {
             gap: '1rem'
           }}>
             <div style={{ flex: '1 1 auto', minWidth: 0 }}>
-              <h1 style={{
+              <h1
+                data-tour="dashboard-title"
+                style={{
                 fontFamily: "'Lora', Georgia, serif",
                 fontSize: 'clamp(20px, 5vw, 28px)',
                 fontWeight: 700,
@@ -694,6 +759,11 @@ const ProfessorDashboard = () => {
               </p>
             </div>
             <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexShrink: 0 }}>
+              {/* Notification Center */}
+              <div data-tour="notification-bell">
+                <NotificationCenter />
+              </div>
+
               {/* Profile Dropdown */}
               <div style={{ position: 'relative' }}>
                 <button
@@ -954,7 +1024,7 @@ const ProfessorDashboard = () => {
         )}
 
         {/* Pending Reviews Section */}
-        <section style={{ marginBottom: '2.5rem' }}>
+        <section data-tour="pending-submissions" style={{ marginBottom: '2.5rem' }}>
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -1293,6 +1363,7 @@ const ProfessorDashboard = () => {
                 Follow Apprentice
               </button>
               <button
+                data-tour="add-apprentice-btn"
                 onClick={() => setShowAddModal(true)}
                 style={{
                   display: 'flex',
