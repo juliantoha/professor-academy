@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, CheckCircle, BookOpen, Users, Music, Save, Star, Sparkles, Trophy, Zap, MousePointerClick } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { ArrowLeft, CheckCircle, BookOpen, Users, Music, Save, Star, Sparkles, Trophy, Zap, MousePointerClick, ChevronDown, Settings, LogOut } from 'lucide-react';
 
 interface Apprentice {
   id: string;
@@ -479,6 +480,7 @@ const AchievementBadge = ({ category }: { category: Category }) => (
 const SkillsChecklist = () => {
   const { dashboardToken } = useParams<{ dashboardToken: string }>();
   const navigate = useNavigate();
+  const { user, profile, signOut } = useAuth();
 
   const [apprentice, setApprentice] = useState<Apprentice | null>(null);
   const [checkedSkills, setCheckedSkills] = useState<Record<string, boolean>>({});
@@ -487,6 +489,20 @@ const SkillsChecklist = () => {
   const [error, setError] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+  // Get display name for professor
+  const displayName = profile?.firstName || profile?.name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Professor';
+
+  // Scroll detection for compact header
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 150);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const fetchApprentice = useCallback(async () => {
     try {
@@ -898,6 +914,260 @@ const SkillsChecklist = () => {
               }}
             />
           ))}
+        </div>
+      )}
+
+      {/* Compact Sticky Header - appears on scroll */}
+      {isScrolled && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          background: 'linear-gradient(135deg, #003250 0%, #004A69 100%)',
+          boxShadow: '0 4px 20px rgba(0, 38, 66, 0.25)',
+          zIndex: 100,
+          animation: 'slideDown 0.3s ease-out'
+        }}>
+          <div style={{
+            maxWidth: '1000px',
+            margin: '0 auto',
+            padding: '0.625rem 1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '0.75rem'
+          }}>
+            {/* Left: Back button and progress */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <button
+                onClick={() => navigate('/professor')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0.375rem',
+                  background: 'rgba(255,255,255,0.1)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  borderRadius: '6px',
+                  color: 'white',
+                  cursor: 'pointer'
+                }}
+              >
+                <ArrowLeft size={16} />
+              </button>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                <div style={{
+                  width: '80px',
+                  height: '6px',
+                  background: 'rgba(255,255,255,0.2)',
+                  borderRadius: '50px',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{
+                    width: `${progressPercent}%`,
+                    height: '100%',
+                    background: progressPercent === 100
+                      ? 'linear-gradient(90deg, #10B981 0%, #34D399 100%)'
+                      : 'linear-gradient(90deg, #FBBF24 0%, #F59E0B 100%)',
+                    borderRadius: '50px',
+                    transition: 'width 0.3s ease'
+                  }} />
+                </div>
+                <span style={{
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  color: progressPercent === 100 ? '#34D399' : '#FBBF24'
+                }}>
+                  {progressPercent}%
+                </span>
+              </div>
+            </div>
+
+            {/* Right: Save button and profile */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.375rem 0.75rem',
+                  background: saveSuccess
+                    ? 'linear-gradient(135deg, #059669 0%, #10B981 100%)'
+                    : 'linear-gradient(135deg, #eb6a18 0%, #ff8c3d 100%)',
+                  border: 'none',
+                  borderRadius: '6px',
+                  color: 'white',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: saving ? 'not-allowed' : 'pointer',
+                  opacity: saving ? 0.7 : 1
+                }}
+              >
+                {saving ? (
+                  <div style={{
+                    width: '12px',
+                    height: '12px',
+                    border: '2px solid rgba(255,255,255,0.3)',
+                    borderTopColor: 'white',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                  }} />
+                ) : saveSuccess ? (
+                  <CheckCircle size={12} />
+                ) : (
+                  <Save size={12} />
+                )}
+                {saving ? 'Saving' : saveSuccess ? 'Saved' : 'Save'}
+              </button>
+
+              {/* Profile Dropdown */}
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    padding: '0.375rem 0.5rem',
+                    background: 'rgba(255,255,255,0.1)',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    borderRadius: '6px',
+                    color: 'white',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <div style={{
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '50%',
+                    background: profile?.avatarUrl
+                      ? `url(${profile.avatarUrl}) center/cover no-repeat`
+                      : 'linear-gradient(135deg, #eb6a18 0%, #ff8c3d 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '11px',
+                    fontWeight: 700
+                  }}>
+                    {!profile?.avatarUrl && displayName.charAt(0).toUpperCase()}
+                  </div>
+                  <ChevronDown size={12} style={{
+                    transform: showProfileMenu ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.2s ease'
+                  }} />
+                </button>
+
+                {/* Dropdown Menu */}
+                {showProfileMenu && (
+                  <>
+                    <div
+                      onClick={() => setShowProfileMenu(false)}
+                      style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        zIndex: 10
+                      }}
+                    />
+                    <div style={{
+                      position: 'absolute',
+                      top: '100%',
+                      right: 0,
+                      marginTop: '0.5rem',
+                      background: 'white',
+                      borderRadius: '10px',
+                      boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+                      width: '180px',
+                      zIndex: 20,
+                      overflow: 'hidden'
+                    }}>
+                      <div style={{
+                        padding: '0.75rem',
+                        borderBottom: '1px solid #E5E7EB'
+                      }}>
+                        <p style={{
+                          fontSize: '13px',
+                          fontWeight: 600,
+                          color: '#002642',
+                          margin: '0 0 0.15rem 0'
+                        }}>
+                          {displayName}
+                        </p>
+                        <p style={{
+                          fontSize: '11px',
+                          color: 'rgba(0, 38, 66, 0.6)',
+                          margin: 0
+                        }}>
+                          {user?.email}
+                        </p>
+                      </div>
+                      <div style={{ padding: '0.35rem' }}>
+                        <button
+                          onClick={() => {
+                            setShowProfileMenu(false);
+                            navigate('/settings');
+                          }}
+                          style={{
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            padding: '0.5rem 0.75rem',
+                            background: 'transparent',
+                            border: 'none',
+                            borderRadius: '6px',
+                            color: '#374151',
+                            fontSize: '13px',
+                            cursor: 'pointer',
+                            textAlign: 'left'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = '#F3F4F6'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        >
+                          <Settings size={14} />
+                          Settings
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowProfileMenu(false);
+                            signOut();
+                          }}
+                          style={{
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            padding: '0.5rem 0.75rem',
+                            background: 'transparent',
+                            border: 'none',
+                            borderRadius: '6px',
+                            color: '#DC2626',
+                            fontSize: '13px',
+                            cursor: 'pointer',
+                            textAlign: 'left'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = '#FEF2F2'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        >
+                          <LogOut size={14} />
+                          Sign Out
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -1483,6 +1753,10 @@ const SkillsChecklist = () => {
         @keyframes tap-hint {
           0%, 100% { transform: scale(1); }
           50% { transform: scale(1.1); }
+        }
+        @keyframes slideDown {
+          from { transform: translateY(-100%); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
         }
       `}</style>
     </div>
