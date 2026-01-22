@@ -305,22 +305,9 @@ const NotificationCenter = () => {
           if (!isOpen) e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
         }}
       >
-        <svg
-          width="22"
-          height="22"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="white"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{
-            animation: unreadCount > 0 ? 'bell-ring 0.5s ease-in-out' : 'none'
-          }}
-        >
-          <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-          <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-        </svg>
+        <Bell size={22} color="white" strokeWidth={2} style={{
+          animation: unreadCount > 0 ? 'bell-ring 0.5s ease-in-out' : 'none'
+        }} />
 
         {/* Badge */}
         {unreadCount > 0 && (
@@ -387,24 +374,37 @@ const NotificationCenter = () => {
               justifyContent: 'space-between',
               background: 'linear-gradient(135deg, #003250 0%, #004A69 100%)'
             }}>
-              <div>
-                <h2 style={{
-                  fontSize: '18px',
-                  fontWeight: 700,
-                  color: 'white',
-                  margin: 0
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '10px',
+                  background: 'rgba(255,255,255,0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}>
-                  Notifications
-                </h2>
-                {unreadCount > 0 && (
-                  <p style={{
-                    fontSize: '12px',
-                    color: 'rgba(255,255,255,0.7)',
-                    margin: '4px 0 0 0'
+                  <Bell size={20} color="white" />
+                </div>
+                <div>
+                  <h2 style={{
+                    fontSize: '18px',
+                    fontWeight: 700,
+                    color: 'white',
+                    margin: 0
                   }}>
-                    {unreadCount} unread
-                  </p>
-                )}
+                    Notifications
+                  </h2>
+                  {unreadCount > 0 && (
+                    <p style={{
+                      fontSize: '12px',
+                      color: 'rgba(255,255,255,0.7)',
+                      margin: '4px 0 0 0'
+                    }}>
+                      {unreadCount} unread
+                    </p>
+                  )}
+                </div>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 {unreadCount > 0 && (
