@@ -25,6 +25,9 @@ import { AuthProvider } from './contexts/AuthContext.tsx'
 import { ProtectedRoute } from './components/ProtectedRoute.tsx'
 import { ToastProvider } from './contexts/ToastContext.tsx'
 import { DarkModeProvider } from './contexts/DarkModeContext.tsx'
+import { NotificationProvider } from './contexts/NotificationContext.tsx'
+import { OnboardingProvider } from './contexts/OnboardingContext.tsx'
+import OnboardingOverlay from './components/OnboardingOverlay.tsx'
 
 // Import the modules
 import Module1ComputerEssentials from './components/modules/Module1.tsx'
@@ -155,7 +158,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <DarkModeProvider>
       <ToastProvider>
         <AuthProvider>
-          <RouterProvider router={router} />
+          <NotificationProvider>
+            <OnboardingProvider>
+              <RouterProvider router={router} />
+              <OnboardingOverlay />
+            </OnboardingProvider>
+          </NotificationProvider>
         </AuthProvider>
       </ToastProvider>
     </DarkModeProvider>
