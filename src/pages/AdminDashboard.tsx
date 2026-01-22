@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -6,7 +6,6 @@ import {
   Users,
   GraduationCap,
   Eye,
-  RefreshCw,
   LogOut,
   Shield,
   Clock,
@@ -99,18 +98,11 @@ const AdminDashboard = () => {
 
   const displayName = profile?.firstName || profile?.name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Admin';
 
-  useEffect(() => {
-    if (!isSuperAdmin) {
-      navigate('/professor');
-      return;
-    }
-    fetchData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, isSuperAdmin]);
+  const isInitialLoad = useRef(true);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async (showLoadingSpinner = true) => {
     try {
-      setLoading(true);
+      if (showLoadingSpinner) setLoading(true);
       setError('');
 
       // Fetch all professors (users with role 'professor')
@@ -206,8 +198,58 @@ const AdminDashboard = () => {
       setError(err.message || 'Failed to load data');
     } finally {
       setLoading(false);
+      isInitialLoad.current = false;
     }
-  };
+  }, []);
+
+  // Initial fetch and real-time subscriptions
+  useEffect(() => {
+    if (!isSuperAdmin) {
+      navigate('/professor');
+      return;
+    }
+
+    fetchData();
+
+    // Set up real-time subscriptions
+    const apprenticesChannel = supabase
+      .channel('admin-apprentices')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'apprentices' }, () => {
+        console.log('[RealTime] Apprentices changed');
+        fetchData(false);
+      })
+      .subscribe();
+
+    const submissionsChannel = supabase
+      .channel('admin-submissions')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'submissions' }, () => {
+        console.log('[RealTime] Submissions changed');
+        fetchData(false);
+      })
+      .subscribe();
+
+    const progressChannel = supabase
+      .channel('admin-progress')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'progress' }, () => {
+        console.log('[RealTime] Progress changed');
+        fetchData(false);
+      })
+      .subscribe();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && !isInitialLoad.current) {
+        fetchData(false);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      supabase.removeChannel(apprenticesChannel);
+      supabase.removeChannel(submissionsChannel);
+      supabase.removeChannel(progressChannel);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isSuperAdmin, navigate, fetchData]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -605,33 +647,6 @@ const AdminDashboard = () => {
             </div>
 
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              <button
-                onClick={fetchData}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.75rem 1.25rem',
-                  background: 'rgba(255,215,0,0.1)',
-                  border: '2px solid rgba(255,215,0,0.3)',
-                  borderRadius: '10px',
-                  color: '#FFD700',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255,215,0,0.2)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255,215,0,0.1)';
-                }}
-              >
-                <RefreshCw size={18} />
-                Refresh
-              </button>
-
               {/* Profile Dropdown */}
               <div style={{ position: 'relative' }}>
                 <button
