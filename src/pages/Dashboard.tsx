@@ -478,7 +478,10 @@ const Dashboard = ({ dashboardToken }: { dashboardToken: string }) => {
           borderRadius: '20px',
           padding: '2.5rem',
           marginBottom: '2rem',
-          boxShadow: '0 4px 16px rgba(0, 38, 66, 0.06)'
+          boxShadow: '0 4px 16px rgba(0, 38, 66, 0.06)',
+          position: 'sticky',
+          top: '1rem',
+          zIndex: 50
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
             <div style={{

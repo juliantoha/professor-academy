@@ -389,7 +389,8 @@ const ProfessorDashboard = () => {
       <header style={{
         background: 'linear-gradient(135deg, #002642 0%, #004A69 50%, #0066A2 100%)',
         boxShadow: '0 4px 20px rgba(0, 38, 66, 0.15)',
-        position: 'relative',
+        position: 'sticky',
+        top: isMasquerading ? '52px' : '0',
         zIndex: 50
       }}>
         <div style={{
