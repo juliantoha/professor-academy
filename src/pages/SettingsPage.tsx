@@ -1,13 +1,16 @@
 import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useDarkMode } from '../contexts/DarkModeContext';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, User, Lock, Camera, Save, CheckCircle, AlertCircle, Home, ChevronRight } from 'lucide-react';
+import { ArrowLeft, User, Lock, Camera, Save, CheckCircle, AlertCircle, Home, ChevronRight, LogOut, Settings, ChevronDown, Moon, Sun } from 'lucide-react';
 
 const SettingsPage = () => {
-  const { user, profile, updatePassword, refreshProfile } = useAuth();
+  const { user, profile, updatePassword, refreshProfile, signOut } = useAuth();
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const [firstName, setFirstName] = useState(profile?.firstName || '');
   const [lastName, setLastName] = useState(profile?.lastName || '');
@@ -144,11 +147,21 @@ const SettingsPage = () => {
     }
   };
 
+  const displayName = profile?.firstName || profile?.name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'User';
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login');
+  };
+
   return (
     <div style={{
       fontFamily: 'Lato, sans-serif',
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)'
+      background: isDarkMode
+        ? 'linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%)'
+        : 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)',
+      transition: 'background 0.4s ease'
     }}>
       {/* Header */}
       <header style={{
@@ -228,34 +241,196 @@ const SettingsPage = () => {
               Account Settings
             </h1>
 
-            <button
-              onClick={() => navigate('/professor')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.75rem 1.25rem',
-                background: 'rgba(255,255,255,0.15)',
-                border: '2px solid rgba(255,255,255,0.3)',
-                borderRadius: '10px',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.3s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255,255,255,0.25)';
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.5)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)';
-              }}
-            >
-              <ArrowLeft size={18} />
-              Back to Dashboard
-            </button>
+            {/* Profile Dropdown */}
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '0.5rem 1rem',
+                  background: 'rgba(255,255,255,0.1)',
+                  border: '2px solid rgba(255,255,255,0.3)',
+                  borderRadius: '10px',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                <div style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  background: profile?.avatarUrl
+                    ? `url(${profile.avatarUrl}) center/cover no-repeat`
+                    : 'linear-gradient(135deg, #eb6a18 0%, #ff8c3d 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  {!profile?.avatarUrl && (
+                    <span style={{
+                      fontFamily: "'Lora', Georgia, serif",
+                      fontSize: '14px',
+                      fontWeight: 700,
+                      color: 'white'
+                    }}>
+                      {displayName.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <span>{displayName}</span>
+                <ChevronDown size={16} style={{
+                  transform: showProfileMenu ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.2s ease'
+                }} />
+              </button>
+
+              {showProfileMenu && (
+                <>
+                  <div
+                    onClick={() => setShowProfileMenu(false)}
+                    style={{
+                      position: 'fixed',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      zIndex: 10
+                    }}
+                  />
+                  <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    left: 'auto',
+                    marginTop: '0.5rem',
+                    background: isDarkMode ? '#1f2937' : 'white',
+                    borderRadius: '12px',
+                    boxShadow: isDarkMode
+                      ? '0 8px 32px rgba(0,0,0,0.4)'
+                      : '0 8px 32px rgba(0,0,0,0.15)',
+                    border: isDarkMode ? '1px solid #374151' : 'none',
+                    width: '220px',
+                    zIndex: 20,
+                    overflow: 'hidden'
+                  }}>
+                    <div style={{
+                      padding: '1rem',
+                      borderBottom: isDarkMode ? '1px solid #374151' : '1px solid #E5E7EB'
+                    }}>
+                      <p style={{
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        color: isDarkMode ? '#F9FAFB' : '#002642',
+                        margin: '0 0 0.25rem 0'
+                      }}>
+                        {profile?.firstName && profile?.lastName
+                          ? `${profile.firstName} ${profile.lastName}`
+                          : displayName}
+                      </p>
+                      <p style={{
+                        fontSize: '12px',
+                        color: isDarkMode ? '#9CA3AF' : 'rgba(0, 38, 66, 0.6)',
+                        margin: 0
+                      }}>
+                        {user?.email}
+                      </p>
+                    </div>
+                    <div style={{ padding: '0.5rem' }}>
+                      <button
+                        onClick={() => {
+                          setShowProfileMenu(false);
+                          navigate('/professor');
+                        }}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.75rem',
+                          padding: '0.75rem 1rem',
+                          background: 'transparent',
+                          border: 'none',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          color: isDarkMode ? '#E5E7EB' : '#002642',
+                          fontSize: '14px',
+                          textAlign: 'left',
+                          transition: 'background 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = isDarkMode ? '#374151' : '#F3F4F6'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <Home size={18} color={isDarkMode ? '#9CA3AF' : '#6B7280'} />
+                        <span>Dashboard</span>
+                      </button>
+
+                      <button
+                        onClick={() => toggleDarkMode()}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.75rem',
+                          padding: '0.75rem 1rem',
+                          background: 'transparent',
+                          border: 'none',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          color: isDarkMode ? '#E5E7EB' : '#002642',
+                          fontSize: '14px',
+                          textAlign: 'left',
+                          transition: 'background 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = isDarkMode ? '#374151' : '#F3F4F6'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      >
+                        {isDarkMode ? (
+                          <Moon size={18} color="#9CA3AF" />
+                        ) : (
+                          <Sun size={18} color="#F59E0B" />
+                        )}
+                        <span>{isDarkMode ? 'Dark Mode' : 'Light Mode'}</span>
+                      </button>
+
+                      <div style={{
+                        height: '1px',
+                        background: isDarkMode ? '#374151' : '#E5E7EB',
+                        margin: '0.5rem 0'
+                      }} />
+
+                      <button
+                        onClick={handleSignOut}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.75rem',
+                          padding: '0.75rem 1rem',
+                          background: 'transparent',
+                          border: 'none',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          color: '#DC2626',
+                          fontSize: '14px',
+                          textAlign: 'left',
+                          transition: 'background 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = isDarkMode ? '#374151' : '#FEE2E2'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      >
+                        <LogOut size={18} />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -300,11 +475,11 @@ const SettingsPage = () => {
 
         {/* Profile Photo Section */}
         <section style={{
-          background: 'white',
+          background: isDarkMode ? '#1E293B' : 'white',
           borderRadius: '20px',
           padding: '2rem',
           marginBottom: '1.5rem',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.06)'
+          boxShadow: isDarkMode ? '0 4px 16px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)'
         }}>
           <div style={{
             display: 'flex',
@@ -312,12 +487,12 @@ const SettingsPage = () => {
             gap: '0.75rem',
             marginBottom: '1.5rem'
           }}>
-            <Camera size={22} color="#004A69" />
+            <Camera size={22} color={isDarkMode ? '#60A5FA' : '#004A69'} />
             <h2 style={{
               fontFamily: 'Montserrat, sans-serif',
               fontSize: '18px',
               fontWeight: 600,
-              color: '#004A69',
+              color: isDarkMode ? '#F9FAFB' : '#004A69',
               margin: 0
             }}>
               Profile Photo
@@ -397,11 +572,11 @@ const SettingsPage = () => {
 
         {/* Personal Info Section */}
         <section style={{
-          background: 'white',
+          background: isDarkMode ? '#1E293B' : 'white',
           borderRadius: '20px',
           padding: '2rem',
           marginBottom: '1.5rem',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.06)'
+          boxShadow: isDarkMode ? '0 4px 16px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)'
         }}>
           <div style={{
             display: 'flex',
@@ -409,12 +584,12 @@ const SettingsPage = () => {
             gap: '0.75rem',
             marginBottom: '1.5rem'
           }}>
-            <User size={22} color="#004A69" />
+            <User size={22} color={isDarkMode ? '#60A5FA' : '#004A69'} />
             <h2 style={{
               fontFamily: 'Montserrat, sans-serif',
               fontSize: '18px',
               fontWeight: 600,
-              color: '#004A69',
+              color: isDarkMode ? '#F9FAFB' : '#004A69',
               margin: 0
             }}>
               Personal Information
@@ -432,7 +607,7 @@ const SettingsPage = () => {
                 display: 'block',
                 fontSize: '14px',
                 fontWeight: 600,
-                color: '#004A69',
+                color: isDarkMode ? '#E5E7EB' : '#004A69',
                 marginBottom: '0.5rem'
               }}>
                 First Name
@@ -446,20 +621,20 @@ const SettingsPage = () => {
                   width: '100%',
                   padding: '0.875rem 1rem',
                   fontSize: '15px',
-                  border: '2px solid #E5E7EB',
+                  border: isDarkMode ? '2px solid #4B5563' : '2px solid #E5E7EB',
                   borderRadius: '10px',
                   outline: 'none',
                   transition: 'all 0.3s ease',
                   boxSizing: 'border-box',
-                  backgroundColor: 'white',
-                  color: '#1F2937'
+                  backgroundColor: isDarkMode ? '#374151' : 'white',
+                  color: isDarkMode ? '#F9FAFB' : '#1F2937'
                 }}
                 onFocus={(e) => {
                   e.target.style.borderColor = '#0066A2';
                   e.target.style.boxShadow = '0 0 0 4px rgba(0,102,162,0.1)';
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#E5E7EB';
+                  e.target.style.borderColor = isDarkMode ? '#4B5563' : '#E5E7EB';
                   e.target.style.boxShadow = 'none';
                 }}
               />
@@ -470,7 +645,7 @@ const SettingsPage = () => {
                 display: 'block',
                 fontSize: '14px',
                 fontWeight: 600,
-                color: '#004A69',
+                color: isDarkMode ? '#E5E7EB' : '#004A69',
                 marginBottom: '0.5rem'
               }}>
                 Last Name
@@ -484,20 +659,20 @@ const SettingsPage = () => {
                   width: '100%',
                   padding: '0.875rem 1rem',
                   fontSize: '15px',
-                  border: '2px solid #E5E7EB',
+                  border: isDarkMode ? '2px solid #4B5563' : '2px solid #E5E7EB',
                   borderRadius: '10px',
                   outline: 'none',
                   transition: 'all 0.3s ease',
                   boxSizing: 'border-box',
-                  backgroundColor: 'white',
-                  color: '#1F2937'
+                  backgroundColor: isDarkMode ? '#374151' : 'white',
+                  color: isDarkMode ? '#F9FAFB' : '#1F2937'
                 }}
                 onFocus={(e) => {
                   e.target.style.borderColor = '#0066A2';
                   e.target.style.boxShadow = '0 0 0 4px rgba(0,102,162,0.1)';
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#E5E7EB';
+                  e.target.style.borderColor = isDarkMode ? '#4B5563' : '#E5E7EB';
                   e.target.style.boxShadow = 'none';
                 }}
               />
@@ -509,7 +684,7 @@ const SettingsPage = () => {
               display: 'block',
               fontSize: '14px',
               fontWeight: 600,
-              color: '#004A69',
+              color: isDarkMode ? '#E5E7EB' : '#004A69',
               marginBottom: '0.5rem'
             }}>
               Email Address
@@ -522,11 +697,11 @@ const SettingsPage = () => {
                 width: '100%',
                 padding: '0.875rem 1rem',
                 fontSize: '15px',
-                border: '2px solid #E5E7EB',
+                border: isDarkMode ? '2px solid #4B5563' : '2px solid #E5E7EB',
                 borderRadius: '10px',
                 boxSizing: 'border-box',
-                backgroundColor: '#F9FAFB',
-                color: '#6B7280',
+                backgroundColor: isDarkMode ? '#1F2937' : '#F9FAFB',
+                color: isDarkMode ? '#9CA3AF' : '#6B7280',
                 cursor: 'not-allowed'
               }}
             />
@@ -567,10 +742,10 @@ const SettingsPage = () => {
 
         {/* Password Section */}
         <section style={{
-          background: 'white',
+          background: isDarkMode ? '#1E293B' : 'white',
           borderRadius: '20px',
           padding: '2rem',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.06)'
+          boxShadow: isDarkMode ? '0 4px 16px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)'
         }}>
           <div style={{
             display: 'flex',
@@ -578,12 +753,12 @@ const SettingsPage = () => {
             gap: '0.75rem',
             marginBottom: '1.5rem'
           }}>
-            <Lock size={22} color="#004A69" />
+            <Lock size={22} color={isDarkMode ? '#60A5FA' : '#004A69'} />
             <h2 style={{
               fontFamily: 'Montserrat, sans-serif',
               fontSize: '18px',
               fontWeight: 600,
-              color: '#004A69',
+              color: isDarkMode ? '#F9FAFB' : '#004A69',
               margin: 0
             }}>
               Change Password
@@ -601,7 +776,7 @@ const SettingsPage = () => {
                 display: 'block',
                 fontSize: '14px',
                 fontWeight: 600,
-                color: '#004A69',
+                color: isDarkMode ? '#E5E7EB' : '#004A69',
                 marginBottom: '0.5rem'
               }}>
                 New Password
@@ -615,20 +790,20 @@ const SettingsPage = () => {
                   width: '100%',
                   padding: '0.875rem 1rem',
                   fontSize: '15px',
-                  border: '2px solid #E5E7EB',
+                  border: isDarkMode ? '2px solid #4B5563' : '2px solid #E5E7EB',
                   borderRadius: '10px',
                   outline: 'none',
                   transition: 'all 0.3s ease',
                   boxSizing: 'border-box',
-                  backgroundColor: 'white',
-                  color: '#1F2937'
+                  backgroundColor: isDarkMode ? '#374151' : 'white',
+                  color: isDarkMode ? '#F9FAFB' : '#1F2937'
                 }}
                 onFocus={(e) => {
                   e.target.style.borderColor = '#0066A2';
                   e.target.style.boxShadow = '0 0 0 4px rgba(0,102,162,0.1)';
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#E5E7EB';
+                  e.target.style.borderColor = isDarkMode ? '#4B5563' : '#E5E7EB';
                   e.target.style.boxShadow = 'none';
                 }}
               />
@@ -639,7 +814,7 @@ const SettingsPage = () => {
                 display: 'block',
                 fontSize: '14px',
                 fontWeight: 600,
-                color: '#004A69',
+                color: isDarkMode ? '#E5E7EB' : '#004A69',
                 marginBottom: '0.5rem'
               }}>
                 Confirm Password
@@ -653,20 +828,20 @@ const SettingsPage = () => {
                   width: '100%',
                   padding: '0.875rem 1rem',
                   fontSize: '15px',
-                  border: '2px solid #E5E7EB',
+                  border: isDarkMode ? '2px solid #4B5563' : '2px solid #E5E7EB',
                   borderRadius: '10px',
                   outline: 'none',
                   transition: 'all 0.3s ease',
                   boxSizing: 'border-box',
-                  backgroundColor: 'white',
-                  color: '#1F2937'
+                  backgroundColor: isDarkMode ? '#374151' : 'white',
+                  color: isDarkMode ? '#F9FAFB' : '#1F2937'
                 }}
                 onFocus={(e) => {
                   e.target.style.borderColor = '#0066A2';
                   e.target.style.boxShadow = '0 0 0 4px rgba(0,102,162,0.1)';
                 }}
                 onBlur={(e) => {
-                  e.target.style.borderColor = '#E5E7EB';
+                  e.target.style.borderColor = isDarkMode ? '#4B5563' : '#E5E7EB';
                   e.target.style.boxShadow = 'none';
                 }}
               />
@@ -680,9 +855,11 @@ const SettingsPage = () => {
               padding: '0.875rem 1.75rem',
               fontSize: '15px',
               fontWeight: 600,
-              color: '#004A69',
-              background: 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)',
-              border: '2px solid #E5E7EB',
+              color: isDarkMode ? '#E5E7EB' : '#004A69',
+              background: isDarkMode
+                ? 'linear-gradient(135deg, #374151 0%, #1F2937 100%)'
+                : 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)',
+              border: isDarkMode ? '2px solid #4B5563' : '2px solid #E5E7EB',
               borderRadius: '10px',
               cursor: savingPassword ? 'not-allowed' : 'pointer',
               transition: 'all 0.3s ease',
