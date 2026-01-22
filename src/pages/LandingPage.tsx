@@ -244,7 +244,7 @@ const LandingPage = () => {
           gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
           gap: '2rem'
         }}>
-          {phases.map((phase, index) => {
+          {phases.map((phase) => {
             const IconComponent = phase.icon;
             return (
               <div

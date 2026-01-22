@@ -1,4 +1,4 @@
-import { Eye, X, Shield } from 'lucide-react';
+import { Eye, Shield } from 'lucide-react';
 
 const MasqueradeBanner = () => {
   const isMasquerading = sessionStorage.getItem('adminMasqueradeActive') === 'true';

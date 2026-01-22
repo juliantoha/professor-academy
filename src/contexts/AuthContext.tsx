@@ -27,6 +27,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Only refetch profile if it's been more than 1 hour
+const PROFILE_REFRESH_INTERVAL = 60 * 60 * 1000; // 1 hour in ms
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) throw new Error('useAuth must be used within AuthProvider');
@@ -44,9 +47,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const lastProfileFetch = useRef<number>(0);
   const isFetchingProfile = useRef(false);
   const hasInitialized = useRef(false);
-
-  // Only refetch profile if it's been more than 1 hour
-  const PROFILE_REFRESH_INTERVAL = 60 * 60 * 1000; // 1 hour in ms
 
   const fetchProfile = useCallback(async (userId: string, userEmail: string, userMetadata: any, forceRefresh = false) => {
     const now = Date.now();

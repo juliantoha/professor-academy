@@ -137,6 +137,7 @@ const SkillsChecklist = () => {
     if (dashboardToken) {
       fetchApprentice();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dashboardToken]);
 
   const fetchApprentice = async () => {

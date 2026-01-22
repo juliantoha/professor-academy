@@ -7,8 +7,8 @@ import MasqueradeBanner from '../components/MasqueradeBanner';
 import DarkModeToggle from '../components/DarkModeToggle';
 import { useDarkMode } from '../contexts/DarkModeContext';
 
-// Super admin emails
-const SUPER_ADMIN_EMAILS = ['julian@oclef.com'];
+// Super admin emails - configured via environment variable
+const SUPER_ADMIN_EMAILS = (import.meta.env.VITE_SUPER_ADMIN_EMAILS || '').split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
 
 interface Apprentice {
   id: string;
@@ -87,7 +87,8 @@ const ProfessorDashboard = () => {
     if (user?.email) {
       fetchData();
     }
-  }, [user]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.email]);
 
   const fetchData = async () => {
     try {
@@ -926,7 +927,7 @@ const ProfessorDashboard = () => {
               fontFamily: "'Lora', Georgia, serif",
               fontSize: '22px',
               fontWeight: 700,
-              color: '#002642',
+              color: isDarkMode ? '#F9FAFB' : '#002642',
               margin: 0
             }}>
               Pending Reviews ({pendingSubmissions.length})
@@ -935,11 +936,11 @@ const ProfessorDashboard = () => {
 
           {pendingSubmissions.length === 0 ? (
             <div style={{
-              background: 'white',
+              background: isDarkMode ? '#1E293B' : 'white',
               borderRadius: '20px',
               padding: '4rem 2rem',
               textAlign: 'center',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.06)'
+              boxShadow: isDarkMode ? '0 4px 16px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)'
             }}>
               <div style={{
                 width: '80px',
@@ -1098,7 +1099,7 @@ const ProfessorDashboard = () => {
                 fontFamily: "'Lora', Georgia, serif",
                 fontSize: '22px',
                 fontWeight: 700,
-                color: '#002642',
+                color: isDarkMode ? '#F9FAFB' : '#002642',
                 margin: 0
               }}>
                 Your Apprentices ({activeApprentices.length})
@@ -1168,11 +1169,11 @@ const ProfessorDashboard = () => {
 
           {activeApprentices.length === 0 ? (
             <div style={{
-              background: 'white',
+              background: isDarkMode ? '#1E293B' : 'white',
               borderRadius: '20px',
               padding: '4rem 2rem',
               textAlign: 'center',
-              boxShadow: '0 4px 16px rgba(0,0,0,0.06)'
+              boxShadow: isDarkMode ? '0 4px 16px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)'
             }}>
               <div style={{
                 width: '80px',
@@ -2546,17 +2547,14 @@ const ProfessorDashboard = () => {
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = 'rgba(255,255,255,0.35)';
-                  e.currentTarget.style.transform = 'rotate(90deg)';
+                  e.currentTarget.style.transform = 'scale(1.1)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
-                  e.currentTarget.style.transform = 'rotate(0deg)';
+                  e.currentTarget.style.transform = 'scale(1)';
                 }}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
+                <X size={20} color="white" strokeWidth={2.5} />
               </button>
             </div>
 

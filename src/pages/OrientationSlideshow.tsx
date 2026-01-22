@@ -186,19 +186,22 @@ const OrientationSlideshow = ({ apprenticeName, apprenticeEmail, professorEmail,
     }
   };
 
-  const handleKeyPress = (e: KeyboardEvent) => {
-    if (e.key === 'ArrowRight') nextSlide();
-    if (e.key === 'ArrowLeft') previousSlide();
-    if (e.key === ' ') {
-      e.preventDefault();
-      nextSlide();
-    }
-  };
-
   useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') {
+        setCurrentSlide(prev => prev < slides.length - 1 ? prev + 1 : prev);
+      }
+      if (e.key === 'ArrowLeft') {
+        setCurrentSlide(prev => prev > 0 ? prev - 1 : prev);
+      }
+      if (e.key === ' ') {
+        e.preventDefault();
+        setCurrentSlide(prev => prev < slides.length - 1 ? prev + 1 : prev);
+      }
+    };
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [currentSlide]);
+  }, [slides.length]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {

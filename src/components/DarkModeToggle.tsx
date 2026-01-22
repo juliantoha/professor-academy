@@ -1,6 +1,6 @@
 import React from 'react';
 import { useDarkMode } from '../contexts/DarkModeContext';
-import { colors, borderRadius, transitions, shadows } from '../styles/oclefDesignSystem';
+import { colors, borderRadius, transitions } from '../styles/oclefDesignSystem';
 
 interface DarkModeToggleProps {
   size?: 'small' | 'medium' | 'large';

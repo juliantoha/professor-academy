@@ -111,9 +111,9 @@ const Module2ZoomConfiguration = () => {
   const tokenFromUrl = urlParams.get('token') || '';
   
   // Student Information State - Auto-populated from URL
-  const [studentName, setStudentName] = useState(nameFromUrl);
-  const [apprenticeEmail, setApprenticeEmail] = useState(emailFromUrl);
-  const [professorEmail, setProfessorEmail] = useState(professorFromUrl);
+  const [studentName] = useState(nameFromUrl);
+  const [apprenticeEmail] = useState(emailFromUrl);
+  const [professorEmail] = useState(professorFromUrl);
   const [dashboardToken] = useState(tokenFromUrl);
   
   // Module State
