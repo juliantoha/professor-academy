@@ -2,10 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, CheckCheck, Trash2, FileText, CheckCircle, AlertCircle, MessageSquare, Award, Settings } from 'lucide-react';
 import { useNotifications, Notification } from '../contexts/NotificationContext';
+import { useDarkMode } from '../contexts/DarkModeContext';
 
 const NotificationCenter = () => {
   const navigate = useNavigate();
   const { notifications, unreadCount, markAsRead, markAllAsRead, removeNotification, clearAll } = useNotifications();
+  const { isDarkMode } = useDarkMode();
   const [isOpen, setIsOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -142,16 +144,21 @@ const NotificationCenter = () => {
         <div style={{
           fontSize: '11px',
           fontWeight: 600,
-          color: '#64748B',
+          color: isDarkMode ? '#94A3B8' : '#64748B',
           textTransform: 'uppercase',
           letterSpacing: '0.05em',
           padding: '0.5rem 1rem',
-          background: '#F8FAFC'
+          background: isDarkMode ? '#0F172A' : '#F8FAFC'
         }}>
           {title}
         </div>
         {items.map(notification => {
           const iconStyle = getIconColor(notification.type);
+          const readBg = isDarkMode ? '#1E293B' : 'white';
+          const unreadBg = isDarkMode
+            ? 'linear-gradient(135deg, #1E3A5F 0%, #1E293B 100%)'
+            : 'linear-gradient(135deg, #FFF7ED 0%, #FFFBF7 100%)';
+          const hoverBg = isDarkMode ? '#334155' : '#F8FAFC';
           return (
             <div
               key={notification.id}
@@ -161,16 +168,16 @@ const NotificationCenter = () => {
                 gap: '0.75rem',
                 padding: '0.875rem 1rem',
                 cursor: notification.link ? 'pointer' : 'default',
-                background: notification.read ? 'white' : 'linear-gradient(135deg, #FFF7ED 0%, #FFFBF7 100%)',
+                background: notification.read ? readBg : unreadBg,
                 borderLeft: notification.read ? '3px solid transparent' : '3px solid #F97316',
                 transition: 'all 0.15s ease',
                 position: 'relative'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#F8FAFC';
+                e.currentTarget.style.background = hoverBg;
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = notification.read ? 'white' : 'linear-gradient(135deg, #FFF7ED 0%, #FFFBF7 100%)';
+                e.currentTarget.style.background = notification.read ? readBg : unreadBg;
               }}
             >
               {/* Icon */}
@@ -193,7 +200,7 @@ const NotificationCenter = () => {
                 <div style={{
                   fontSize: '13px',
                   fontWeight: notification.read ? 500 : 600,
-                  color: '#1E293B',
+                  color: isDarkMode ? '#F1F5F9' : '#1E293B',
                   marginBottom: '2px',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
@@ -203,7 +210,7 @@ const NotificationCenter = () => {
                 </div>
                 <div style={{
                   fontSize: '12px',
-                  color: '#64748B',
+                  color: isDarkMode ? '#94A3B8' : '#64748B',
                   lineHeight: 1.4,
                   display: '-webkit-box',
                   WebkitLineClamp: 2,
@@ -214,7 +221,7 @@ const NotificationCenter = () => {
                 </div>
                 <div style={{
                   fontSize: '11px',
-                  color: '#94A3B8',
+                  color: isDarkMode ? '#64748B' : '#94A3B8',
                   marginTop: '4px'
                 }}>
                   {formatTime(notification.timestamp)}
@@ -391,8 +398,8 @@ const NotificationCenter = () => {
               right: 0,
               bottom: 0,
               width: 'min(380px, 100vw)',
-              background: 'white',
-              boxShadow: '-4px 0 30px rgba(0,0,0,0.15)',
+              background: isDarkMode ? '#1E293B' : 'white',
+              boxShadow: isDarkMode ? '-4px 0 30px rgba(0,0,0,0.4)' : '-4px 0 30px rgba(0,0,0,0.15)',
               zIndex: 999,
               display: 'flex',
               flexDirection: 'column',
@@ -513,28 +520,30 @@ const NotificationCenter = () => {
                     width: '80px',
                     height: '80px',
                     borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%)',
+                    background: isDarkMode
+                      ? 'linear-gradient(135deg, #1E3A5F 0%, #0F172A 100%)'
+                      : 'linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     marginBottom: '1.5rem'
                   }}>
                     <svg width="32" height="32" viewBox="0 0 24 24" style={{ display: 'block', minWidth: '32px', minHeight: '32px' }}>
-                      <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" fill="none" stroke="#0284C7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" fill="none" stroke="#0284C7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" fill="none" stroke={isDarkMode ? '#38BDF8' : '#0284C7'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" fill="none" stroke={isDarkMode ? '#38BDF8' : '#0284C7'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </div>
                   <h3 style={{
                     fontSize: '16px',
                     fontWeight: 600,
-                    color: '#1E293B',
+                    color: isDarkMode ? '#F1F5F9' : '#1E293B',
                     margin: '0 0 0.5rem 0'
                   }}>
                     All caught up!
                   </h3>
                   <p style={{
                     fontSize: '14px',
-                    color: '#64748B',
+                    color: isDarkMode ? '#94A3B8' : '#64748B',
                     margin: 0
                   }}>
                     You have no notifications yet.
@@ -554,7 +563,7 @@ const NotificationCenter = () => {
             {notifications.length > 0 && (
               <div style={{
                 padding: '0.75rem 1rem',
-                borderTop: '1px solid #E2E8F0',
+                borderTop: isDarkMode ? '1px solid #334155' : '1px solid #E2E8F0',
                 display: 'flex',
                 justifyContent: 'center'
               }}>
@@ -566,23 +575,23 @@ const NotificationCenter = () => {
                     gap: '6px',
                     padding: '8px 16px',
                     borderRadius: '8px',
-                    border: '1px solid #E2E8F0',
-                    background: 'white',
-                    color: '#64748B',
+                    border: isDarkMode ? '1px solid #475569' : '1px solid #E2E8F0',
+                    background: isDarkMode ? '#334155' : 'white',
+                    color: isDarkMode ? '#94A3B8' : '#64748B',
                     fontSize: '13px',
                     fontWeight: 500,
                     cursor: 'pointer',
                     transition: 'all 0.15s ease'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#FEE2E2';
-                    e.currentTarget.style.borderColor = '#FECACA';
-                    e.currentTarget.style.color = '#DC2626';
+                    e.currentTarget.style.background = isDarkMode ? '#7F1D1D' : '#FEE2E2';
+                    e.currentTarget.style.borderColor = isDarkMode ? '#991B1B' : '#FECACA';
+                    e.currentTarget.style.color = isDarkMode ? '#FCA5A5' : '#DC2626';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'white';
-                    e.currentTarget.style.borderColor = '#E2E8F0';
-                    e.currentTarget.style.color = '#64748B';
+                    e.currentTarget.style.background = isDarkMode ? '#334155' : 'white';
+                    e.currentTarget.style.borderColor = isDarkMode ? '#475569' : '#E2E8F0';
+                    e.currentTarget.style.color = isDarkMode ? '#94A3B8' : '#64748B';
                   }}
                 >
                   <Trash2 size={14} />
