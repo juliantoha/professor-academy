@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import Dashboard from './Dashboard';
-import { LogOut, Settings, ChevronDown, AlertCircle, Clock, RefreshCw, Mail } from 'lucide-react';
+import { LogOut, Settings, ChevronDown, AlertCircle, Clock, Mail } from 'lucide-react';
 
 const ApprenticeDashboard = () => {
   const { user, profile, signOut } = useAuth();
@@ -15,10 +15,11 @@ const ApprenticeDashboard = () => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const displayName = profile?.firstName || profile?.name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Student';
+  const isInitialLoad = useRef(true);
 
-  const fetchDashboardToken = async () => {
+  const fetchDashboardToken = useCallback(async (showLoadingSpinner = true) => {
     try {
-      setLoading(true);
+      if (showLoadingSpinner) setLoading(true);
       setError('');
       setWaitingForProfessor(false);
 
@@ -49,15 +50,45 @@ const ApprenticeDashboard = () => {
       setError(err.message || 'Failed to load dashboard');
     } finally {
       setLoading(false);
+      isInitialLoad.current = false;
     }
-  };
+  }, [user?.email]);
 
   useEffect(() => {
-    if (user?.email) {
-      fetchDashboardToken();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.email]);
+    if (!user?.email) return;
+
+    fetchDashboardToken();
+
+    // Real-time subscription for when professor adds the apprentice
+    const apprenticeChannel = supabase
+      .channel('apprentice-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'apprentices',
+          filter: `email=eq.${user.email}`
+        },
+        () => {
+          console.log('[RealTime] Apprentice record changed');
+          fetchDashboardToken(false);
+        }
+      )
+      .subscribe();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && !isInitialLoad.current) {
+        fetchDashboardToken(false);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      supabase.removeChannel(apprenticeChannel);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [user?.email, fetchDashboardToken]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -238,8 +269,8 @@ const ApprenticeDashboard = () => {
                 e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,102,162,0.3)';
               }}
             >
-              <RefreshCw size={18} />
-              Check Again
+              <Clock size={18} />
+              Check Status
             </button>
 
             <button

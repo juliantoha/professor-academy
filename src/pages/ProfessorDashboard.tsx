@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { LogOut, Users, Clock, CheckCircle, ExternalLink, RefreshCw, Settings, ChevronDown, Plus, X, UserPlus, Copy, Check, Shield, ClipboardList, GraduationCap, RotateCcw, Music2, Theater, Piano, PenLine, BookOpen, Target, Search, UserMinus, ChevronUp, Moon, Sun } from 'lucide-react';
+import { LogOut, Users, Clock, CheckCircle, ExternalLink, Settings, ChevronDown, Plus, X, UserPlus, Copy, Check, Shield, ClipboardList, GraduationCap, RotateCcw, Music2, Theater, Piano, PenLine, BookOpen, Target, Search, UserMinus, ChevronUp, Moon, Sun } from 'lucide-react';
 import MasqueradeBanner from '../components/MasqueradeBanner';
 import DarkModeToggle from '../components/DarkModeToggle';
 import { useDarkMode } from '../contexts/DarkModeContext';
@@ -83,16 +83,12 @@ const ProfessorDashboard = () => {
   // Get display name
   const displayName = profile?.firstName || profile?.name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Professor';
 
-  useEffect(() => {
-    if (user?.email) {
-      fetchData();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.email]);
+  // Track if this is the initial load vs a real-time update
+  const isInitialLoad = useRef(true);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async (showLoadingSpinner = true) => {
     try {
-      setLoading(true);
+      if (showLoadingSpinner) setLoading(true);
       setError('');
 
       const { data: apprenticesData, error: apprenticesError } = await supabase
@@ -228,8 +224,85 @@ const ProfessorDashboard = () => {
       setError(err.message || 'Failed to load data');
     } finally {
       setLoading(false);
+      isInitialLoad.current = false;
     }
-  };
+  }, [user?.email]);
+
+  // Initial data fetch and real-time subscriptions
+  useEffect(() => {
+    if (!user?.email) return;
+
+    // Initial fetch
+    fetchData();
+
+    // Set up real-time subscriptions for automatic updates
+    const apprenticesChannel = supabase
+      .channel('professor-apprentices')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'apprentices',
+          filter: `professorEmail=eq.${user.email}`
+        },
+        () => {
+          console.log('[RealTime] Apprentices changed, refreshing...');
+          fetchData(false);
+        }
+      )
+      .subscribe();
+
+    const submissionsChannel = supabase
+      .channel('professor-submissions')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'submissions',
+          filter: `professorEmail=eq.${user.email}`
+        },
+        () => {
+          console.log('[RealTime] Submissions changed, refreshing...');
+          fetchData(false);
+        }
+      )
+      .subscribe();
+
+    const progressChannel = supabase
+      .channel('professor-progress')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'progress'
+        },
+        () => {
+          console.log('[RealTime] Progress changed, refreshing...');
+          fetchData(false);
+        }
+      )
+      .subscribe();
+
+    // Also refresh when tab becomes visible again
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && !isInitialLoad.current) {
+        console.log('[Visibility] Tab visible, refreshing...');
+        fetchData(false);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Cleanup subscriptions on unmount
+    return () => {
+      supabase.removeChannel(apprenticesChannel);
+      supabase.removeChannel(submissionsChannel);
+      supabase.removeChannel(progressChannel);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [user?.email, fetchData]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -618,33 +691,6 @@ const ProfessorDashboard = () => {
               </p>
             </div>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              <button
-                onClick={fetchData}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.75rem 1.25rem',
-                  background: 'rgba(255,255,255,0.1)',
-                  border: '2px solid rgba(255,255,255,0.3)',
-                  borderRadius: '10px',
-                  color: 'white',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
-                }}
-              >
-                <RefreshCw size={18} />
-                Refresh
-              </button>
-
               {/* Profile Dropdown */}
               <div style={{ position: 'relative' }}>
                 <button
@@ -958,14 +1004,14 @@ const ProfessorDashboard = () => {
                 fontFamily: "'Lora', Georgia, serif",
                 fontSize: '20px',
                 fontWeight: 600,
-                color: '#002642',
+                color: isDarkMode ? '#F9FAFB' : '#002642',
                 margin: '0 0 0.75rem 0'
               }}>
                 All caught up!
               </h3>
               <p style={{
                 fontSize: '15px',
-                color: 'rgba(0, 38, 66, 0.6)',
+                color: isDarkMode ? '#9CA3AF' : 'rgba(0, 38, 66, 0.6)',
                 margin: 0
               }}>
                 No pending submissions to review. New submissions will appear here.
@@ -982,10 +1028,10 @@ const ProfessorDashboard = () => {
                   key={submission.submissionId}
                   onClick={() => navigate(`/review/${submission.submissionId}?review=true`)}
                   style={{
-                    background: 'white',
+                    background: isDarkMode ? '#1E293B' : 'white',
                     borderRadius: '16px',
                     padding: '1.5rem',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
+                    boxShadow: isDarkMode ? '0 4px 16px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)',
                     borderLeft: '5px solid #eb6a18',
                     cursor: 'pointer',
                     transition: 'all 0.3s ease'
@@ -1191,14 +1237,14 @@ const ProfessorDashboard = () => {
                 fontFamily: "'Lora', Georgia, serif",
                 fontSize: '20px',
                 fontWeight: 600,
-                color: '#002642',
+                color: isDarkMode ? '#F9FAFB' : '#002642',
                 margin: '0 0 0.75rem 0'
               }}>
                 No apprentices yet
               </h3>
               <p style={{
                 fontSize: '15px',
-                color: 'rgba(0, 38, 66, 0.6)',
+                color: isDarkMode ? '#9CA3AF' : 'rgba(0, 38, 66, 0.6)',
                 margin: 0
               }}>
                 Apprentices assigned to you will appear here.
@@ -1216,19 +1262,19 @@ const ProfessorDashboard = () => {
                   <div
                     key={apprentice.id}
                     style={{
-                      background: 'white',
+                      background: isDarkMode ? '#1E293B' : 'white',
                       borderRadius: '20px',
                       padding: '1.75rem',
-                      boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
+                      boxShadow: isDarkMode ? '0 4px 16px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)',
                       transition: 'all 0.3s ease'
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = 'translateY(-4px)';
-                      e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.1)';
+                      e.currentTarget.style.boxShadow = isDarkMode ? '0 8px 24px rgba(0,0,0,0.4)' : '0 8px 24px rgba(0,0,0,0.1)';
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.06)';
+                      e.currentTarget.style.boxShadow = isDarkMode ? '0 4px 16px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)';
                     }}
                   >
                     <div style={{
@@ -1266,14 +1312,14 @@ const ProfessorDashboard = () => {
                             fontFamily: "'Lora', Georgia, serif",
                             fontSize: '17px',
                             fontWeight: 600,
-                            color: '#002642',
+                            color: isDarkMode ? '#F9FAFB' : '#002642',
                             margin: '0 0 0.25rem 0'
                           }}>
                             {apprentice.name}
                           </h3>
                           <p style={{
                             fontSize: '13px',
-                            color: 'rgba(0, 38, 66, 0.6)',
+                            color: isDarkMode ? '#9CA3AF' : 'rgba(0, 38, 66, 0.6)',
                             margin: 0
                           }}>
                             {apprentice.email}
@@ -2049,7 +2095,7 @@ const ProfessorDashboard = () => {
               fontFamily: "'Lora', Georgia, serif",
               fontSize: '22px',
               fontWeight: 700,
-              color: '#002642',
+              color: isDarkMode ? '#F9FAFB' : '#002642',
               margin: 0
             }}>
               Apps & Resources
@@ -2057,10 +2103,10 @@ const ProfessorDashboard = () => {
           </div>
 
           <div style={{
-            background: 'white',
+            background: isDarkMode ? '#1E293B' : 'white',
             borderRadius: '20px',
             padding: '2rem',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.06)'
+            boxShadow: isDarkMode ? '0 4px 16px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)'
           }}>
             <div style={{
               display: 'grid',
@@ -2534,27 +2580,25 @@ const ProfessorDashboard = () => {
               <button
                 onClick={resetFollowModal}
                 style={{
-                  background: 'rgba(255,255,255,0.2)',
-                  border: '2px solid rgba(255,255,255,0.3)',
-                  borderRadius: '50%',
-                  width: '36px',
-                  height: '36px',
+                  background: 'rgba(255,255,255,0.15)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  width: '32px',
+                  height: '32px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
-                  transition: 'all 0.2s ease'
+                  transition: 'background 0.2s ease'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.35)';
-                  e.currentTarget.style.transform = 'scale(1.1)';
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.3)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
-                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.15)';
                 }}
               >
-                <X size={20} color="white" strokeWidth={2.5} />
+                <X size={18} color="white" strokeWidth={2.5} />
               </button>
             </div>
 
@@ -2767,6 +2811,7 @@ const ResourceCard = ({ href, icon, title, subtitle, description, color }: {
   color: string;
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const { isDarkMode } = useDarkMode();
 
   return (
     <a
@@ -2775,8 +2820,10 @@ const ResourceCard = ({ href, icon, title, subtitle, description, color }: {
       rel="noopener noreferrer"
       style={{
         textDecoration: 'none',
-        background: 'linear-gradient(135deg, #FFFFFF 0%, #F9FAFB 100%)',
-        border: `2px solid ${isHovered ? color : '#E5E7EB'}`,
+        background: isDarkMode
+          ? 'linear-gradient(135deg, #374151 0%, #1F2937 100%)'
+          : 'linear-gradient(135deg, #FFFFFF 0%, #F9FAFB 100%)',
+        border: `2px solid ${isHovered ? color : isDarkMode ? '#4B5563' : '#E5E7EB'}`,
         borderRadius: '16px',
         padding: '1.5rem',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -2785,7 +2832,7 @@ const ResourceCard = ({ href, icon, title, subtitle, description, color }: {
         gap: '1rem',
         cursor: 'pointer',
         transform: isHovered ? 'translateY(-4px)' : 'translateY(0)',
-        boxShadow: isHovered ? `0 12px 24px ${color}18` : '0 2px 8px rgba(0,0,0,0.04)'
+        boxShadow: isHovered ? `0 12px 24px ${color}18` : isDarkMode ? '0 2px 8px rgba(0,0,0,0.2)' : '0 2px 8px rgba(0,0,0,0.04)'
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -2810,20 +2857,20 @@ const ResourceCard = ({ href, icon, title, subtitle, description, color }: {
           <h3 style={{
             fontSize: '15px',
             fontWeight: 600,
-            color: '#002642',
+            color: isDarkMode ? '#F9FAFB' : '#002642',
             margin: 0,
             letterSpacing: '-0.01em'
           }}>
             {title}
           </h3>
-          <p style={{ fontSize: '12px', color: 'rgba(0, 38, 66, 0.6)', margin: '0.15rem 0 0 0' }}>
+          <p style={{ fontSize: '12px', color: isDarkMode ? '#9CA3AF' : 'rgba(0, 38, 66, 0.6)', margin: '0.15rem 0 0 0' }}>
             {subtitle}
           </p>
         </div>
       </div>
       <p style={{
         fontSize: '13px',
-        color: '#4B5563',
+        color: isDarkMode ? '#D1D5DB' : '#4B5563',
         margin: 0,
         lineHeight: '1.6'
       }}>
