@@ -1,28 +1,25 @@
 import { useState, useEffect, useMemo } from 'react';
 import { TrendingUp, TrendingDown, Users, CheckCircle, Clock, Award, BarChart3, PieChart, Calendar, Zap } from 'lucide-react';
 
-interface AnalyticsData {
+interface SchoolWideData {
   apprentices: Array<{
     email: string;
     createdAt?: string;
     graduated?: boolean;
     graduatedAt?: string;
   }>;
-  progress: Record<string, Array<{
+  progress: Array<{
     Status: string;
     module: string;
     phase: string;
-  }>>;
-  pendingSubmissions: Array<{
-    submittedAt: string;
-    status: string;
+    apprenticeEmail: string;
   }>;
+  pendingSubmissions: number;
 }
 
 interface AnalyticsDashboardProps {
-  data: AnalyticsData;
+  schoolWideData: SchoolWideData;
   isDarkMode?: boolean;
-  schoolWideGraduates?: Array<{ createdAt?: string; graduatedAt?: string }>;
 }
 
 // Animated counter component
@@ -441,25 +438,24 @@ const ActivityHeatmap = ({
   );
 };
 
-const AnalyticsDashboard = ({ data, isDarkMode = false, schoolWideGraduates = [] }: AnalyticsDashboardProps) => {
-  // Calculate analytics from data
+const AnalyticsDashboard = ({ schoolWideData, isDarkMode = false }: AnalyticsDashboardProps) => {
+  // Calculate analytics from school-wide data
   const analytics = useMemo(() => {
-    const { apprentices, progress, pendingSubmissions } = data;
+    const { apprentices, progress, pendingSubmissions } = schoolWideData;
 
-    // Total apprentices
+    // Total apprentices (school-wide)
     const totalApprentices = apprentices.length;
     const graduated = apprentices.filter(a => a.graduated).length;
     const active = totalApprentices - graduated;
 
-    // Progress stats
-    const allProgress = Object.values(progress).flat();
-    const completed = allProgress.filter(p => p.Status === 'Completed' || p.Status === 'Approved').length;
-    const pending = allProgress.filter(p => p.Status === 'Submitted' || p.Status === 'Pending').length;
-    const inProgress = allProgress.filter(p => p.Status === 'In Progress').length;
+    // Progress stats (school-wide)
+    const completed = progress.filter(p => p.Status === 'Completed' || p.Status === 'Approved').length;
+    const pending = progress.filter(p => p.Status === 'Submitted' || p.Status === 'Pending').length;
+    const inProgress = progress.filter(p => p.Status === 'In Progress').length;
 
     // Module completion by module number
     const moduleStats: Record<string, { completed: number; total: number }> = {};
-    allProgress.forEach(p => {
+    progress.forEach(p => {
       const modNum = p.module || 'Unknown';
       if (!moduleStats[modNum]) {
         moduleStats[modNum] = { completed: 0, total: 0 };
@@ -470,10 +466,10 @@ const AnalyticsDashboard = ({ data, isDarkMode = false, schoolWideGraduates = []
       }
     });
 
-    // Submission stats
-    const submissionCount = pendingSubmissions.length;
+    // Submission stats (school-wide pending count)
+    const submissionCount = pendingSubmissions;
 
-    // Approval rate (mock - would need historical data)
+    // Approval rate
     const approvalRate = completed > 0 ? Math.round((completed / (completed + pending)) * 100) : 0;
 
     // Generate mock activity data for heatmap (28 days)
@@ -481,6 +477,11 @@ const AnalyticsDashboard = ({ data, isDarkMode = false, schoolWideGraduates = []
 
     // Completion trend (mock percentage)
     const completionTrend = Math.round((Math.random() - 0.3) * 30);
+
+    // Graduates with dates for the training days chart
+    const graduatesWithDates = apprentices
+      .filter(a => a.graduated && a.graduatedAt && a.createdAt)
+      .map(a => ({ createdAt: a.createdAt, graduatedAt: a.graduatedAt }));
 
     return {
       totalApprentices,
@@ -493,9 +494,10 @@ const AnalyticsDashboard = ({ data, isDarkMode = false, schoolWideGraduates = []
       submissionCount,
       approvalRate,
       activityData,
-      completionTrend
+      completionTrend,
+      graduatesWithDates
     };
-  }, [data]);
+  }, [schoolWideData]);
 
   // Prepare chart data
   const statusSegments = [
@@ -726,7 +728,7 @@ const AnalyticsDashboard = ({ data, isDarkMode = false, schoolWideGraduates = []
             </span>
           </div>
 
-          <TrainingDaysChart graduateData={schoolWideGraduates} isDarkMode={isDarkMode} />
+          <TrainingDaysChart graduateData={analytics.graduatesWithDates} isDarkMode={isDarkMode} />
         </div>
       </div>
 
