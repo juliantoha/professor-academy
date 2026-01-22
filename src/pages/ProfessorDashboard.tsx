@@ -12,8 +12,10 @@ import { useDarkMode } from '../contexts/DarkModeContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useOnboarding, OnboardingStep } from '../contexts/OnboardingContext';
 
-// Super admin emails - configured via environment variable
-const SUPER_ADMIN_EMAILS = (import.meta.env.VITE_SUPER_ADMIN_EMAILS || '').split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
+// Super admin emails - hardcoded admins plus any from environment variable
+const HARDCODED_ADMINS = ['julian@oclef.com'];
+const ENV_ADMINS = (import.meta.env.VITE_SUPER_ADMIN_EMAILS || '').split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
+const SUPER_ADMIN_EMAILS = [...new Set([...HARDCODED_ADMINS, ...ENV_ADMINS])];
 
 interface Apprentice {
   id: string;
