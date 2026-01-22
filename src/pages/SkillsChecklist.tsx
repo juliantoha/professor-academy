@@ -30,7 +30,7 @@ const SKILLS_DATA: Category[] = [
     id: 'student-checkin',
     name: '1. Student Check-In & Workflow',
     icon: <Users size={22} color="white" />,
-    color: '#004A69',
+    color: '#002642',
     skills: [
       {
         id: 'system-navigation',
@@ -203,7 +203,7 @@ const SkillsChecklist = () => {
   if (loading) {
     return (
       <div style={{
-        fontFamily: 'Lato, sans-serif',
+        fontFamily: "'Inter', system-ui, sans-serif",
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)',
         display: 'flex',
@@ -256,10 +256,10 @@ const SkillsChecklist = () => {
             gap: '0.5rem'
           }}>
             <span style={{
-              fontFamily: 'Montserrat, sans-serif',
+              fontFamily: "'Lora', Georgia, serif",
               fontSize: '16px',
               fontWeight: 600,
-              color: '#004A69'
+              color: '#002642'
             }}>
               Loading Skills Checklist
             </span>
@@ -300,7 +300,7 @@ const SkillsChecklist = () => {
   if (error || !apprentice) {
     return (
       <div style={{
-        fontFamily: 'Lato, sans-serif',
+        fontFamily: "'Inter', system-ui, sans-serif",
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)',
         display: 'flex',
@@ -317,10 +317,10 @@ const SkillsChecklist = () => {
           boxShadow: '0 4px 16px rgba(0,0,0,0.06)'
         }}>
           <h2 style={{
-            fontFamily: 'Montserrat, sans-serif',
+            fontFamily: "'Lora', Georgia, serif",
             fontSize: '20px',
             fontWeight: 600,
-            color: '#DC2626',
+            color: '#B9314F',
             marginBottom: '1rem'
           }}>
             {error || 'Apprentice not found'}
@@ -347,7 +347,7 @@ const SkillsChecklist = () => {
 
   return (
     <div style={{
-      fontFamily: 'Lato, sans-serif',
+      fontFamily: "'Inter', system-ui, sans-serif",
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #FFF6ED 0%, #F0F9FF 50%, #C4E5F4 100%)'
     }}>
@@ -410,7 +410,7 @@ const SkillsChecklist = () => {
               </button>
               <div>
                 <h1 style={{
-                  fontFamily: 'Montserrat, sans-serif',
+                  fontFamily: "'Lora', Georgia, serif",
                   fontSize: '22px',
                   fontWeight: 700,
                   color: 'white',
@@ -502,10 +502,10 @@ const SkillsChecklist = () => {
           }}>
             <div>
               <h2 style={{
-                fontFamily: 'Montserrat, sans-serif',
+                fontFamily: "'Lora', Georgia, serif",
                 fontSize: '18px',
                 fontWeight: 600,
-                color: '#004A69',
+                color: '#002642',
                 margin: '0 0 0.25rem 0'
               }}>
                 Training Progress
@@ -524,7 +524,7 @@ const SkillsChecklist = () => {
               gap: '0.5rem'
             }}>
               <span style={{
-                fontFamily: 'Montserrat, sans-serif',
+                fontFamily: "'Lora', Georgia, serif",
                 fontSize: '32px',
                 fontWeight: 700,
                 color: completedSkills === totalSkills ? '#059669' : '#004A69'
@@ -603,7 +603,7 @@ const SkillsChecklist = () => {
                     {category.icon}
                   </div>
                   <h3 style={{
-                    fontFamily: 'Montserrat, sans-serif',
+                    fontFamily: "'Lora', Georgia, serif",
                     fontSize: '16px',
                     fontWeight: 600,
                     color: 'white',
@@ -716,7 +716,7 @@ const SkillsChecklist = () => {
               <CheckCircle size={32} color="white" />
             </div>
             <h3 style={{
-              fontFamily: 'Montserrat, sans-serif',
+              fontFamily: "'Lora', Georgia, serif",
               fontSize: '20px',
               fontWeight: 700,
               color: '#059669',

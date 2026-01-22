@@ -445,7 +445,7 @@ const AdminDashboard = () => {
   if (loading) {
     return (
       <div style={{
-        fontFamily: 'Lato, sans-serif',
+        fontFamily: "'Inter', system-ui, sans-serif",
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
         display: 'flex',
@@ -498,7 +498,7 @@ const AdminDashboard = () => {
             gap: '0.5rem'
           }}>
             <span style={{
-              fontFamily: 'Montserrat, sans-serif',
+              fontFamily: "'Lora', Georgia, serif",
               fontSize: '16px',
               fontWeight: 600,
               color: '#FFD700'
@@ -541,7 +541,7 @@ const AdminDashboard = () => {
 
   return (
     <div style={{
-      fontFamily: 'Lato, sans-serif',
+      fontFamily: "'Inter', system-ui, sans-serif",
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)'
     }}>
@@ -580,7 +580,7 @@ const AdminDashboard = () => {
               </div>
               <div>
                 <h1 style={{
-                  fontFamily: 'Montserrat, sans-serif',
+                  fontFamily: "'Lora', Georgia, serif",
                   fontSize: '24px',
                   fontWeight: 700,
                   color: '#FFD700',
@@ -656,7 +656,7 @@ const AdminDashboard = () => {
                     justifyContent: 'center'
                   }}>
                     <span style={{
-                      fontFamily: 'Montserrat, sans-serif',
+                      fontFamily: "'Lora', Georgia, serif",
                       fontSize: '14px',
                       fontWeight: 700,
                       color: '#1a1a2e'
@@ -1574,7 +1574,7 @@ const AdminDashboard = () => {
                   <AlertTriangle size={24} color="white" />
                 )}
                 <h3 style={{
-                  fontFamily: 'Montserrat, sans-serif',
+                  fontFamily: "'Lora', Georgia, serif",
                   fontSize: '18px',
                   fontWeight: 700,
                   color: 'white',
@@ -1752,7 +1752,7 @@ const AdminDashboard = () => {
                 <FileText size={24} color="white" />
                 <div>
                   <h3 style={{
-                    fontFamily: 'Montserrat, sans-serif',
+                    fontFamily: "'Lora', Georgia, serif",
                     fontSize: '18px',
                     fontWeight: 700,
                     color: 'white',
