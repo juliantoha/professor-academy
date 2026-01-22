@@ -22,6 +22,7 @@ interface AnalyticsData {
 interface AnalyticsDashboardProps {
   data: AnalyticsData;
   isDarkMode?: boolean;
+  schoolWideGraduates?: Array<{ createdAt?: string; graduatedAt?: string }>;
 }
 
 // Animated counter component
@@ -245,6 +246,136 @@ const DonutChart = ({
   );
 };
 
+// Days to Complete Training bar chart
+const TrainingDaysChart = ({
+  graduateData,
+  isDarkMode
+}: {
+  graduateData: Array<{ createdAt?: string; graduatedAt?: string }>;
+  isDarkMode?: boolean;
+}) => {
+  // Calculate days to complete for each graduate
+  const daysDistribution = useMemo(() => {
+    const buckets = { '1-8': 0, '9-11': 0, '12+': 0 };
+
+    graduateData.forEach(grad => {
+      if (grad.createdAt && grad.graduatedAt) {
+        const start = new Date(grad.createdAt);
+        const end = new Date(grad.graduatedAt);
+        const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (days <= 8) buckets['1-8']++;
+        else if (days <= 11) buckets['9-11']++;
+        else buckets['12+']++;
+      }
+    });
+
+    return buckets;
+  }, [graduateData]);
+
+  const total = Object.values(daysDistribution).reduce((sum, val) => sum + val, 0);
+  const maxValue = Math.max(...Object.values(daysDistribution), 1);
+
+  const bucketLabels = {
+    '1-8': '1-8 days',
+    '9-11': '9-11 days',
+    '12+': '12+ days'
+  };
+
+  const bucketColors = {
+    '1-8': '#10B981',
+    '9-11': '#F59E0B',
+    '12+': '#EF4444'
+  };
+
+  if (total === 0) {
+    return (
+      <div style={{
+        height: 120,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: isDarkMode ? '#64748B' : '#94A3B8',
+        fontSize: '13px',
+        textAlign: 'center'
+      }}>
+        No graduate data yet.<br />
+        Data will appear as apprentices graduate.
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '1rem' }}>
+        {Object.entries(daysDistribution).map(([bucket, count]) => {
+          const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
+          return (
+            <div key={bucket} style={{ flex: 1, textAlign: 'center' }}>
+              <div style={{
+                height: '80px',
+                display: 'flex',
+                alignItems: 'flex-end',
+                justifyContent: 'center',
+                marginBottom: '0.5rem'
+              }}>
+                <div style={{
+                  width: '100%',
+                  maxWidth: '60px',
+                  height: `${(count / maxValue) * 100}%`,
+                  minHeight: count > 0 ? '20px' : '4px',
+                  background: count > 0
+                    ? `linear-gradient(180deg, ${bucketColors[bucket as keyof typeof bucketColors]} 0%, ${bucketColors[bucket as keyof typeof bucketColors]}cc 100%)`
+                    : (isDarkMode ? 'rgba(255,255,255,0.1)' : '#E2E8F0'),
+                  borderRadius: '6px 6px 0 0',
+                  transition: 'height 0.5s ease',
+                  position: 'relative'
+                }}>
+                  {count > 0 && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '-24px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      fontSize: '14px',
+                      fontWeight: 700,
+                      color: isDarkMode ? '#F1F5F9' : '#1E293B'
+                    }}>
+                      {count}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div style={{
+                fontSize: '12px',
+                fontWeight: 600,
+                color: bucketColors[bucket as keyof typeof bucketColors]
+              }}>
+                {bucketLabels[bucket as keyof typeof bucketLabels]}
+              </div>
+              <div style={{
+                fontSize: '11px',
+                color: isDarkMode ? '#64748B' : '#94A3B8'
+              }}>
+                {percentage}%
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div style={{
+        textAlign: 'center',
+        fontSize: '12px',
+        color: isDarkMode ? '#64748B' : '#94A3B8',
+        borderTop: `1px solid ${isDarkMode ? 'rgba(255,255,255,0.1)' : '#E2E8F0'}`,
+        paddingTop: '0.75rem'
+      }}>
+        Total graduates: <strong style={{ color: isDarkMode ? '#F1F5F9' : '#1E293B' }}>{total}</strong>
+      </div>
+    </div>
+  );
+};
+
 // Activity heatmap (7x4 grid representing last 4 weeks)
 const ActivityHeatmap = ({
   activityData,
@@ -310,7 +441,7 @@ const ActivityHeatmap = ({
   );
 };
 
-const AnalyticsDashboard = ({ data, isDarkMode = false }: AnalyticsDashboardProps) => {
+const AnalyticsDashboard = ({ data, isDarkMode = false, schoolWideGraduates = [] }: AnalyticsDashboardProps) => {
   // Calculate analytics from data
   const analytics = useMemo(() => {
     const { apprentices, progress, pendingSubmissions } = data;
@@ -561,6 +692,41 @@ const AnalyticsDashboard = ({ data, isDarkMode = false }: AnalyticsDashboardProp
             </div>
             <span>More</span>
           </div>
+        </div>
+
+        {/* Days to Complete Training Chart */}
+        <div style={{
+          background: isDarkMode ? 'rgba(255,255,255,0.05)' : 'white',
+          borderRadius: '16px',
+          padding: '1.5rem',
+          boxShadow: isDarkMode ? 'none' : '0 4px 20px rgba(0,0,0,0.08)',
+          border: isDarkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.05)'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            marginBottom: '1rem'
+          }}>
+            <Zap size={16} color={isDarkMode ? '#94A3B8' : '#64748B'} />
+            <span style={{
+              fontSize: '14px',
+              fontWeight: 600,
+              color: isDarkMode ? '#F1F5F9' : '#1E293B'
+            }}>
+              Days to Complete Training
+            </span>
+            <span style={{
+              fontSize: '11px',
+              color: isDarkMode ? '#64748B' : '#94A3B8',
+              marginLeft: 'auto',
+              fontStyle: 'italic'
+            }}>
+              School-wide
+            </span>
+          </div>
+
+          <TrainingDaysChart graduateData={schoolWideGraduates} isDarkMode={isDarkMode} />
         </div>
       </div>
 

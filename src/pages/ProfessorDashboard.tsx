@@ -60,6 +60,7 @@ const ProfessorDashboard = () => {
   const [progress, setProgress] = useState<Record<string, Progress[]>>({});
   const [pendingSubmissions, setPendingSubmissions] = useState<Submission[]>([]);
   const [apprenticeProfiles, setApprenticeProfiles] = useState<Record<string, { avatarUrl?: string }>>({});
+  const [schoolWideGraduates, setSchoolWideGraduates] = useState<Array<{ createdAt?: string; graduatedAt?: string }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -271,6 +272,19 @@ const ProfessorDashboard = () => {
       } else {
         setFollowedApprentices([]);
         setFollowingIds(new Set());
+      }
+
+      // Fetch school-wide graduates for analytics chart
+      const { data: schoolGradsData, error: schoolGradsError } = await supabase
+        .from('apprentices')
+        .select('createdAt, graduatedAt')
+        .eq('graduated', true)
+        .not('graduatedAt', 'is', null);
+
+      if (schoolGradsError) {
+        console.error('Error fetching school-wide graduates:', schoolGradsError);
+      } else {
+        setSchoolWideGraduates(schoolGradsData || []);
       }
 
     } catch (err: any) {
@@ -1037,6 +1051,7 @@ const ProfessorDashboard = () => {
             pendingSubmissions
           }}
           isDarkMode={isDarkMode}
+          schoolWideGraduates={schoolWideGraduates}
         />
 
         {/* Pending Reviews Section */}

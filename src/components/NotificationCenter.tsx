@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Check, CheckCheck, Trash2, FileText, CheckCircle, AlertCircle, MessageSquare, Award, Settings } from 'lucide-react';
+import { X, Check, CheckCheck, Trash2, FileText, CheckCircle, AlertCircle, MessageSquare, Award, Settings, Bell } from 'lucide-react';
 import { useNotifications, Notification } from '../contexts/NotificationContext';
 
 const NotificationCenter = () => {
