@@ -19,6 +19,7 @@ import SettingsPage from './pages/SettingsPage.tsx'
 import ApprenticeSettingsPage from './pages/ApprenticeSettingsPage.tsx'
 import UnauthorizedPage from './pages/UnauthorizedPage.tsx'
 import SkillsChecklist from './pages/SkillsChecklist.tsx'
+import GraduationCelebration from './pages/GraduationCelebration.tsx'
 
 // Auth components
 import { AuthProvider } from './contexts/AuthContext.tsx'
@@ -150,6 +151,11 @@ const router = createBrowserRouter([
   {
     path: '/orientation',
     element: <OrientationWrapper />
+  },
+  // Graduation celebration page (public - shareable via token)
+  {
+    path: '/celebrate/:graduationToken',
+    element: <GraduationCelebration />
   }
 ]);
 
