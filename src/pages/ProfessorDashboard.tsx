@@ -27,6 +27,7 @@ interface Apprentice {
   employmentType?: '1099' | 'part-time' | null;
   graduated?: boolean;
   graduatedAt?: string;
+  graduation_token?: string;
   professorEmail?: string;
 }
 
@@ -95,6 +96,10 @@ const ProfessorDashboard = () => {
 
   // Graduated section state
   const [showGraduated, setShowGraduated] = useState(false);
+
+  // Graduation success modal state
+  const [graduationSuccess, setGraduationSuccess] = useState<{ name: string; token: string } | null>(null);
+  const [graduationLinkCopied, setGraduationLinkCopied] = useState(false);
 
   // Follow apprentice feature state
   const [followedApprentices, setFollowedApprentices] = useState<FollowedApprentice[]>([]);
@@ -549,11 +554,17 @@ const ProfessorDashboard = () => {
 
   const toggleGraduated = async (apprentice: Apprentice, graduated: boolean) => {
     try {
+      // Generate a unique graduation token for shareable celebration link
+      const graduationToken = graduated
+        ? `grad-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 9)}`
+        : null;
+
       const { error: updateError } = await supabase
         .from('apprentices')
         .update({
           graduated,
-          graduatedAt: graduated ? new Date().toISOString() : null
+          graduatedAt: graduated ? new Date().toISOString() : null,
+          graduation_token: graduationToken
         })
         .eq('id', apprentice.id);
 
@@ -562,9 +573,24 @@ const ProfessorDashboard = () => {
       // Update local state
       setApprentices(prev => prev.map(a =>
         a.id === apprentice.id
-          ? { ...a, graduated, graduatedAt: graduated ? new Date().toISOString() : undefined }
+          ? {
+              ...a,
+              graduated,
+              graduatedAt: graduated ? new Date().toISOString() : undefined,
+              graduation_token: graduationToken || undefined
+            }
           : a
       ));
+
+      // Show success modal with celebration link when graduating
+      if (graduated && graduationToken) {
+        setGraduationSuccess({ name: apprentice.name, token: graduationToken });
+        addNotification({
+          type: 'achievement',
+          title: 'Graduation Complete!',
+          message: `${apprentice.name} has been graduated from the Professor Academy.`
+        });
+      }
     } catch (err: any) {
       console.error('Error updating graduated status:', err);
       setError(err.message || 'Failed to update apprentice status');
@@ -3162,7 +3188,236 @@ const ProfessorDashboard = () => {
         </div>
       )}
 
+      {/* Graduation Success Modal */}
+      {graduationSuccess && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.6)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1100,
+            padding: '1rem',
+            animation: 'fadeIn 0.3s ease-out'
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setGraduationSuccess(null);
+          }}
+        >
+          <div style={{
+            background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+            borderRadius: '28px',
+            width: '100%',
+            maxWidth: '520px',
+            overflow: 'hidden',
+            boxShadow: '0 32px 64px rgba(0,0,0,0.4)',
+            animation: 'modalSlideIn 0.4s ease-out',
+            position: 'relative'
+          }}>
+            {/* Confetti Background Animation */}
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '200px',
+              overflow: 'hidden',
+              pointerEvents: 'none'
+            }}>
+              {[...Array(20)].map((_, i) => (
+                <div
+                  key={i}
+                  style={{
+                    position: 'absolute',
+                    width: '10px',
+                    height: '10px',
+                    background: ['#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3', '#F38181', '#AA96DA'][i % 6],
+                    borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+                    left: `${Math.random() * 100}%`,
+                    animation: `confettiFall 3s ease-in-out ${Math.random() * 2}s infinite`,
+                    opacity: 0.8
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Modal Header */}
+            <div style={{
+              position: 'relative',
+              padding: '2.5rem 2rem 2rem',
+              textAlign: 'center'
+            }}>
+              <div style={{
+                width: '100px',
+                height: '100px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 1.5rem',
+                boxShadow: '0 0 40px rgba(255, 215, 0, 0.4)',
+                animation: 'pulse-ring-caught-up 2s ease-out infinite'
+              }}>
+                <GraduationCap size={48} color="#1a1a2e" />
+              </div>
+              <h2 style={{
+                fontFamily: "'Lora', Georgia, serif",
+                fontSize: '28px',
+                fontWeight: 700,
+                background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                color: 'transparent',
+                margin: '0 0 0.5rem 0'
+              }}>
+                Congratulations!
+              </h2>
+              <p style={{
+                fontSize: '18px',
+                color: 'white',
+                margin: '0 0 0.25rem 0',
+                fontWeight: 600
+              }}>
+                {graduationSuccess.name}
+              </p>
+              <p style={{
+                fontSize: '14px',
+                color: 'rgba(255,255,255,0.7)',
+                margin: 0
+              }}>
+                has graduated from the Professor Academy!
+              </p>
+            </div>
+
+            {/* Celebration Link Section */}
+            <div style={{
+              padding: '0 2rem 2rem',
+              textAlign: 'center'
+            }}>
+              <div style={{
+                background: 'rgba(255,255,255,0.1)',
+                borderRadius: '16px',
+                padding: '1.5rem',
+                marginBottom: '1.5rem'
+              }}>
+                <p style={{
+                  fontSize: '14px',
+                  color: 'rgba(255,255,255,0.8)',
+                  margin: '0 0 1rem 0'
+                }}>
+                  Share this celebration page with {graduationSuccess.name}:
+                </p>
+                <div style={{
+                  display: 'flex',
+                  gap: '0.75rem',
+                  alignItems: 'stretch'
+                }}>
+                  <input
+                    type="text"
+                    value={`${window.location.origin}/celebrate/${graduationSuccess.token}`}
+                    readOnly
+                    style={{
+                      flex: 1,
+                      padding: '0.875rem 1rem',
+                      fontSize: '13px',
+                      border: '2px solid rgba(255,255,255,0.2)',
+                      borderRadius: '10px',
+                      background: 'rgba(0,0,0,0.2)',
+                      color: 'white',
+                      outline: 'none'
+                    }}
+                  />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/celebrate/${graduationSuccess.token}`);
+                      setGraduationLinkCopied(true);
+                      setTimeout(() => setGraduationLinkCopied(false), 2000);
+                    }}
+                    style={{
+                      padding: '0.875rem 1.25rem',
+                      background: graduationLinkCopied
+                        ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
+                        : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      border: 'none',
+                      borderRadius: '10px',
+                      color: 'white',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      transition: 'all 0.2s ease',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {graduationLinkCopied ? <Check size={18} /> : <Copy size={18} />}
+                    {graduationLinkCopied ? 'Copied!' : 'Copy'}
+                  </button>
+                </div>
+              </div>
+
+              <div style={{
+                display: 'flex',
+                gap: '0.75rem'
+              }}>
+                <button
+                  onClick={() => {
+                    window.open(`/celebrate/${graduationSuccess.token}`, '_blank');
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '1rem',
+                    background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+                    border: 'none',
+                    borderRadius: '12px',
+                    color: '#1a1a2e',
+                    fontWeight: 700,
+                    fontSize: '15px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    boxShadow: '0 8px 24px rgba(255, 215, 0, 0.3)'
+                  }}
+                >
+                  <ExternalLink size={18} />
+                  View Celebration
+                </button>
+                <button
+                  onClick={() => setGraduationSuccess(null)}
+                  style={{
+                    padding: '1rem 1.5rem',
+                    background: 'rgba(255,255,255,0.1)',
+                    border: '2px solid rgba(255,255,255,0.2)',
+                    borderRadius: '12px',
+                    color: 'white',
+                    fontWeight: 600,
+                    fontSize: '15px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
+        @keyframes confettiFall {
+          0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(200px) rotate(720deg); opacity: 0; }
+        }
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
