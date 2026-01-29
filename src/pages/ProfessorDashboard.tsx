@@ -134,8 +134,14 @@ const ProfessorDashboard = () => {
   const [searching, setSearching] = useState(false);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
 
-  // Get display name
-  const displayName = profile?.firstName || profile?.name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Professor';
+  // Get effective email for data fetching (use masqueradeEmail when masquerading)
+  const effectiveProfessorEmail = isMasquerading
+    ? sessionStorage.getItem('masqueradeEmail') || user?.email
+    : user?.email;
+
+  // Get display name (use masqueradeName when masquerading)
+  const masqueradeName = isMasquerading ? sessionStorage.getItem('masqueradeName') : null;
+  const displayName = masqueradeName || profile?.firstName || profile?.name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Professor';
 
   // Notifications and onboarding
   const { addNotification } = useNotifications();
@@ -194,10 +200,14 @@ const ProfessorDashboard = () => {
       if (showLoadingSpinner) setLoading(true);
       setError('');
 
+      // Use effectiveProfessorEmail for masquerade support
+      const emailToUse = effectiveProfessorEmail;
+      console.log('[ProfessorDashboard] Fetching data for email:', emailToUse, 'isMasquerading:', isMasquerading);
+
       const { data: apprenticesData, error: apprenticesError } = await supabase
         .from('apprentices')
         .select('*')
-        .eq('professorEmail', user?.email);
+        .eq('professorEmail', emailToUse);
 
       if (apprenticesError) throw apprenticesError;
       setApprentices(apprenticesData || []);
@@ -248,12 +258,12 @@ const ProfessorDashboard = () => {
         }
       }
 
-      console.log('[ProfessorDashboard] Fetching submissions for professor:', user?.email);
+      console.log('[ProfessorDashboard] Fetching submissions for professor:', emailToUse);
 
       const { data: submissionsData, error: submissionsError } = await supabase
         .from('submissions')
         .select('*')
-        .eq('professorEmail', user?.email)
+        .eq('professorEmail', emailToUse)
         .eq('status', 'Pending')
         .order('submittedAt', { ascending: false });
 
@@ -375,16 +385,19 @@ const ProfessorDashboard = () => {
       setLoading(false);
       isInitialLoad.current = false;
     }
-  }, [user?.email]);
+  }, [user?.email, effectiveProfessorEmail, isMasquerading]);
 
   // Initial data fetch and real-time subscriptions
   useEffect(() => {
-    if (!user?.email) return;
+    if (!effectiveProfessorEmail) return;
 
     // Initial fetch
     fetchData();
 
     // Set up real-time subscriptions for automatic updates
+    // Use effectiveProfessorEmail for masquerade support
+    const emailForSubscription = effectiveProfessorEmail;
+
     const apprenticesChannel = supabase
       .channel('professor-apprentices')
       .on(
@@ -393,7 +406,7 @@ const ProfessorDashboard = () => {
           event: '*',
           schema: 'public',
           table: 'apprentices',
-          filter: `professorEmail=eq.${user.email}`
+          filter: `professorEmail=eq.${emailForSubscription}`
         },
         () => {
           console.log('[RealTime] Apprentices changed, refreshing...');
@@ -410,7 +423,7 @@ const ProfessorDashboard = () => {
           event: '*',
           schema: 'public',
           table: 'submissions',
-          filter: `professorEmail=eq.${user.email}`
+          filter: `professorEmail=eq.${emailForSubscription}`
         },
         (payload) => {
           console.log('[RealTime] Submissions changed, refreshing...', payload.eventType);
@@ -462,7 +475,7 @@ const ProfessorDashboard = () => {
       supabase.removeChannel(progressChannel);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [user?.email, fetchData]);
+  }, [effectiveProfessorEmail, fetchData]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -583,20 +596,27 @@ const ProfessorDashboard = () => {
         ? `grad-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 9)}`
         : null;
 
-      const { error: updateError } = await supabase
+      // Use dashboardToken as the unique identifier (consistent with other operations)
+      const { data: updateData, error: updateError } = await supabase
         .from('apprentices')
         .update({
           graduated,
           graduatedAt: graduated ? new Date().toISOString() : null,
           graduation_token: graduationToken
         })
-        .eq('id', apprentice.id);
+        .eq('dashboardToken', apprentice.dashboardToken)
+        .select();
 
       if (updateError) throw updateError;
 
+      // Verify the update actually affected a row
+      if (!updateData || updateData.length === 0) {
+        throw new Error('No apprentice found to update. Please refresh and try again.');
+      }
+
       // Update local state
       setApprentices(prev => prev.map(a =>
-        a.id === apprentice.id
+        a.dashboardToken === apprentice.dashboardToken
           ? {
               ...a,
               graduated,
@@ -618,6 +638,12 @@ const ProfessorDashboard = () => {
     } catch (err: any) {
       console.error('Error updating graduated status:', err);
       setError(err.message || 'Failed to update apprentice status');
+      // Show error notification
+      addNotification({
+        type: 'error',
+        title: 'Graduation Failed',
+        message: err.message || 'Failed to graduate apprentice. Please try again.'
+      });
     }
   };
 
@@ -638,7 +664,7 @@ const ProfessorDashboard = () => {
         .from('apprentices')
         .select('*')
         .or(`name.ilike.%${query}%,email.ilike.%${query}%`)
-        .neq('professorEmail', user?.email) // Exclude own apprentices
+        .neq('professorEmail', effectiveProfessorEmail) // Exclude current professor's apprentices
         .limit(10);
 
       if (searchError) throw searchError;
@@ -1840,6 +1866,37 @@ const ProfessorDashboard = () => {
                         </div>
                       )}
                     </div>
+
+                    {/* Ready to Graduate Indicator */}
+                    {summary.completed >= 5 && (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.75rem 1rem',
+                        background: 'linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)',
+                        borderRadius: '10px',
+                        marginBottom: '1rem',
+                        border: '2px solid #F59E0B',
+                        animation: 'pulse-subtle 2s ease-in-out infinite'
+                      }}>
+                        <GraduationCap size={18} color="#B45309" />
+                        <span style={{
+                          fontSize: '13px',
+                          fontWeight: 700,
+                          color: '#B45309'
+                        }}>
+                          Ready to Graduate!
+                        </span>
+                        <span style={{
+                          fontSize: '11px',
+                          color: '#92400E',
+                          marginLeft: 'auto'
+                        }}>
+                          All modules complete
+                        </span>
+                      </div>
+                    )}
 
                     {/* Action Buttons */}
                     <div style={{
@@ -3465,6 +3522,10 @@ const ProfessorDashboard = () => {
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.5; }
+        }
+        @keyframes pulse-subtle {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+          50% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
         }
         @keyframes float-empty {
           0%, 100% { transform: translateY(0) scale(1); }
