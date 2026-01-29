@@ -640,11 +640,13 @@ const GraduationCelebration = () => {
             <TrophyIcon size={28} color={brandColors.gold} />
             <span style={{
               color: 'white',
-              fontSize: '1.2rem',
+              fontSize: '1.1rem',
               fontWeight: 600,
               fontFamily: "'Lora', Georgia, serif",
+              textAlign: 'center',
             }}>
-              Kaizen Graduate
+              Kaizen Graduate<br />
+              <span style={{ fontSize: '0.9rem', opacity: 0.9 }}>Oclef Certified Instructor</span>
             </span>
             <TrophyIcon size={28} color={brandColors.gold} />
           </div>
@@ -709,9 +711,16 @@ const GraduationCelebration = () => {
               marginTop: '1rem',
               fontFamily: "'Lora', Georgia, serif",
             }}>
-              ""She'll be alright, Mate!"
-              <br /><br />
-              "Here's to you, Here's to me, Best of Mates we'll always be, If someday we disagree...""
+              "Every child holds a universe of musical potential within them. As a certified instructor, you now carry the profound gift of unlocking that potential—one note, one lesson, one breakthrough at a time."
+            </p>
+            <p style={{
+              color: 'rgba(255, 255, 255, 0.7)',
+              fontSize: '1rem',
+              lineHeight: 1.6,
+              marginTop: '1rem',
+              fontFamily: "'Inter', sans-serif",
+            }}>
+              Your dedication to continuous improvement will inspire the next generation of musicians. Go forth and make a difference.
             </p>
           </div>
 
@@ -757,8 +766,8 @@ const GraduationCelebration = () => {
                 onClick={() => {
                   if (navigator.share) {
                     navigator.share({
-                      title: `${graduate.name} - Oclef Graduate`,
-                      text: `${graduate.name} has graduated from the Oclef Professor Academy!`,
+                      title: `${graduate.name} - Oclef Certified Instructor`,
+                      text: `Congratulations to ${graduate.name} for becoming an Oclef Certified Instructor! Ready to inspire the next generation of young musicians.`,
                       url: shareUrl,
                     });
                   } else {
