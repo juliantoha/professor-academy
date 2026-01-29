@@ -640,7 +640,7 @@ const ProfessorDashboard = () => {
       setError(err.message || 'Failed to update apprentice status');
       // Show error notification
       addNotification({
-        type: 'error',
+        type: 'system',
         title: 'Graduation Failed',
         message: err.message || 'Failed to graduate apprentice. Please try again.'
       });
