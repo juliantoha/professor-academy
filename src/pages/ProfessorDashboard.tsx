@@ -583,20 +583,27 @@ const ProfessorDashboard = () => {
         ? `grad-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 9)}`
         : null;
 
-      const { error: updateError } = await supabase
+      // Use dashboardToken as the unique identifier (consistent with other operations)
+      const { data: updateData, error: updateError } = await supabase
         .from('apprentices')
         .update({
           graduated,
           graduatedAt: graduated ? new Date().toISOString() : null,
           graduation_token: graduationToken
         })
-        .eq('id', apprentice.id);
+        .eq('dashboardToken', apprentice.dashboardToken)
+        .select();
 
       if (updateError) throw updateError;
 
+      // Verify the update actually affected a row
+      if (!updateData || updateData.length === 0) {
+        throw new Error('No apprentice found to update. Please refresh and try again.');
+      }
+
       // Update local state
       setApprentices(prev => prev.map(a =>
-        a.id === apprentice.id
+        a.dashboardToken === apprentice.dashboardToken
           ? {
               ...a,
               graduated,
@@ -618,6 +625,12 @@ const ProfessorDashboard = () => {
     } catch (err: any) {
       console.error('Error updating graduated status:', err);
       setError(err.message || 'Failed to update apprentice status');
+      // Show error notification
+      addNotification({
+        type: 'error',
+        title: 'Graduation Failed',
+        message: err.message || 'Failed to graduate apprentice. Please try again.'
+      });
     }
   };
 
@@ -1840,6 +1853,37 @@ const ProfessorDashboard = () => {
                         </div>
                       )}
                     </div>
+
+                    {/* Ready to Graduate Indicator */}
+                    {summary.completed >= 5 && (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.75rem 1rem',
+                        background: 'linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)',
+                        borderRadius: '10px',
+                        marginBottom: '1rem',
+                        border: '2px solid #F59E0B',
+                        animation: 'pulse-subtle 2s ease-in-out infinite'
+                      }}>
+                        <GraduationCap size={18} color="#B45309" />
+                        <span style={{
+                          fontSize: '13px',
+                          fontWeight: 700,
+                          color: '#B45309'
+                        }}>
+                          Ready to Graduate!
+                        </span>
+                        <span style={{
+                          fontSize: '11px',
+                          color: '#92400E',
+                          marginLeft: 'auto'
+                        }}>
+                          All modules complete
+                        </span>
+                      </div>
+                    )}
 
                     {/* Action Buttons */}
                     <div style={{
@@ -3465,6 +3509,10 @@ const ProfessorDashboard = () => {
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.5; }
+        }
+        @keyframes pulse-subtle {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+          50% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
         }
         @keyframes float-empty {
           0%, 100% { transform: translateY(0) scale(1); }
