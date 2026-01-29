@@ -220,6 +220,18 @@ const GraduationCelebration = () => {
 
   useEffect(() => {
     const fetchGraduate = async () => {
+      // Demo mode - show preview with sample data
+      if (graduationToken === 'demo') {
+        setGraduate({
+          name: 'Jane Smith',
+          email: 'jane.smith@example.com',
+          graduatedAt: new Date().toISOString(),
+          professorEmail: 'professor@oclef.com'
+        });
+        setLoading(false);
+        return;
+      }
+
       if (!graduationToken) {
         setError('Invalid graduation link');
         setLoading(false);
