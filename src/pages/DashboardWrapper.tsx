@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Dashboard from './Dashboard';
 import MasqueradeBanner from '../components/MasqueradeBanner';
@@ -9,7 +9,32 @@ const DashboardWrapper = () => {
   const { dashboardToken } = useParams<{ dashboardToken: string }>();
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  // Track masquerade status in state (check URL params first, then sessionStorage)
+  const [isMasquerading, setIsMasquerading] = useState(() => {
+    // Check if URL has masquerade params (for new tab) or sessionStorage (for refresh)
+    const params = new URLSearchParams(window.location.search);
+    return params.get('masquerade') === 'true' || sessionStorage.getItem('adminMasqueradeActive') === 'true';
+  });
+
+  // Initialize masquerade from URL params (since sessionStorage isn't shared between tabs)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('masquerade') === 'true') {
+      // Store masquerade info in this tab's sessionStorage
+      sessionStorage.setItem('adminMasqueradeActive', 'true');
+      sessionStorage.setItem('adminOriginalEmail', params.get('adminEmail') || '');
+      sessionStorage.setItem('masqueradeEmail', params.get('masqueradeEmail') || '');
+      sessionStorage.setItem('masqueradeName', params.get('masqueradeName') || '');
+      sessionStorage.setItem('masqueradeType', params.get('masqueradeType') || '');
+      setIsMasquerading(true);
+      // Clean up URL by removing masquerade params (for cleaner URL)
+      if (dashboardToken) {
+        window.history.replaceState({}, '', `/dashboard/${dashboardToken}`);
+      }
+    }
+  }, [location.search, dashboardToken]);
 
   const displayName = profile?.firstName || profile?.name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Student';
 
@@ -30,8 +55,6 @@ const DashboardWrapper = () => {
       </div>
     );
   }
-
-  const isMasquerading = sessionStorage.getItem('adminMasqueradeActive') === 'true';
 
   // If user is logged in, show header with profile dropdown
   if (user) {
