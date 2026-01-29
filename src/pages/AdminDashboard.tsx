@@ -260,26 +260,29 @@ const AdminDashboard = () => {
   };
 
   const handleMasqueradeAsProfessor = (professorEmail: string, professorName: string) => {
-    // Store masquerade info in sessionStorage
-    sessionStorage.setItem('adminMasqueradeActive', 'true');
-    sessionStorage.setItem('adminOriginalEmail', user?.email || '');
-    sessionStorage.setItem('masqueradeEmail', professorEmail);
-    sessionStorage.setItem('masqueradeName', professorName);
-    sessionStorage.setItem('masqueradeType', 'professor');
-    // Open in new tab
-    window.open(`/professor`, '_blank');
+    // Pass masquerade info via URL params (sessionStorage is not shared between tabs)
+    const params = new URLSearchParams({
+      masquerade: 'true',
+      masqueradeEmail: professorEmail,
+      masqueradeName: professorName,
+      masqueradeType: 'professor',
+      adminEmail: user?.email || ''
+    });
+    // Open in new tab with masquerade params
+    window.open(`/professor?${params.toString()}`, '_blank');
   };
 
   const handleMasqueradeAsApprentice = (dashboardToken: string, apprenticeName: string, apprenticeEmail: string) => {
-    // Store masquerade info in sessionStorage
-    sessionStorage.setItem('adminMasqueradeActive', 'true');
-    sessionStorage.setItem('adminOriginalEmail', user?.email || '');
-    sessionStorage.setItem('masqueradeEmail', apprenticeEmail);
-    sessionStorage.setItem('masqueradeName', apprenticeName);
-    sessionStorage.setItem('masqueradeType', 'apprentice');
-    sessionStorage.setItem('masqueradeDashboardToken', dashboardToken);
-    // Open the apprentice's dashboard in a new tab
-    window.open(`/dashboard/${dashboardToken}`, '_blank');
+    // Pass masquerade info via URL params (sessionStorage is not shared between tabs)
+    const params = new URLSearchParams({
+      masquerade: 'true',
+      masqueradeEmail: apprenticeEmail,
+      masqueradeName: apprenticeName,
+      masqueradeType: 'apprentice',
+      adminEmail: user?.email || ''
+    });
+    // Open the apprentice's dashboard in a new tab with masquerade params
+    window.open(`/dashboard/${dashboardToken}?${params.toString()}`, '_blank');
   };
 
   const handleDeactivateProfessor = async (professor: Professor) => {

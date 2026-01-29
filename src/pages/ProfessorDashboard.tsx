@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { apprenticeCache } from '../lib/apprenticeCache';
@@ -57,7 +57,31 @@ interface Submission {
 const ProfessorDashboard = () => {
   const { user, profile, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isDarkMode } = useDarkMode();
+
+  // Track masquerade status in state (check URL params first, then sessionStorage)
+  const [isMasquerading, setIsMasquerading] = useState(() => {
+    // Check if URL has masquerade params (for new tab) or sessionStorage (for refresh)
+    const params = new URLSearchParams(window.location.search);
+    return params.get('masquerade') === 'true' || sessionStorage.getItem('adminMasqueradeActive') === 'true';
+  });
+
+  // Initialize masquerade from URL params (since sessionStorage isn't shared between tabs)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('masquerade') === 'true') {
+      // Store masquerade info in this tab's sessionStorage
+      sessionStorage.setItem('adminMasqueradeActive', 'true');
+      sessionStorage.setItem('adminOriginalEmail', params.get('adminEmail') || '');
+      sessionStorage.setItem('masqueradeEmail', params.get('masqueradeEmail') || '');
+      sessionStorage.setItem('masqueradeName', params.get('masqueradeName') || '');
+      sessionStorage.setItem('masqueradeType', params.get('masqueradeType') || '');
+      setIsMasquerading(true);
+      // Clean up URL by removing masquerade params (optional, for cleaner URL)
+      window.history.replaceState({}, '', '/professor');
+    }
+  }, [location.search]);
 
   const [apprentices, setApprentices] = useState<Apprentice[]>([]);
   const [progress, setProgress] = useState<Record<string, Progress[]>>({});
@@ -781,8 +805,6 @@ const ProfessorDashboard = () => {
       </div>
     );
   }
-
-  const isMasquerading = sessionStorage.getItem('adminMasqueradeActive') === 'true';
 
   return (
     <div style={{
