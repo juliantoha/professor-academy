@@ -134,8 +134,14 @@ const ProfessorDashboard = () => {
   const [searching, setSearching] = useState(false);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
 
-  // Get display name
-  const displayName = profile?.firstName || profile?.name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Professor';
+  // Get effective email for data fetching (use masqueradeEmail when masquerading)
+  const effectiveProfessorEmail = isMasquerading
+    ? sessionStorage.getItem('masqueradeEmail') || user?.email
+    : user?.email;
+
+  // Get display name (use masqueradeName when masquerading)
+  const masqueradeName = isMasquerading ? sessionStorage.getItem('masqueradeName') : null;
+  const displayName = masqueradeName || profile?.firstName || profile?.name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'Professor';
 
   // Notifications and onboarding
   const { addNotification } = useNotifications();
@@ -194,10 +200,14 @@ const ProfessorDashboard = () => {
       if (showLoadingSpinner) setLoading(true);
       setError('');
 
+      // Use effectiveProfessorEmail for masquerade support
+      const emailToUse = effectiveProfessorEmail;
+      console.log('[ProfessorDashboard] Fetching data for email:', emailToUse, 'isMasquerading:', isMasquerading);
+
       const { data: apprenticesData, error: apprenticesError } = await supabase
         .from('apprentices')
         .select('*')
-        .eq('professorEmail', user?.email);
+        .eq('professorEmail', emailToUse);
 
       if (apprenticesError) throw apprenticesError;
       setApprentices(apprenticesData || []);
@@ -248,12 +258,12 @@ const ProfessorDashboard = () => {
         }
       }
 
-      console.log('[ProfessorDashboard] Fetching submissions for professor:', user?.email);
+      console.log('[ProfessorDashboard] Fetching submissions for professor:', emailToUse);
 
       const { data: submissionsData, error: submissionsError } = await supabase
         .from('submissions')
         .select('*')
-        .eq('professorEmail', user?.email)
+        .eq('professorEmail', emailToUse)
         .eq('status', 'Pending')
         .order('submittedAt', { ascending: false });
 
@@ -375,16 +385,19 @@ const ProfessorDashboard = () => {
       setLoading(false);
       isInitialLoad.current = false;
     }
-  }, [user?.email]);
+  }, [user?.email, effectiveProfessorEmail, isMasquerading]);
 
   // Initial data fetch and real-time subscriptions
   useEffect(() => {
-    if (!user?.email) return;
+    if (!effectiveProfessorEmail) return;
 
     // Initial fetch
     fetchData();
 
     // Set up real-time subscriptions for automatic updates
+    // Use effectiveProfessorEmail for masquerade support
+    const emailForSubscription = effectiveProfessorEmail;
+
     const apprenticesChannel = supabase
       .channel('professor-apprentices')
       .on(
@@ -393,7 +406,7 @@ const ProfessorDashboard = () => {
           event: '*',
           schema: 'public',
           table: 'apprentices',
-          filter: `professorEmail=eq.${user.email}`
+          filter: `professorEmail=eq.${emailForSubscription}`
         },
         () => {
           console.log('[RealTime] Apprentices changed, refreshing...');
@@ -410,7 +423,7 @@ const ProfessorDashboard = () => {
           event: '*',
           schema: 'public',
           table: 'submissions',
-          filter: `professorEmail=eq.${user.email}`
+          filter: `professorEmail=eq.${emailForSubscription}`
         },
         (payload) => {
           console.log('[RealTime] Submissions changed, refreshing...', payload.eventType);
@@ -462,7 +475,7 @@ const ProfessorDashboard = () => {
       supabase.removeChannel(progressChannel);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [user?.email, fetchData]);
+  }, [effectiveProfessorEmail, fetchData]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -651,7 +664,7 @@ const ProfessorDashboard = () => {
         .from('apprentices')
         .select('*')
         .or(`name.ilike.%${query}%,email.ilike.%${query}%`)
-        .neq('professorEmail', user?.email) // Exclude own apprentices
+        .neq('professorEmail', effectiveProfessorEmail) // Exclude current professor's apprentices
         .limit(10);
 
       if (searchError) throw searchError;
