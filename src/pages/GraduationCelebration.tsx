@@ -223,8 +223,8 @@ const GraduationCelebration = () => {
       // Demo mode - show preview with sample data
       if (graduationToken === 'demo') {
         setGraduate({
-          name: 'Jane Smith',
-          email: 'jane.smith@example.com',
+          name: 'Dr. Ludwig Treviranus',
+          email: 'ludwig@example.com',
           graduatedAt: new Date().toISOString(),
           professorEmail: 'professor@oclef.com'
         });
@@ -500,48 +500,46 @@ const GraduationCelebration = () => {
           zIndex: 2,
         }} />
 
-        {/* Effects Layer */}
-        {showEffects && (
-          <>
-            {effectMode === 'confetti' ? (
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 10 }}>
-                {confettiParticles.map(particle => (
-                  <ConfettiParticle key={particle.id} {...particle} />
-                ))}
-              </div>
-            ) : (
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 10, overflow: 'hidden' }}>
-                {laserBeams.map(beam => (
-                  <LaserBeam key={beam.id} {...beam} />
-                ))}
-              </div>
-            )}
+        {/* Effects Layer - Always show both confetti and lasers */}
+        <>
+          {/* Confetti */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 10 }}>
+            {confettiParticles.map(particle => (
+              <ConfettiParticle key={particle.id} {...particle} />
+            ))}
+          </div>
 
-            {/* Dancing Music Notes */}
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 8 }}>
-              {dancingNotes.map(note => (
-                <DancingNote key={note.id} {...note} />
-              ))}
-            </div>
+          {/* Lasers */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 9, overflow: 'hidden' }}>
+            {laserBeams.map(beam => (
+              <LaserBeam key={beam.id} {...beam} />
+            ))}
+          </div>
 
-            {/* Floating Sparkles */}
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 6 }}>
-              {sparkles.map(sparkle => (
-                <div
-                  key={sparkle.id}
-                  style={{
-                    position: 'absolute',
-                    left: `${sparkle.left}%`,
-                    top: `${sparkle.top}%`,
-                    animation: `twinkle 2.5s ease-in-out ${sparkle.delay}s infinite`,
-                  }}
-                >
-                  <SparkleIcon size={sparkle.size} color={brandColors.gold} />
-                </div>
-              ))}
-            </div>
-          </>
-        )}
+          {/* Dancing Music Notes */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 8 }}>
+            {dancingNotes.map(note => (
+              <DancingNote key={note.id} {...note} />
+            ))}
+          </div>
+
+          {/* Floating Sparkles */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, pointerEvents: 'none', zIndex: 6 }}>
+            {sparkles.map(sparkle => (
+              <div
+                key={sparkle.id}
+                style={{
+                  position: 'absolute',
+                  left: `${sparkle.left}%`,
+                  top: `${sparkle.top}%`,
+                  animation: `twinkle 2.5s ease-in-out ${sparkle.delay}s infinite`,
+                }}
+              >
+                <SparkleIcon size={sparkle.size} color={brandColors.gold} />
+              </div>
+            ))}
+          </div>
+        </>
 
         {/* Main Content */}
         <div style={{
@@ -646,7 +644,7 @@ const GraduationCelebration = () => {
               fontWeight: 600,
               fontFamily: "'Lora', Georgia, serif",
             }}>
-              Oclef Professor Academy Graduate
+              Kaizen Graduate
             </span>
             <TrophyIcon size={28} color={brandColors.gold} />
           </div>
@@ -711,8 +709,9 @@ const GraduationCelebration = () => {
               marginTop: '1rem',
               fontFamily: "'Lora', Georgia, serif",
             }}>
-              "You've completed all requirements and demonstrated excellence in music education.
-              You're now ready to inspire the next generation of musicians!"
+              ""She'll be alright, Mate!"
+              <br /><br />
+              "Here's to you, Here's to me, Best of Mates we'll always be, If someday we disagree...""
             </p>
           </div>
 
@@ -787,55 +786,7 @@ const GraduationCelebration = () => {
             </div>
           </div>
 
-          {/* Effect Controls */}
-          <div style={{
-            position: 'fixed',
-            bottom: '2rem',
-            right: '2rem',
-            display: 'flex',
-            gap: '0.75rem',
-            zIndex: 100,
-          }}>
-            <button
-              onClick={() => setEffectMode(effectMode === 'confetti' ? 'lasers' : 'confetti')}
-              style={{
-                padding: '0.75rem 1.25rem',
-                background: 'rgba(255, 255, 255, 0.1)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                borderRadius: '50px',
-                color: 'white',
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                backdropFilter: 'blur(8px)',
-              }}
-            >
-              <SparkleIcon size={14} color="white" />
-              {effectMode === 'confetti' ? 'Lasers' : 'Confetti'}
-            </button>
-            <button
-              onClick={() => setShowEffects(!showEffects)}
-              style={{
-                padding: '0.75rem 1.25rem',
-                background: 'rgba(255, 255, 255, 0.1)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                borderRadius: '50px',
-                color: 'white',
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                backdropFilter: 'blur(8px)',
-              }}
-            >
-              <StarburstIcon size={14} color="white" />
-              {showEffects ? 'Hide' : 'Show'} Effects
-            </button>
-          </div>
-        </div>
+                  </div>
       </div>
     </>
   );
