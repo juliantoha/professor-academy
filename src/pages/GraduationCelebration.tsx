@@ -720,7 +720,7 @@ const GraduationCelebration = () => {
               marginTop: '1rem',
               fontFamily: "'Inter', sans-serif",
             }}>
-              Your dedication to continuous improvement will inspire the next generation of musicians. Go forth and make a difference.
+              Your dedication to continuous improvement will inspire the next generation of learners through piano.
             </p>
           </div>
 

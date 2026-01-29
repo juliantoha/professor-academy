@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, CheckCheck, Trash2, FileText, CheckCircle, AlertCircle, MessageSquare, Award, Settings } from 'lucide-react';
+import { Check, CheckCheck, FileText, CheckCircle, AlertCircle, MessageSquare, Award, Settings } from 'lucide-react';
 import { useNotifications, Notification } from '../contexts/NotificationContext';
 import { useDarkMode } from '../contexts/DarkModeContext';
 
 const NotificationCenter = () => {
   const navigate = useNavigate();
-  const { notifications, unreadCount, markAsRead, markAllAsRead, removeNotification, clearAll } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const { isDarkMode } = useDarkMode();
   const [isOpen, setIsOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -244,7 +244,7 @@ const NotificationCenter = () => {
                       e.stopPropagation();
                       markAsRead(notification.id);
                     }}
-                    title="Mark as read"
+                    title="Mark as seen"
                     style={{
                       width: '24px',
                       height: '24px',
@@ -261,30 +261,6 @@ const NotificationCenter = () => {
                     <Check size={12} />
                   </button>
                 )}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeNotification(notification.id);
-                  }}
-                  title="Remove"
-                  style={{
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '6px',
-                    border: 'none',
-                    background: '#FEE2E2',
-                    color: '#DC2626',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width={12} height={12} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}>
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
               </div>
             </div>
           );
@@ -559,46 +535,6 @@ const NotificationCenter = () => {
               )}
             </div>
 
-            {/* Footer */}
-            {notifications.length > 0 && (
-              <div style={{
-                padding: '0.75rem 1rem',
-                borderTop: isDarkMode ? '1px solid #334155' : '1px solid #E2E8F0',
-                display: 'flex',
-                justifyContent: 'center'
-              }}>
-                <button
-                  onClick={clearAll}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    border: isDarkMode ? '1px solid #475569' : '1px solid #E2E8F0',
-                    background: isDarkMode ? '#334155' : 'white',
-                    color: isDarkMode ? '#94A3B8' : '#64748B',
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = isDarkMode ? '#7F1D1D' : '#FEE2E2';
-                    e.currentTarget.style.borderColor = isDarkMode ? '#991B1B' : '#FECACA';
-                    e.currentTarget.style.color = isDarkMode ? '#FCA5A5' : '#DC2626';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = isDarkMode ? '#334155' : 'white';
-                    e.currentTarget.style.borderColor = isDarkMode ? '#475569' : '#E2E8F0';
-                    e.currentTarget.style.color = isDarkMode ? '#94A3B8' : '#64748B';
-                  }}
-                >
-                  <Trash2 size={14} />
-                  Clear all notifications
-                </button>
-              </div>
-            )}
           </div>
         </>
       )}
